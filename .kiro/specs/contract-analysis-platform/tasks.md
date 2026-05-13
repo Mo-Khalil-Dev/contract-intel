@@ -50,6 +50,15 @@
 - ✅ Task 2.4: Layout Components
 - ✅ Task 2.5: Centralised Icons
 
+**Phase 3 progress**: **3/4 tasks complete** (backend done; frontend UI pending)
+
+- ✅ Task 3.1: Authentication Domain Model (Commit: 32e2067)
+- ✅ Task 3.2: Authentication Application Layer (Commit: 01a028b)
+- ✅ Task 3.3: Authentication Infrastructure Layer (Commit: 2f26822)
+- ⏳ Task 3.4: Authentication UI
+
+**Phase 3 architectural decision (2026-05-13)**: Auth0 redirects to a **frontend** callback page (`http://localhost:5173/auth/callback`) which then POSTs `{ code, state }` to the backend. Backend mints/verifies the OAuth state (HMAC-signed, carries CSRF token + returnUrl) and owns the session cookie. End-to-end smoke-tested against the real Auth0 dev tenant — login → exchange → cookie → /me → logout → 401 all verified.
+
 ---
 
 ## Overview
