@@ -28,6 +28,20 @@
 
 ---
 
+## Phase Plan (Post-Phase 1)
+
+| Phase   | Theme                                                    | Tasks   |
+| ------- | -------------------------------------------------------- | ------- |
+| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks |
+| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks |
+| Phase 4 | Home Screen (Reference Data API + Dashboard UI)          | 3 tasks |
+| Phase 5 | Upload Screen (Document Ingestion domain + UI)           | 4 tasks |
+| Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks |
+
+**Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
+
+---
+
 ## Overview
 
 This implementation plan follows a **user story-driven approach** with Clean Architecture principles, aligned with the **high-fidelity wireframes** from Claude Design.
@@ -142,17 +156,20 @@ apps/backend/
 ├── src/
 │   ├── modules/          # Feature modules (vertical slices)
 │   ├── shared/           # Shared kernel
-│   │   ├── domain/       # Base classes, Result, ValueObject
-│   │   ├── exceptions/   # AppError hierarchy
-│   │   └── infrastructure/ # Prisma, ports
-│   ├── config/           # Configuration service
+│   │   ├── domain/       # Base classes, Result, ValueObject, AggregateRoot, DomainEvent
+│   │   ├── exceptions/   # AppError hierarchy + HttpExceptionFilter
+│   │   ├── infrastructure/ # Ports, ResponseInterceptor, LoggerModule
+│   │   └── test/         # TestFactory base class
+│   ├── config/           # Configuration service (class-validator schema)
 │   ├── app.module.ts
 │   └── main.ts
-├── prisma/
-│   └── schema.prisma
+├── test/                 # E2E tests (Supertest)
 ├── package.json
-└── tsconfig.json
+├── tsconfig.json
+└── tsconfig.eslint.json
 ```
+
+> Per-feature persistence is added inside each feature module when it ships. No workspace-level `prisma/` folder.
 
 **Frontend Structure**:
 
@@ -160,9 +177,15 @@ apps/backend/
 apps/frontend/
 ├── src/
 │   ├── pages/            # Page components
-│   ├── components/       # Reusable UI components
+│   ├── components/
+│   │   ├── ui/           # Shadcn primitives (npx shadcn add)
+│   │   ├── core/         # Custom shared components (RiskBadge, TypePill, icons)
+│   │   ├── layout/       # TopNav, OrgBanner, PageShell
+│   │   └── features/     # Feature-specific composites
 │   ├── hooks/            # Custom React hooks
-│   ├── api/              # API client layer
+│   ├── api/              # HTTP client layer (client, httpService, endpoints, unwrap)
+│   ├── lib/              # Shadcn `cn()` utility
+│   ├── config/           # Design tokens (single source of truth)
 │   ├── types/            # TypeScript types
 │   └── utils/            # Utility functions
 ├── package.json
@@ -172,7 +195,7 @@ apps/frontend/
 **Deliverables**:
 
 - [x] Monorepo package.json with workspaces
-- [x] Backend: NestJS project with TypeScript, Prisma, Jest
+- [x] Backend: NestJS 11 project with TypeScript + Jest (persistence introduced per-feature)
 - [x] Frontend: Vite + React + TypeScript + TailwindCSS
 - [x] ESLint + Prettier configuration
 - [x] Git ignore files
@@ -393,859 +416,214 @@ src/shared/test/
 
 ---
 
-## Phase 2: Design System Implementation (From Wireframes)
+## Phase 2: Design System Implementation
 
-### Task 2.1: Design Tokens Setup
+### Strategy: Shadcn UI Base + Domain-Specific Customizations
 
-**Goal**: Extract and implement design tokens from wireframes
+We do **not** build standard UI primitives from scratch. Shadcn UI provides them, and `npx shadcn add <name>` copies the source into `src/components/ui/` where we own and customize it. We only build components that don't exist in Shadcn because they encode contract-domain concepts.
 
-**Deliverables**:
+**What Shadcn provides (we just install and theme):**
 
-- [ ] `designTokens.ts` with all color definitions from `tokens.js`
-  - Background colors: bg, bgAlt, surface, surfaceAlt
-  - Text colors: ink, inkMid, inkSoft, inkMute
-  - Border colors: border, borderMid
-  - Accent colors: blue, blueDark, blueLight, blueMid
-  - Semantic colors: green, orange, red (with dark, bg, border variants)
-  - Nav colors: nav, navBorder
-- [ ] Risk threshold functions: riskColor(), riskBg(), riskLabel(), riskShort()
-- [ ] Severity functions: sevColor(), sevBg()
-- [ ] Typography tokens (DM Sans, DM Mono)
-- [ ] Spacing scale (xs, sm, md, lg, xl, xxl)
-- [ ] Border radius scale (none, sm, md, lg, full)
-- [ ] Shadow scale (sm, md, lg, xl)
-- [ ] Breakpoints (mobile: 420px, sm: 640px, md: 860px, lg: 1100px)
+| Primitive      | Shadcn Component | Source location after install         |
+| -------------- | ---------------- | ------------------------------------- |
+| Button         | `button`         | `src/components/ui/button.tsx`        |
+| Badge          | `badge`          | `src/components/ui/badge.tsx`         |
+| Input          | `input`          | `src/components/ui/input.tsx`         |
+| Card           | `card`           | `src/components/ui/card.tsx`          |
+| Dialog (Modal) | `dialog`         | `src/components/ui/dialog.tsx`        |
+| Tabs           | `tabs`           | `src/components/ui/tabs.tsx`          |
+| Checkbox       | `checkbox`       | `src/components/ui/checkbox.tsx`      |
+| Dropdown       | `dropdown-menu`  | `src/components/ui/dropdown-menu.tsx` |
+| Toast          | `sonner`         | `src/components/ui/sonner.tsx`        |
+| Avatar         | `avatar`         | `src/components/ui/avatar.tsx`        |
+| Tooltip        | `tooltip`        | `src/components/ui/tooltip.tsx`       |
+| Skeleton       | `skeleton`       | `src/components/ui/skeleton.tsx`      |
 
-**Files**:
+**What we build (domain-specific components):**
+
+| Component      | Why custom                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------------- |
+| `RiskBadge`    | Score (0-100) + threshold-driven color/label + DM Mono numeric. No Shadcn equivalent.               |
+| `RiskBar`      | Horizontal progress bar colored by risk threshold. Domain-specific viz.                             |
+| `FlagsSummary` | Inline red/orange/green dot counts. Bespoke summary.                                                |
+| `TypePill`     | Maps contract-type enum (vendor / license / lease / nda / partnership / customer) to colour scheme. |
+| `KPICard`      | Dashboard metric card. Wraps Shadcn `Card`, adds metric / delta / sparkline slot.                   |
+| `OrgBanner`    | Top banner: org name, workspace tag, system status dot. Custom layout.                              |
+| `TopNav`       | Application nav: logo, primary links, profile menu. Custom layout.                                  |
+| `PageShell`    | Page wrapper: max-width, padding, scroll behaviour. Custom layout.                                  |
+| Icons          | Centralised `src/components/core/icons.tsx`. Codebase convention.                                   |
+
+---
+
+### Folder Conventions
 
 ```
-frontend/src/config/
-└── designTokens.ts
+apps/frontend/src/
+├── components/
+│   ├── ui/             # Shadcn primitives (managed via `npx shadcn add`)
+│   ├── core/           # Custom shared components (RiskBadge, TypePill, icons, etc.)
+│   ├── layout/         # TopNav, PageShell, OrgBanner
+│   └── features/       # Feature-specific composites (e.g. HomeKpiCards, UploadDropzone)
+├── config/
+│   └── designTokens.ts # Source of truth for colours, spacing, type, breakpoints
+└── lib/
+    └── utils.ts        # Shadcn's `cn()` class-name helper
 ```
-
-**Requirements**: Foundation for all UI components
-
----
-
-### Task 2.2: Core UI Components (From Wireframes)
-
-**Goal**: Implement reusable components matching wireframe designs using Shadcn UI as base
-
-**Component Structure** (applies to ALL components):
-
-- **ComponentName.tsx**: JSX only, max 15 lines, no logic
-- **useComponentName.ts**: All UI logic (hooks, state, handlers)
-- **ComponentName.module.css**: All styles
-- **ComponentName.test.tsx**: Unit tests
-- **ComponentName.stories.tsx**: Storybook story
-
----
-
-#### Sub-Task 2.2.1: Button Component (Mobile-First)
-
-**Goal**: Build accessible, responsive Button component
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Touch target: 48px minimum height
-  - Padding: 12px 16px
-  - Font size: 14px
-  - Full-width on mobile by default
-- [ ] **Tablet Design (640px-1024px)**
-  - Touch target: 44px minimum height
-  - Padding: 10px 16px
-  - Font size: 14px
-  - Auto-width (not full-width)
-- [ ] **Desktop Design (1024px+)**
-  - Touch target: 40px minimum height
-  - Padding: 8px 16px
-  - Font size: 14px
-  - Hover states visible
-- [ ] **Base: Shadcn UI Button component**
-- [ ] **Variants**: primary, secondary, ghost, danger, success, dark
-- [ ] **Sizes**: sm, md, lg (responsive sizing)
-- [ ] **Props**: disabled, full, onClick
-- [ ] **Accessibility**:
-  - Focus indicators: 3px outline, visible
-  - ARIA labels for icon-only buttons
-  - Keyboard navigation (Tab, Enter, Space)
-  - Color contrast ≥4.5:1
-- [ ] **Testing**:
-  - Unit tests for all variants
-  - Storybook stories for all states
-  - Test on iPhone (portrait + landscape)
-  - Test on Android phone
-  - Test on iPad
-  - Test on desktop with keyboard
-  - Screen reader tested (VoiceOver/NVDA)
-  - axe DevTools: 0 violations
-  - Lighthouse a11y: ≥95
-
-**Definition of Done**: Button works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.2.2: Badge Component (Mobile-First)
-
-**Goal**: Build accessible Badge component
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Font size: 11px
-  - Padding: 4px 8px
-  - Border radius: 4px
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Font size: 11px
-  - Padding: 4px 8px
-  - Border radius: 4px
-- [ ] **Base: Shadcn UI Badge component**
-- [ ] **Props**: label, color, bg, border, dot
-- [ ] **Inline-flex layout** with optional dot indicator
-- [ ] **Accessibility**:
-  - Color contrast ≥4.5:1
-  - ARIA label if dot-only
-- [ ] **Testing**:
-  - Unit tests for all variants
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - Color contrast verified
-  - axe DevTools: 0 violations
-
-**Definition of Done**: Badge works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.2.3: RiskBadge Component (Mobile-First)
-
-**Goal**: Build accessible RiskBadge component
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Small size: 16px font, 24px height
-  - Large size: 18px font, 28px height
-  - DM Mono font
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Small size: 14px font, 22px height
-  - Large size: 16px font, 26px height
-  - DM Mono font
-- [ ] **Sizes**: sm, lg
-- [ ] **Displays risk score** with colored dot
-- [ ] **Color determined by risk threshold**
-- [ ] **Accessibility**:
-  - Color contrast ≥4.5:1
-  - ARIA label: "Risk score: 72 out of 100"
-- [ ] **Testing**:
-  - Unit tests for all risk levels
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - Color contrast verified
-  - Screen reader announces score
-  - axe DevTools: 0 violations
-
-**Definition of Done**: RiskBadge works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.2.4: TypePill Component (Mobile-First)
-
-**Goal**: Build accessible TypePill component
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Font size: 11px
-  - Padding: 4px 10px
-  - Border radius: 12px
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Font size: 11px
-  - Padding: 4px 10px
-  - Border radius: 12px
-- [ ] **Maps contract types to colors**
-  - Types: vendor, license, partnership, customer, lease, nda
-  - Capitalized text
-- [ ] **Accessibility**:
-  - Color contrast ≥4.5:1
-  - ARIA label: "Contract type: Vendor Agreement"
-- [ ] **Testing**:
-  - Unit tests for all types
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - Color contrast verified
-  - axe DevTools: 0 violations
-
-**Definition of Done**: TypePill works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.2.5: RiskBar Component (Mobile-First)
-
-**Goal**: Build accessible RiskBar component
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Bar: 60px × 5px
-  - Score: 14px DM Mono
-  - Vertical layout (bar above score)
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Bar: 72px × 5px
-  - Score: 14px DM Mono
-  - Horizontal layout (bar + score inline)
-- [ ] **Horizontal progress bar**
-- [ ] **Filled portion colored by risk level**
-- [ ] **Score displayed in DM Mono**
-- [ ] **Accessibility**:
-  - ARIA label: "Risk score: 72 out of 100"
-  - ARIA role="progressbar"
-  - aria-valuenow, aria-valuemin, aria-valuemax
-- [ ] **Testing**:
-  - Unit tests for all risk levels
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - Screen reader announces score
-  - axe DevTools: 0 violations
-
-**Definition of Done**: RiskBar works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.2.6: FlagsSummary Component (Mobile-First)
-
-**Goal**: Build accessible FlagsSummary component
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Dots: 6px diameter
-  - Spacing: 4px between dots
-  - Font: 12px DM Mono
-  - Vertical layout if needed
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Dots: 6px diameter
-  - Spacing: 4px between dots
-  - Font: 12px DM Mono
-  - Horizontal layout
-- [ ] **Inline dots + counts** for red/orange/green flags
-- [ ] **Shows "—"** if no red/orange flags
-- [ ] **DM Mono font** for numbers
-- [ ] **Accessibility**:
-  - Color contrast ≥4.5:1
-  - ARIA label: "3 critical flags, 5 medium flags, 2 low flags"
-  - Screen reader announces counts
-- [ ] **Testing**:
-  - Unit tests for all flag combinations
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - Screen reader announces counts
-  - axe DevTools: 0 violations
-
-**Definition of Done**: FlagsSummary works on all devices, fully accessible, all tests pass
-
----
-
-**Files**:
-
-```
-frontend/src/components/core/
-├── Button/
-│   ├── Button.tsx          # JSX only, max 15 lines
-│   ├── useButton.ts        # All logic
-│   ├── Button.module.css   # Styles
-│   ├── Button.test.tsx     # Tests
-│   └── Button.stories.tsx  # Storybook
-├── Badge/
-│   ├── Badge.tsx
-│   ├── useBadge.ts
-│   ├── Badge.module.css
-│   ├── Badge.test.tsx
-│   └── Badge.stories.tsx
-├── RiskBadge/
-│   ├── RiskBadge.tsx
-│   ├── useRiskBadge.ts
-│   ├── RiskBadge.module.css
-│   ├── RiskBadge.test.tsx
-│   └── RiskBadge.stories.tsx
-├── TypePill/
-│   ├── TypePill.tsx
-│   ├── useTypePill.ts
-│   ├── TypePill.module.css
-│   ├── TypePill.test.tsx
-│   └── TypePill.stories.tsx
-├── RiskBar/
-│   ├── RiskBar.tsx
-│   ├── useRiskBar.ts
-│   ├── RiskBar.module.css
-│   ├── RiskBar.test.tsx
-│   └── RiskBar.stories.tsx
-├── FlagsSummary/
-│   ├── FlagsSummary.tsx
-│   ├── useFlagsSummary.ts
-│   ├── FlagsSummary.module.css
-│   ├── FlagsSummary.test.tsx
-│   └── FlagsSummary.stories.tsx
-└── icons.tsx               # All SVG icons centralized
-```
-
-**Overall Accessibility Requirements** (ALL components):
-
-- [ ] Focus indicators visible (3px outline)
-- [ ] Touch targets ≥44px on mobile, ≥40px on desktop
-- [ ] ARIA labels on icon buttons
-- [ ] Keyboard navigation (Tab, Enter, Space)
-- [ ] Color contrast ≥4.5:1
-- [ ] Screen reader tested (VoiceOver on iOS/macOS, NVDA on Windows)
-- [ ] axe DevTools: 0 critical violations
-- [ ] Lighthouse a11y score: ≥95
-
-**Overall Testing Requirements** (ALL components):
-
-- [ ] Unit tests for all variants/states
-- [ ] Storybook stories for visual testing
-- [ ] Test on real iPhone (portrait + landscape)
-- [ ] Test on real Android phone
-- [ ] Test on real iPad
-- [ ] Test on desktop monitor
-- [ ] Test at 100%, 150%, 200% zoom
-- [ ] Keyboard navigation tested
-- [ ] Screen reader tested
-
-**Requirements**: US-001 to US-007 (Design System Foundation)
-
----
-
-### Task 2.2.5: Centralized Icons
-
-**Goal**: Create single source of truth for all SVG icons
-
-**Deliverables**:
-
-- [ ] **src/components/core/icons.tsx**: All SVG icons as React components
-
-  ```typescript
-  export const UploadIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      {/* SVG path */}
-    </svg>
-  );
-
-  export const CheckIcon = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      {/* SVG path */}
-    </svg>
-  );
-
-  // ... all other icons
-  ```
 
 **Rules**:
 
-- [ ] All SVG icons in one file
-- [ ] No inline SVGs in components
-- [ ] Consistent sizing (24×24 default)
-- [ ] Accessible (aria-hidden="true" on decorative icons)
-- [ ] Named exports (not default)
+- Only `src/components/ui/*` is owned by Shadcn CLI. Other folders are hand-authored.
+- All SVG icons live in `src/components/core/icons.tsx`. No inline SVG elsewhere.
+- Tailwind reads design tokens from `designTokens.ts`. No literal hex / px in components.
+- Each custom component follows the structure rule: JSX file ≤ 15 lines, hook file owns logic, co-located test + story.
+
+---
+
+### Task 2.1: Design Tokens & Tailwind Wiring
+
+**Goal**: Single source of truth for colours, type, spacing, breakpoints; wired into Tailwind so every component (Shadcn or custom) inherits them.
+
+**Deliverables**:
+
+- [ ] `apps/frontend/src/config/designTokens.ts` exporting:
+  - Colour palette: bg, surface, ink (+ mid/soft/mute), border, blue, green, orange, red, nav
+  - Risk helpers: `riskColor(score)`, `riskBg(score)`, `riskLabel(score)`, `riskShort(score)`
+  - Severity helpers: `sevColor(level)`, `sevBg(level)`
+  - Typography: DM Sans / DM Mono families, sizes, weights, letter-spacing
+  - Spacing scale (xs … xxl)
+  - Border-radius scale
+  - Shadow scale
+  - Breakpoints (mobile 420, sm 640, md 860, lg 1100)
+- [ ] `tailwind.config.js` imports from `designTokens.ts` (already partially scaffolded in Task 1.1 — extend, do not duplicate)
+- [ ] Unit tests for risk / severity helper functions (threshold edges, boundary cases)
 
 **Files**:
 
 ```
-frontend/src/components/core/
-└── icons.tsx                  # All SVG icons centralized
+apps/frontend/src/config/designTokens.ts
+apps/frontend/src/config/designTokens.spec.ts
+apps/frontend/tailwind.config.js
 ```
 
-**Requirements**: Frontend architecture guidelines
+**Requirements**: Foundation for every UI component (Shadcn theming and custom components alike).
 
 ---
 
-### Task 2.3: Layout Components (From Wireframes)
+### Task 2.2: Shadcn UI Bootstrap
 
-**Goal**: Implement navigation and page layout components
-
-**Component Structure** (applies to ALL components):
-
-- **ComponentName.tsx**: JSX only, max 15 lines, no logic
-- **useComponentName.ts**: All UI logic (hooks, state, handlers)
-- **ComponentName.module.css**: All styles
-- **ComponentName.test.tsx**: Unit tests
-- **ComponentName.stories.tsx**: Storybook story
-
----
-
-#### Sub-Task 2.3.1: TopNav Component (Mobile-First)
-
-**Goal**: Build accessible, responsive navigation
+**Goal**: Initialise Shadcn UI in the frontend workspace and install the primitives we'll use.
 
 **Deliverables**:
 
-- [ ] **Mobile Design (320px-640px)**
-  - Height: 56px, sticky, z-index 200
-  - Logo box (28×28, blue background, rounded 7px)
-  - Hamburger menu button (≥48px touch target)
-  - User avatar (32×32, initials "JW")
-  - Mobile drawer (slides down, full-width)
-  - Close button in drawer (≥48px touch target)
-- [ ] **Tablet Design (640px-1024px)**
-  - Height: 56px, sticky
-  - Logo + partial nav links
-  - Hamburger menu for overflow items
-  - "+ Upload" button visible
-  - User avatar (32×32)
-- [ ] **Desktop Design (1024px+)**
-  - Height: 56px, sticky
-  - Logo + full center nav links with active state
-  - "+ Upload" button + user avatar (32×32)
-  - No hamburger menu
-  - Hover states visible
-- [ ] **Accessibility**:
-  - Skip link to main content (visible on focus)
-  - Hamburger button: aria-label="Open menu", aria-expanded
-  - Mobile drawer: role="navigation", aria-label="Main navigation"
-  - Focus trap in mobile drawer when open
-  - Escape key closes drawer
-  - Focus returns to hamburger on close
-  - Keyboard navigation (Tab, Enter, Escape)
-  - Focus indicators visible (3px outline)
-- [ ] **Testing**:
-  - Unit tests for menu open/close
-  - Storybook stories for all states
-  - Test on iPhone (portrait + landscape)
-  - Test on Android phone
-  - Test on iPad
-  - Test on desktop with keyboard
-  - Screen reader tested (VoiceOver/NVDA)
-  - axe DevTools: 0 violations
-  - Lighthouse a11y: ≥95
-
-**Definition of Done**: TopNav works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.3.2: PageShell Component (Mobile-First)
-
-**Goal**: Build responsive page layout container
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Title: 18px weight 700
-  - Subtitle: 13px
-  - Action buttons: stack vertically, full-width
-  - Body padding: 16px
-- [ ] **Tablet Design (640px-1024px)**
-  - Title: 20px weight 700
-  - Subtitle: 14px
-  - Action buttons: horizontal, auto-width
-  - Body padding: 24px
-- [ ] **Desktop Design (1024px+)**
-  - Title: 22px weight 700
-  - Subtitle: 14px
-  - Action buttons: horizontal, auto-width
-  - Body padding: 32px
-- [ ] **Header bar**: background white, border-bottom
-- [ ] **Body**: flex 1, overflow auto, background #FAFAF9
-- [ ] **noPad prop** to disable body padding
-- [ ] **Semantic HTML**: <main>, <header>
-- [ ] **Accessibility**:
-  - Semantic HTML structure
-  - ARIA landmarks (main, header)
-- [ ] **Testing**:
-  - Unit tests for all props
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - axe DevTools: 0 violations
-
-**Definition of Done**: PageShell works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.3.3: SectionLabel Component (Mobile-First)
-
-**Goal**: Build accessible section heading
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Font: 10px weight 700, uppercase
-  - Letter-spacing: 0.08em
-  - Color: #94A3B8 (muted)
-  - Margin-bottom: 8px
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Font: 11px weight 700, uppercase
-  - Letter-spacing: 0.08em
-  - Color: #94A3B8 (muted)
-  - Margin-bottom: 10px
-- [ ] **Semantic HTML**: <h2>, <h3> (configurable)
-- [ ] **Accessibility**:
-  - Proper heading hierarchy
-  - Color contrast ≥4.5:1
-- [ ] **Testing**:
-  - Unit tests
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - axe DevTools: 0 violations
-
-**Definition of Done**: SectionLabel works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.3.4: Divider Component (Mobile-First)
-
-**Goal**: Build accessible divider
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Height: 1px, background: #E2E8F0
-  - Vertical margin: 12px (configurable)
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Height: 1px, background: #E2E8F0
-  - Vertical margin: 16px (configurable)
-- [ ] **ARIA role="separator"**
-- [ ] **Testing**:
-  - Unit tests
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - axe DevTools: 0 violations
-
-**Definition of Done**: Divider works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.3.5: StatCard Component (Mobile-First)
-
-**Goal**: Build accessible stat card
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Background: white, border, border-radius: 8px
-  - Padding: 16px
-  - Label: 10px weight 700 uppercase
-  - Value: 24px weight 800, DM Mono
-  - Sub-text: 11px
-- [ ] **Tablet/Desktop Design (640px+)**
-  - Background: white, border, border-radius: 10px
-  - Padding: 20px
-  - Label: 11px weight 700 uppercase
-  - Value: 28px weight 800, DM Mono
-  - Sub-text: 12px
-- [ ] **Optional color prop** for value text
-- [ ] **Accessibility**:
-  - Color contrast ≥4.5:1
-  - ARIA label: "Active contracts: 127"
-  - Semantic HTML
-- [ ] **Testing**:
-  - Unit tests for all variants
-  - Storybook stories
-  - Test on mobile, tablet, desktop
-  - Color contrast verified
-  - Screen reader announces stat
-  - axe DevTools: 0 violations
-
-**Definition of Done**: StatCard works on all devices, fully accessible, all tests pass
-
----
+- [ ] Run `npx shadcn init` (creates `components.json`, `lib/utils.ts`, baseline CSS variables)
+- [ ] Reconcile Shadcn's CSS variables with our `designTokens.ts` (one source of truth)
+- [ ] Install primitives:
+  - [ ] `button`, `badge`, `input`, `card`
+  - [ ] `dialog`, `tabs`, `checkbox`, `dropdown-menu`
+  - [ ] `sonner` (toast), `avatar`, `tooltip`, `skeleton`
+- [ ] Verify each primitive renders correctly under our tokens (visual smoke test via Storybook)
+- [ ] Document the install/upgrade workflow in `apps/frontend/README.md`
 
 **Files**:
 
 ```
-frontend/src/components/core/
+apps/frontend/components.json
+apps/frontend/src/lib/utils.ts
+apps/frontend/src/components/ui/*       # generated by Shadcn CLI
+apps/frontend/README.md                 # Shadcn install/upgrade notes
+```
+
+**Requirements**: Provides the primitives consumed by every domain and layout component.
+
+---
+
+### Task 2.3: Domain Components
+
+**Goal**: Build the contract-domain components Shadcn doesn't ship.
+
+**Deliverables** (each component follows the standard structure: tsx + use\*.ts + module.css + test + story):
+
+- [ ] `RiskBadge` — score + dot + label, threshold-driven colour, DM Mono numeric, sizes sm/lg
+- [ ] `RiskBar` — horizontal progress (72×5), colour by threshold, score label
+- [ ] `FlagsSummary` — inline red/orange/green counts, '—' when empty
+- [ ] `TypePill` — contract-type mapping (vendor, license, partnership, customer, lease, nda)
+- [ ] `KPICard` — wraps Shadcn `Card`; slots for label, value, delta, optional sparkline
+- [ ] Accessibility: each component meets the a11y checklist (focus, ≥44px touch, ARIA, contrast)
+
+**Files**:
+
+```
+apps/frontend/src/components/core/
+├── RiskBadge/
+├── RiskBar/
+├── FlagsSummary/
+├── TypePill/
+└── KPICard/
+```
+
+**Requirements**: Used by Home, Results, Compare, Portfolio screens.
+
+---
+
+### Task 2.4: Layout Components
+
+**Goal**: Application chrome shared by every screen.
+
+**Deliverables**:
+
+- [ ] `TopNav` — logo, primary nav links, profile dropdown (uses Shadcn `dropdown-menu` + `avatar`)
+- [ ] `OrgBanner` — org name + workspace tag + status dot
+- [ ] `PageShell` — page wrapper (max-width 1120, padding, scroll container, optional header slot)
+- [ ] Responsive behaviour: mobile-first, navigation collapses to hamburger below `md`
+
+**Files**:
+
+```
+apps/frontend/src/components/layout/
 ├── TopNav/
-│   ├── TopNav.tsx          # JSX only, max 15 lines
-│   ├── useTopNav.ts        # All logic (menu state, navigation)
-│   ├── TopNav.module.css   # Styles
-│   ├── TopNav.test.tsx     # Tests
-│   └── TopNav.stories.tsx  # Storybook
-├── PageShell/
-│   ├── PageShell.tsx
-│   ├── usePageShell.ts
-│   ├── PageShell.module.css
-│   ├── PageShell.test.tsx
-│   └── PageShell.stories.tsx
-├── SectionLabel/
-│   ├── SectionLabel.tsx
-│   ├── useSectionLabel.ts
-│   ├── SectionLabel.module.css
-│   ├── SectionLabel.test.tsx
-│   └── SectionLabel.stories.tsx
-├── Divider/
-│   ├── Divider.tsx
-│   ├── useDivider.ts
-│   ├── Divider.module.css
-│   ├── Divider.test.tsx
-│   └── Divider.stories.tsx
-└── StatCard/
-    ├── StatCard.tsx
-    ├── useStatCard.ts
-    ├── StatCard.module.css
-    ├── StatCard.test.tsx
-    └── StatCard.stories.tsx
+├── OrgBanner/
+└── PageShell/
 ```
 
-**Overall Accessibility Requirements** (ALL components):
-
-- [ ] Focus indicators visible (3px outline)
-- [ ] Touch targets ≥48px on mobile, ≥44px on tablet, ≥40px on desktop
-- [ ] ARIA labels where needed
-- [ ] Keyboard navigation (Tab, Enter, Escape)
-- [ ] Color contrast ≥4.5:1
-- [ ] Semantic HTML
-- [ ] Screen reader tested (VoiceOver on iOS/macOS, NVDA on Windows)
-- [ ] axe DevTools: 0 critical violations
-- [ ] Lighthouse a11y score: ≥95
-
-**Overall Testing Requirements** (ALL components):
-
-- [ ] Unit tests for all states
-- [ ] Storybook stories for visual testing
-- [ ] Test on real iPhone (portrait + landscape)
-- [ ] Test on real Android phone
-- [ ] Test on real iPad
-- [ ] Test on desktop monitor
-- [ ] Test at 100%, 150%, 200% zoom
-- [ ] Keyboard navigation tested
-- [ ] Screen reader tested
-
-**Requirements**: US-005 (Layout Components)
+**Requirements**: Used by every authenticated screen.
 
 ---
 
-### Task 2.4: Modal & Tabs Components (From Wireframes)
+### Task 2.5: Centralised Icons
 
-**Goal**: Implement modal dialog and tab navigation
-
-**Component Structure** (applies to ALL components):
-
-- **ComponentName.tsx**: JSX only, max 15 lines, no logic
-- **useComponentName.ts**: All UI logic (hooks, state, handlers)
-- **ComponentName.module.css**: All styles
-- **ComponentName.test.tsx**: Unit tests
-- **ComponentName.stories.tsx**: Storybook story
-
----
-
-#### Sub-Task 2.4.1: Modal Component (Mobile-First)
-
-**Goal**: Build accessible, responsive modal dialog
+**Goal**: All SVG icons in one tree-shakeable module; lint rule prevents inline SVG.
 
 **Deliverables**:
 
-- [ ] **Mobile Design (320px-640px)**
-  - Fixed overlay: rgba(0,0,0,0.4)
-  - Panel: full-width minus 16px margin, max-height 90vh
-  - Background: white, border-radius: 12px
-  - Header padding: 16px
-  - Body padding: 16px
-  - Title: 14px weight 700
-  - Close button: top-right, ≥48px touch target
-  - Scroll body if content overflows
-- [ ] **Tablet Design (640px-1024px)**
-  - Panel: max-width 600px, centered
-  - Header padding: 20px
-  - Body padding: 20px
-  - Title: 15px weight 700
-  - Close button: ≥44px touch target
-- [ ] **Desktop Design (1024px+)**
-  - Panel: max-width 480px (configurable), centered
-  - Header padding: 24px
-  - Body padding: 24px
-  - Title: 15px weight 700
-  - Close button: ≥40px touch target
-  - Box-shadow: 0 24px 64px rgba(0,0,0,0.18)
-- [ ] **Base: Shadcn UI Dialog component**
-- [ ] **Click outside to close**
-- [ ] **Escape key to close**
-- [ ] **onClose callback**
-- [ ] **Accessibility**:
-  - Focus trap (focus stays inside modal)
-  - Focus returns to trigger on close
-  - ARIA role="dialog"
-  - ARIA labelledby for title
-  - ARIA describedby for body
-  - Keyboard navigation (Tab, Shift+Tab, Escape)
-  - Close button: aria-label="Close dialog"
-  - Body scroll locked when modal open
-- [ ] **Testing**:
-  - Unit tests for open/close
-  - Storybook stories for all states
-  - Test on iPhone (portrait + landscape)
-  - Test on Android phone
-  - Test on iPad
-  - Test on desktop with keyboard
-  - Focus trap tested
-  - Escape key tested
-  - Click outside tested
-  - Screen reader tested (VoiceOver/NVDA)
-  - axe DevTools: 0 violations
-  - Lighthouse a11y: ≥95
-
-**Definition of Done**: Modal works on all devices, fully accessible, all tests pass
-
----
-
-#### Sub-Task 2.4.2: Tabs Component (Mobile-First)
-
-**Goal**: Build accessible, responsive tab navigation
-
-**Deliverables**:
-
-- [ ] **Mobile Design (320px-640px)**
-  - Horizontal tab bar, border-bottom
-  - Active tab: blue text, bottom border 2px solid blue, weight 700
-  - Inactive: #64748B text, weight 400
-  - Padding: 10px 14px per tab
-  - Horizontal scroll if tabs overflow
-  - Scroll snap to tabs
-  - Font: 13px
-- [ ] **Tablet Design (640px-1024px)**
-  - Padding: 11px 16px per tab
-  - Font: 14px
-  - Horizontal scroll if needed
-- [ ] **Desktop Design (1024px+)**
-  - Padding: 11px 18px per tab
-  - Font: 14px
-  - No scroll (tabs fit)
-- [ ] **Base: Shadcn UI Tabs component**
-- [ ] **onChange callback**
-- [ ] **Accessibility**:
-  - Keyboard navigation (Arrow keys, Home, End, Tab)
-  - ARIA role="tablist", "tab", "tabpanel"
-  - ARIA selected on active tab
-  - ARIA controls linking tab to panel
-  - ARIA labelledby linking panel to tab
-  - Focus indicators visible (3px outline)
-  - Touch targets ≥48px on mobile
-- [ ] **Testing**:
-  - Unit tests for tab switching
-  - Storybook stories for all states
-  - Test on iPhone (horizontal scroll)
-  - Test on Android phone
-  - Test on iPad
-  - Test on desktop with keyboard
-  - Arrow key navigation tested
-  - Home/End key tested
-  - Screen reader tested (VoiceOver/NVDA)
-  - axe DevTools: 0 violations
-  - Lighthouse a11y: ≥95
-
-**Definition of Done**: Tabs works on all devices, fully accessible, all tests pass
-
----
+- [ ] `apps/frontend/src/components/core/icons.tsx` exporting named icon components
+- [ ] Icon set covers wireframe needs: Upload, Search, Filter, Plus, Check, X, ChevronRight/Down, Alert, Info, ExternalLink, Download, Trash, Edit, MoreVertical, User, Logout
+- [ ] Icons use `currentColor` so they inherit text colour
+- [ ] Storybook story listing every icon (visual catalogue)
 
 **Files**:
 
 ```
-frontend/src/components/core/
-├── Modal/
-│   ├── Modal.tsx           # JSX only, max 15 lines
-│   ├── useModal.ts         # All logic (open/close state, focus trap)
-│   ├── Modal.module.css    # Styles
-│   ├── Modal.test.tsx      # Tests
-│   └── Modal.stories.tsx   # Storybook
-└── Tabs/
-    ├── Tabs.tsx            # JSX only, max 15 lines
-    ├── useTabs.ts          # All logic (active tab state)
-    ├── Tabs.module.css     # Styles
-    ├── Tabs.test.tsx       # Tests
-    └── Tabs.stories.tsx    # Storybook
+apps/frontend/src/components/core/icons.tsx
+apps/frontend/src/components/core/icons.stories.tsx
 ```
 
-**Overall Accessibility Requirements** (ALL components):
-
-- [ ] Focus trap in modal
-- [ ] Focus returns to trigger on close
-- [ ] Escape key closes modal
-- [ ] Click outside closes modal
-- [ ] ARIA roles (dialog, tablist, tab, tabpanel)
-- [ ] ARIA labels
-- [ ] Keyboard navigation (Tab, Arrow keys, Escape, Home, End)
-- [ ] Focus indicators visible (3px outline)
-- [ ] Touch targets ≥48px on mobile, ≥44px on tablet, ≥40px on desktop
-- [ ] Screen reader tested (VoiceOver on iOS/macOS, NVDA on Windows)
-- [ ] axe DevTools: 0 critical violations
-- [ ] Lighthouse a11y score: ≥95
-
-**Overall Testing Requirements** (ALL components):
-
-- [ ] Unit tests for all interactions
-- [ ] Storybook stories for visual testing
-- [ ] Test on real iPhone (portrait + landscape)
-- [ ] Test on real Android phone
-- [ ] Test on real iPad
-- [ ] Test on desktop monitor
-- [ ] Test at 100%, 150%, 200% zoom
-- [ ] Keyboard navigation tested
-- [ ] Screen reader tested
-
-**Requirements**: US-006 (Modal & Tabs Components)
+**Requirements**: Used everywhere a glyph is needed.
 
 ---
 
-### Task 2.5: Responsive CSS & Breakpoints
+### Phase 2 Summary
 
-**Goal**: Implement responsive overrides matching wireframe breakpoints
+**Five focused tasks** instead of 30+ subtasks. The lean scope deliberately excludes:
 
-**Deliverables**:
+- ❌ Custom Button / Badge / Input / Card / Modal / Tabs / Checkbox — Shadcn ships these
+- ❌ Separate "responsive CSS" task — handled inline by Tailwind utilities in each component
+- ❌ Separate "Tailwind config" task — folded into Task 2.1 (tokens + Tailwind go together)
 
-- [ ] Responsive CSS classes (ci-\* prefixed)
-- [ ] Breakpoints:
-  - lg ≤ 1100px (tablet landscape)
-  - md ≤ 860px (tablet)
-  - sm ≤ 640px (phone)
-  - xs ≤ 420px (small phone)
-- [ ] Mobile nav behavior (hide links, show hamburger)
-- [ ] Grid collapsing (4-col → 2-col → 1-col)
-- [ ] Table horizontal scroll
-- [ ] Results screen layout (split → vertical)
-- [ ] Padding adjustments (32px → 20px → 16px → 14px)
-- [ ] Font size scaling
-- [ ] Touch target sizing (≥44px)
-
-**Files**:
-
-```
-frontend/src/styles/
-├── responsive.css
-└── globals.css
-```
-
-**Requirements**: US-023 (Responsive Design)
-
----
-
-### Task 2.6: Tailwind Configuration
-
-**Goal**: Wire design tokens into Tailwind config
-
-**Deliverables**:
-
-- [ ] Tailwind config importing designTokens.ts
-- [ ] Color palette from tokens
-- [ ] Spacing scale from tokens
-- [ ] Font families (DM Sans, DM Mono)
-- [ ] Font sizes from tokens
-- [ ] Border radius from tokens
-- [ ] Box shadows from tokens
-- [ ] Breakpoints from tokens
-- [ ] Dark mode configuration (class-based)
-
-**Files**:
-
-```
-frontend/
-├── tailwind.config.js
-└── postcss.config.js
-```
-
-**Requirements**: Design system integration
-
----
+**Exit criteria**: All wireframe screens (Home, Upload, Results, Compare, Portfolio, Renewals, Settings, Export) can be assembled from `components/ui/*` (Shadcn) + `components/core/*` (domain) + `components/layout/*` without inventing new primitives.
 
 ## Phase 3: User Story — Authentication (Requirement 0)
 
-### Task 2.1: Authentication Domain Model
+### Task 3.1: Authentication Domain Model
 
 **Goal**: Define User and Session aggregates with domain events
 
@@ -1317,7 +695,7 @@ modules/auth/domain/
 
 ---
 
-### Task 2.2: Authentication Application Layer
+### Task 3.2: Authentication Application Layer
 
 **Goal**: Commands, queries, and event handlers for auth flows
 
@@ -1373,7 +751,7 @@ modules/auth/application/
 
 ---
 
-### Task 2.3: Authentication Infrastructure Layer
+### Task 3.3: Authentication Infrastructure Layer
 
 **Goal**: Prisma repositories, Auth0 integration, session guard
 
@@ -1411,7 +789,7 @@ modules/auth/infrastructure/
 
 ---
 
-### Task 2.4: Authentication UI
+### Task 3.4: Authentication UI
 
 **Goal**: Login redirect, logout button, session management with 3-tier API architecture
 
@@ -2333,9 +1711,9 @@ frontend/src/
 
 ---
 
-## Phase 4: User Story — Audit Service (Requirement 7)
+## Phase 6: User Story — Audit Service (Requirement 7)
 
-### Task 4.1: Audit Domain Model
+### Task 6.1: Audit Domain Model
 
 **Goal**: Define AuditEvent aggregate with tamper detection
 
@@ -2388,7 +1766,7 @@ modules/audit/domain/
 
 ---
 
-### Task 4.2: Audit Application Layer
+### Task 6.2: Audit Application Layer
 
 **Goal**: Command handler and query handler for audit events
 
@@ -2444,7 +1822,7 @@ modules/audit/application/
 
 ---
 
-### Task 4.3: Audit Infrastructure Layer
+### Task 6.3: Audit Infrastructure Layer
 
 **Goal**: Append-only Prisma repository and audit controller
 
@@ -2477,7 +1855,7 @@ modules/audit/infrastructure/
 
 ---
 
-### Task 4.4: Audit UI (Optional)
+### Task 6.4: Audit UI (Optional)
 
 **Goal**: Admin screen to view audit log
 

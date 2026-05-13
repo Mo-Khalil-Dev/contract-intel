@@ -8,13 +8,13 @@
 
 ## Backend Stack
 
-- **Framework**: NestJS 10 + TypeScript
-- **ORM**: Prisma
-- **Database**: SQLite (local dev), PostgreSQL (Railway demo, GCP Cloud SQL production)
+- **Framework**: NestJS 11 + TypeScript
+- **Persistence**: Introduced incrementally per feature (no global ORM commitment). Each feature module owns its repository interface in the domain layer and chooses its persistence adapter when the persistence slice is implemented. Production target remains PostgreSQL (GCP Cloud SQL); local dev / Railway demo target TBD per feature.
 - **Authentication**: Auth0 (hosted Universal Login, Authorization Code Flow)
 - **CQRS**: @nestjs/cqrs (commands mutate, queries read directly)
 - **Logging**: pino + nestjs-pino (JSON in production, pretty in dev)
 - **Validation**: class-validator + class-transformer
+- **Config**: @nestjs/config + class-validator schema (startup validation)
 - **API Docs**: @nestjs/swagger (OpenAPI)
 - **Testing**: Jest + Supertest
 
@@ -22,11 +22,13 @@
 
 - **Framework**: React 18 + TypeScript
 - **Build Tool**: Vite
-- **Styling**: TailwindCSS + Design Tokens
+- **UI Primitives**: **Shadcn UI** — copy-in components owned in `src/components/ui/`, themed via design tokens. Do not build Button/Badge/Input/Card/Dialog/Tabs/Checkbox/Dropdown/Tooltip/Skeleton/Toast/Avatar from scratch.
+- **Custom Components**: Built only for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and layout (TopNav, OrgBanner, PageShell). Live in `src/components/core/` and `src/components/layout/`.
+- **Styling**: TailwindCSS wired to `src/config/designTokens.ts` (single source of truth for colours, spacing, type, breakpoints)
 - **State Management**:
   - React Query (server state / data fetching)
-  - Redux Toolkit (complex shared state) or React Context (simple local state)
-- **HTTP Client**: Axios (with response unwrapping interceptor)
+  - Zustand or React Context for local UI state (no Redux unless complexity justifies it)
+- **HTTP Client**: Axios via 3-tier stack (Hook → Service → httpService) with response unwrapping
 - **Forms**: Formik + Yup
 - **Routing**: React Router v6
 - **Testing**: Vitest + React Testing Library
@@ -78,21 +80,23 @@ npm run dev:frontend
 ```bash
 cd apps/backend
 
-# Generate Prisma client
-npm run prisma:generate
+# Development (NestJS watch mode)
+npm run dev
 
-# Run migrations
-npm run prisma:migrate
+# Build
+npm run build
 
-# Create new migration
-npm run prisma:migrate:dev
+# Unit tests
+npm test
 
-# Open Prisma Studio (DB GUI)
-npm run prisma:studio
+# E2E tests (Supertest)
+npm run test:e2e
 
-# Seed database
-npm run prisma:seed
+# Coverage report (global ≥80%, shared/domain ≥90%)
+npm run test:cov
 ```
+
+> Persistence-layer commands (migrations, seeders, studios) are introduced per feature when that feature ships its persistence adapter. There is no global ORM step at the workspace level.
 
 ### Testing
 
@@ -315,33 +319,36 @@ npm run build-storybook
 ### Backend (.env)
 
 ```bash
-# Database
-DATABASE_URL="file:./dev.db"  # SQLite for local dev
+# Server
+NODE_ENV="development"        # development | test | production
+PORT=3000
+API_PREFIX="api/v1"
+SESSION_SECRET="..."          # min 32 chars (enforced at startup)
 
 # Auth0
 AUTH0_DOMAIN="your-tenant.auth0.com"
 AUTH0_CLIENT_ID="..."
 AUTH0_CLIENT_SECRET="..."
-AUTH0_AUDIENCE="..."
+AUTH0_CALLBACK_URL="http://localhost:3000/api/v1/auth/callback"
 
 # Claude API
 CLAUDE_API_KEY="sk-ant-..."
 
-# Google Document AI
-GCP_PROJECT_ID="..."
-GCP_PROCESSOR_ID="..."
+# Frontend
+FRONTEND_URL="http://localhost:5173"
+CORS_ORIGIN="http://localhost:5173"
 
 # Infrastructure Drivers
-STORAGE_DRIVER="local"  # local | gcs
-OCR_DRIVER="mock"       # mock | google-document-ai
-QUEUE_DRIVER="memory"   # memory | pg-boss | bullmq
-SECRETS_DRIVER="env"    # env | gcp-secret-manager
-LOGGER_DRIVER="console" # console | pino
+STORAGE_DRIVER="local"        # local | gcs
+LOCAL_STORAGE_PATH="./uploads"
+OCR_DRIVER="mock"             # mock | google-document-ai
+QUEUE_DRIVER="memory"         # memory | pg-boss | bullmq
 
-# GCP (production only)
-GCS_BUCKET_NAME="..."
-REDIS_URL="..."
+# Logging
+LOG_LEVEL="debug"             # trace | debug | info | warn | error | fatal
 ```
+
+> The complete schema (validation rules, defaults, production-only requirements) lives in `apps/backend/src/config/environment-variables.ts`. Startup fails fast if any rule is violated.
 
 ### Frontend (.env)
 
@@ -364,7 +371,7 @@ src/modules/{feature}/
     {feature}-id.vo.ts
     {feature}.events.ts
     {feature}.factory.ts
-    {feature}.repository.ts  # Interface (port)
+    {feature}.repository.ts  # Interface (port) — implementation lives in infrastructure/
   application/         # Use cases
     commands/
       {action}.command.ts
@@ -375,23 +382,36 @@ src/modules/{feature}/
     events/
       {event}.handler.ts
   infrastructure/      # Framework & external concerns
-    prisma-{feature}.repository.ts
+    {feature}.repository.impl.ts    # Adapter implementing the port (Prisma / TypeORM / SQL / in-memory)
     {feature}.controller.ts
     {feature}.module.ts
-    {feature}.mapper.ts
+    {feature}.mapper.ts             # Persistence row ↔ Domain ↔ DTO
     dtos/
 ```
+
+> The persistence adapter is chosen **per feature** at the time the feature is built — there is no global ORM commitment. The domain layer only knows about the port.
 
 ### Frontend Component Structure
 
 ```
-src/components/{ComponentName}/
-  ComponentName.tsx           # JSX only (max 15 lines)
-  useComponentName.ts         # All logic (hooks, state, handlers)
-  ComponentName.module.css    # Styles
-  ComponentName.test.tsx      # Tests
-  ComponentName.stories.tsx   # Storybook story
+src/components/
+├── ui/                          # Shadcn primitives (managed via `npx shadcn add`)
+├── core/                        # Custom shared components (RiskBadge, TypePill, icons, etc.)
+│   └── ComponentName/
+│       ├── ComponentName.tsx           # JSX only (max 15 lines)
+│       ├── useComponentName.ts         # All logic (hooks, state, handlers)
+│       ├── ComponentName.module.css    # Styles (Tailwind for utilities)
+│       ├── ComponentName.test.tsx      # Tests (co-located)
+│       └── ComponentName.stories.tsx   # Storybook story
+├── layout/                      # TopNav, OrgBanner, PageShell
+└── features/                    # Feature-specific composites
 ```
+
+**Rules**:
+
+- Only `src/components/ui/*` is managed by the Shadcn CLI. Everything else is hand-authored.
+- All SVG icons live in `src/components/core/icons.tsx`. No inline SVG elsewhere.
+- Tailwind reads from `src/config/designTokens.ts`. No literal hex / px in component code.
 
 ### Frontend API Call Stack (3-Tier)
 

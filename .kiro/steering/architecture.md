@@ -40,12 +40,14 @@ src/modules/{feature}/
 │       └── {event}.handler.ts
 │
 └── infrastructure/           # Framework & external concerns
-    ├── prisma-{feature}.repository.ts
+    ├── {feature}.repository.impl.ts  # Adapter implementing the port (Prisma / TypeORM / SQL / in-memory)
     ├── {feature}.controller.ts
     ├── {feature}.module.ts
-    ├── {feature}.mapper.ts
+    ├── {feature}.mapper.ts           # Persistence row ↔ Domain ↔ DTO
     └── dtos/
 ```
+
+> The persistence adapter is chosen **per feature** when that feature ships. There is no global ORM commitment — the domain layer only knows the port.
 
 ### Domain Layer Rules
 
@@ -62,7 +64,7 @@ static create(props): Result<T> {
 
 - Returns `T | null` (null = not found)
 - Throws `InfrastructureException` on failure
-- Never returns Prisma types (always domain aggregates)
+- Never returns persistence-layer types (always domain aggregates) — Prisma rows, TypeORM entities, raw rows stay inside the adapter
 
 ### Exception Hierarchy
 
@@ -78,7 +80,7 @@ Global `HttpExceptionFilter` returns RFC 7807 Problem Details.
 
 Three representations (never leak between layers):
 
-- `Persistence` (Prisma) ↔ `Domain` (Aggregate) ↔ `DTO` (API Response)
+- `Persistence` (Prisma row / TypeORM entity / raw row — whichever the feature uses) ↔ `Domain` (Aggregate) ↔ `DTO` (API Response)
 
 Each module has `{Feature}Mapper` implementing:
 
@@ -178,11 +180,22 @@ The shared `unwrap<T>` utility lives in `src/api/unwrap.ts`.
 
 ### Design System Integration
 
-**Shadcn UI as Base**: Use Shadcn UI components as foundation, then customize with design tokens.
+**Shadcn UI is the base for every standard primitive.** We install components via `npx shadcn add <name>`; the source is copied into `src/components/ui/` and is owned by us from that point on. We customise via design tokens, not by re-writing.
 
-**Design Tokens**: All colors, spacing, typography, shadows, border-radius defined in `src/config/designTokens.ts`.
+**Build custom only for what Shadcn doesn't ship.** That means contract-domain components (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). These live in `src/components/core/` and `src/components/layout/`.
 
-**Tailwind Config**: Wired to design tokens for consistent theming.
+**Hard rules**:
+
+- ❌ Do **not** hand-roll Button, Badge, Input, Card, Dialog, Tabs, Checkbox, Dropdown, Tooltip, Skeleton, Toast, Avatar — use Shadcn.
+- ✅ Each Shadcn primitive is reviewed once at install time to ensure its styles map to our design tokens.
+- ✅ Custom components in `core/` and `layout/` follow the standard structure (tsx ≤ 15 lines, hook owns logic, co-located test + story).
+- ✅ All SVG icons live in `src/components/core/icons.tsx`. Lint should fail PRs with inline `<svg>` elsewhere.
+
+**Design Tokens**: All colors, spacing, typography, shadows, border-radius defined in `src/config/designTokens.ts` — single source of truth.
+
+**Tailwind Config**: `tailwind.config.js` imports from `designTokens.ts`. No literal hex / px values in component code.
+
+**Risk and severity helpers**: `designTokens.ts` exports `riskColor()`, `riskBg()`, `riskLabel()`, `riskShort()`, `sevColor()`, `sevBg()` so threshold logic lives in one place.
 
 ### Mobile-First Responsive (MANDATORY)
 
@@ -1331,11 +1344,11 @@ describe('ContractController API', () => {
 });
 ```
 
-**Infrastructure Layer** — Integration tests, real test DB:
+**Infrastructure Layer** — Integration tests against the feature's chosen persistence adapter:
 
 ```typescript
-// src/modules/contracts/infrastructure/__tests__/prisma-contract.repository.integration.spec.ts
-describe('PrismaContractRepository Integration', () => {
+// src/modules/contracts/infrastructure/contract.repository.integration.spec.ts
+describe('ContractRepository Integration', () => {
   it('should save and retrieve contract', async () => {
     const contract = ContractFactory.create();
     await repository.save(contract);
@@ -1346,6 +1359,8 @@ describe('PrismaContractRepository Integration', () => {
   });
 });
 ```
+
+> The adapter under test is whichever the feature ships (`PrismaContractRepository`, `TypeOrmContractRepository`, `SqlContractRepository`, or an in-memory variant for early development).
 
 **Decision Matrix** — which test to write:
 

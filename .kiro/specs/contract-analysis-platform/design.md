@@ -22,43 +22,44 @@ Built as a **vertically-sliced NestJS monolith** following **Clean Architecture*
 
 ## Tech Stack
 
-| Concern                | Technology                                     |
-| ---------------------- | ---------------------------------------------- |
-| Backend                | NestJS + TypeScript                            |
-| Frontend               | React + TypeScript                             |
-| ORM                    | Prisma                                         |
-| Database (production)  | PostgreSQL (GCP Cloud SQL)                     |
-| Database (local dev)   | SQLite                                         |
-| Authentication         | Auth0 (hosted Universal Login, session cookie) |
-| AI / ML                | Claude API (Anthropic)                         |
-| OCR (scanned docs)     | Google Document AI                             |
-| Document storage       | GCP Cloud Storage                              |
-| Job queue (local)      | In-memory                                      |
-| Job queue (demo)       | pg-boss (PostgreSQL-backed)                    |
-| Job queue (production) | BullMQ + Redis (GCP Memorystore)               |
-| Logging                | pino + nestjs-pino                             |
-| CQRS / Event Bus       | @nestjs/cqrs                                   |
-| API docs               | @nestjs/swagger (OpenAPI)                      |
-| Testing                | Jest + Supertest                               |
-| APM (backend)          | Dynatrace (OneAgent)                           |
-| APM (frontend)         | LogRocket                                      |
-| Product analytics      | PostHog                                        |
-| Resilience             | cockatiel (retry, circuit breaker, timeout)    |
+| Concern                | Technology                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Backend                | NestJS 11 + TypeScript                                                                                         |
+| Frontend               | React 18 + Vite + TypeScript                                                                                   |
+| UI Primitives          | **Shadcn UI** (Button, Badge, Input, Card, Dialog, Tabs, Checkbox, Dropdown, Tooltip, Toast, Avatar, Skeleton) |
+| Styling                | TailwindCSS + design tokens (`src/config/designTokens.ts`)                                                     |
+| Persistence            | Introduced per-feature (no global ORM commitment). Production target PostgreSQL (Cloud SQL).                   |
+| Authentication         | Auth0 (hosted Universal Login, session cookie)                                                                 |
+| AI / ML                | Claude API (Anthropic)                                                                                         |
+| OCR (scanned docs)     | Google Document AI                                                                                             |
+| Document storage       | GCP Cloud Storage                                                                                              |
+| Job queue (local)      | In-memory                                                                                                      |
+| Job queue (demo)       | pg-boss (PostgreSQL-backed)                                                                                    |
+| Job queue (production) | BullMQ + Redis (GCP Memorystore)                                                                               |
+| Logging                | pino + nestjs-pino                                                                                             |
+| CQRS / Event Bus       | @nestjs/cqrs                                                                                                   |
+| Config validation      | @nestjs/config + class-validator                                                                               |
+| API docs               | @nestjs/swagger (OpenAPI)                                                                                      |
+| Testing                | Jest + Supertest (backend), Vitest + React Testing Library (frontend)                                          |
+| APM (backend)          | Dynatrace (OneAgent)                                                                                           |
+| APM (frontend)         | LogRocket                                                                                                      |
+| Product analytics      | PostHog                                                                                                        |
+| Resilience             | cockatiel (retry, circuit breaker, timeout)                                                                    |
 
 ---
 
 ## Deployment Environments
 
-| Concern  | Local Dev        | Railway (Demo)     | GCP (Production)     |
-| -------- | ---------------- | ------------------ | -------------------- |
-| Database | SQLite           | PostgreSQL         | Cloud SQL            |
-| Storage  | Local filesystem | GCS bucket         | GCS bucket           |
-| OCR      | Mock adapter     | Google Document AI | Google Document AI   |
-| Queue    | In-memory        | pg-boss            | BullMQ + Memorystore |
-| Secrets  | `.env` file      | Railway env vars   | GCP Secret Manager   |
-| Logging  | pino-pretty      | JSON               | JSON → Cloud Logging |
+| Concern     | Local Dev                                | Railway (Demo)                        | GCP (Production)                    |
+| ----------- | ---------------------------------------- | ------------------------------------- | ----------------------------------- |
+| Persistence | Per-feature choice (in-memory / SQLite). | Per-feature (PostgreSQL via Railway). | Per-feature (Cloud SQL PostgreSQL). |
+| Storage     | Local filesystem                         | GCS bucket                            | GCS bucket                          |
+| OCR         | Mock adapter                             | Google Document AI                    | Google Document AI                  |
+| Queue       | In-memory                                | pg-boss                               | BullMQ + Memorystore                |
+| Secrets     | `.env` file                              | Railway env vars                      | GCP Secret Manager                  |
+| Logging     | pino-pretty                              | JSON                                  | JSON → Cloud Logging                |
 
-**Local dev**: `npm run dev` — single command, no containers, SQLite, in-memory queue.
+**Local dev**: `npm run dev` — single command, no containers, in-memory queue. Per-feature persistence chosen at the time each feature ships its adapter.
 
 **Railway demo**: containerised services, PostgreSQL + Redis managed by Railway, same Docker image as production.
 
@@ -106,7 +107,7 @@ Cloud Run, Cloud SQL, and Memorystore live in a private VPC. Cloud SQL has no pu
 ```
 ┌─────────────────────────────────────────┐
 │           Infrastructure Layer          │
-│  Controllers, Prisma repos, adapters,   │
+│  Controllers, Repository adapters,      │
 │  DTOs, filters, guards, mappers         │
 ├─────────────────────────────────────────┤
 │           Application Layer             │
@@ -131,7 +132,7 @@ HTTP Request → Controller
     │           → EventHandler: enqueue job / audit / notify
     │
     └── QueryBus.execute(query)
-            → QueryHandler → Prisma (direct read, no domain)
+            → QueryHandler → Persistence (direct read, no domain)
             → ResponseDto
 ```
 
@@ -143,7 +144,7 @@ src/
     documents/
       domain/           ← aggregate, value objects, events, factory, repository interface
       application/      ← commands/, queries/, events/
-      infrastructure/   ← prisma repo, controller, module, dtos/, mapper
+      infrastructure/   ← repository adapter, controller, module, dtos/, mapper
       __tests__/
     clauses/
     engagements/
@@ -281,9 +282,89 @@ All responses follow a uniform structure. See `research/api-response-structure.m
 
 ---
 
+## Frontend Component Strategy
+
+### Composition Model
+
+The frontend composes UI from three layers:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Pages (src/pages)                                            │
+│  Orchestrate hooks + composites; render layout.              │
+├──────────────────────────────────────────────────────────────┤
+│  Features (src/components/features)                           │
+│  Screen-specific composites (HomeKpiCards, UploadDropzone).  │
+├──────────────────────────────────────────────────────────────┤
+│  Layout (src/components/layout)                               │
+│  Application chrome: TopNav, OrgBanner, PageShell.           │
+├──────────────────────────────────────────────────────────────┤
+│  Core (src/components/core)        UI (src/components/ui)    │
+│  Custom domain components.         Shadcn UI primitives.     │
+│  RiskBadge, RiskBar, TypePill,     button, badge, input,     │
+│  FlagsSummary, KPICard, icons.     card, dialog, tabs, …     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Shadcn UI as the Primitive Base
+
+We do **not** build standard UI primitives from scratch. Shadcn ships them, and `npx shadcn add <name>` copies the source into `src/components/ui/` — from that point we own the code and customise via design tokens.
+
+**Primitives sourced from Shadcn**:
+
+| Concern         | Shadcn component    |
+| --------------- | ------------------- |
+| Buttons         | `button`            |
+| Status / labels | `badge`             |
+| Form inputs     | `input`, `checkbox` |
+| Containers      | `card`              |
+| Modals          | `dialog`            |
+| Tab navigation  | `tabs`              |
+| Menus           | `dropdown-menu`     |
+| Avatars         | `avatar`            |
+| Tooltips        | `tooltip`           |
+| Toasts          | `sonner`            |
+| Loading states  | `skeleton`          |
+
+### Custom Components: Only When Domain-Specific
+
+We hand-author components only when Shadcn has no equivalent. These encode **contract-domain concepts**:
+
+| Component      | Why custom                                                                                            |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| `RiskBadge`    | Score (0-100) + threshold-driven colour + DM Mono numeric — no Shadcn equivalent.                     |
+| `RiskBar`      | Horizontal progress bar coloured by risk threshold — domain-specific visualisation.                   |
+| `FlagsSummary` | Inline red / orange / green dot counts — bespoke summary widget.                                      |
+| `TypePill`     | Maps contract-type enum (vendor / license / partnership / customer / lease / nda) to a colour scheme. |
+| `KPICard`      | Wraps Shadcn `Card` with metric / delta / sparkline slots.                                            |
+| `TopNav`       | Application nav: logo + primary links + profile menu.                                                 |
+| `OrgBanner`    | Org-name banner with workspace tag and system-status dot.                                             |
+| `PageShell`    | Page wrapper: max-width 1120, padding, scroll behaviour.                                              |
+
+### Design Tokens
+
+`src/config/designTokens.ts` is the single source of truth for colours, type, spacing, breakpoints, and risk-threshold helpers (`riskColor`, `riskBg`, `riskLabel`, `riskShort`, `sevColor`, `sevBg`). Tailwind imports from this file — no literal hex / px values in component code.
+
+### Component File Layout (Custom Components Only)
+
+Every component in `core/`, `layout/`, or `features/` follows:
+
+```
+ComponentName/
+├── ComponentName.tsx          # JSX only (≤ 15 lines)
+├── useComponentName.ts        # All logic (hooks, state, handlers, computed values)
+├── ComponentName.module.css   # Component-specific styles
+├── ComponentName.test.tsx     # Co-located unit tests
+└── ComponentName.stories.tsx  # Storybook story (every variant)
+```
+
+Shadcn primitives in `ui/` keep Shadcn's own conventions (single-file, hyphen-cased filenames) — don't refactor them into the custom-component layout.
+
+---
+
 ## Authentication
 
-Auth0 Universal Login (hosted forms) with **Authorization Code Flow**. Tokens are encrypted server-side using AES-256-CBC with PBKDF2 key derivation and stored in PostgreSQL — they are never sent to the browser. The browser holds only a signed, httpOnly session cookie containing a token reference ID and safe user claims (userId, email, roles). On every request, the backend reads the cookie, fetches the encrypted token record, decrypts it, validates the access token, and refreshes it transparently if expired.
+Auth0 Universal Login (hosted forms) with **Authorization Code Flow**. Tokens are encrypted server-side using AES-256-CBC with PBKDF2 key derivation and stored via the Auth module's repository (persistence adapter chosen when the Auth feature ships — Phase 3) — they are never sent to the browser. The browser holds only a signed, httpOnly session cookie containing a token reference ID and safe user claims (userId, email, roles). On every request, the backend reads the cookie, fetches the encrypted token record, decrypts it, validates the access token, and refreshes it transparently if expired.
 
 Key security properties:
 
@@ -293,7 +374,7 @@ Key security properties:
 - httpOnly + Secure + SameSite=Strict — cookie cannot be read by JS, not sent cross-origin
 - Refresh token rotation — Auth0 issues a new refresh token on each use
 
-See `research/auth0-integration.md` for full implementation details including the Prisma schema, NestJS module structure, SessionAuthGuard, and Auth0 dashboard configuration.
+See `research/auth0-integration.md` for full implementation details including the data model, NestJS module structure, SessionAuthGuard, and Auth0 dashboard configuration.
 
 ---
 
