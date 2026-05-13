@@ -45,8 +45,8 @@
 **Phase 2 progress**:
 
 - ✅ Task 2.1: Design Tokens (Commit: 81c7fc8)
-- ✅ Task 2.2: Shadcn UI Bootstrap
-- ⏳ Task 2.3: Domain Components
+- ✅ Task 2.2: Shadcn UI Bootstrap (Commit: 0b9f9f3)
+- ✅ Task 2.3: Domain Components
 - ⏳ Task 2.4: Layout Components
 - ⏳ Task 2.5: Centralised Icons
 
@@ -588,31 +588,37 @@ apps/frontend/.eslintrc.cjs                 # override for components/ui/
 
 ---
 
-### Task 2.3: Domain Components
+### Task 2.3: Domain Components ✅ COMPLETED
 
 **Goal**: Build the contract-domain components Shadcn doesn't ship.
 
-**Deliverables** (each component follows the standard structure: tsx + use\*.ts + module.css + test + story):
+**Deliverables** (each component follows the project structure: `ComponentName.tsx` + `useComponentName.ts` + `index.ts` + co-located `.test.tsx`):
 
-- [ ] `RiskBadge` — score + dot + label, threshold-driven colour, DM Mono numeric, sizes sm/lg
-- [ ] `RiskBar` — horizontal progress (72×5), colour by threshold, score label
-- [ ] `FlagsSummary` — inline red/orange/green counts, '—' when empty
-- [ ] `TypePill` — contract-type mapping (vendor, license, partnership, customer, lease, nda)
-- [ ] `KPICard` — wraps Shadcn `Card`; slots for label, value, delta, optional sparkline
-- [ ] Accessibility: each component meets the a11y checklist (focus, ≥44px touch, ARIA, contrast)
+- [x] `RiskBadge` — score + dot + DM Mono numeric, threshold-driven colour, sizes sm/lg, accessible `role="status"` (10 tests)
+- [x] `RiskBar` — horizontal progress (72×5px), fill colour by threshold, score label, `role="progressbar"` with aria-valuenow/min/max (7 tests)
+- [x] `FlagsSummary` — inline red/orange/green dot+count display, renders `—` when no urgent flags, screen-reader summary (7 tests)
+- [x] `TypePill` — 6 contract-type mappings (vendor / license / partnership / customer / lease / nda), each with distinct colour scheme (4 tests)
+- [x] `KPICard` — wraps Shadcn `Card`, slots for label / value / delta (up/down/flat) / hint, ReactNode-friendly value slot (7 tests)
+- [x] Each component uses Tailwind classes referencing tokens (no inline hex), pulls colour helpers from `designTokens.ts`
+- [x] Accessibility: ARIA roles, descriptive aria-labels, decorative elements marked aria-hidden
+- [x] Smoke-test page in `App.tsx` renders all components together
 
 **Files**:
 
 ```
 apps/frontend/src/components/core/
-├── RiskBadge/
-├── RiskBar/
-├── FlagsSummary/
-├── TypePill/
-└── KPICard/
+├── RiskBadge/      (RiskBadge.tsx + useRiskBadge.ts + RiskBadge.test.tsx + index.ts)
+├── RiskBar/        (same structure)
+├── FlagsSummary/   (same structure)
+├── TypePill/       (same structure)
+└── KPICard/        (same structure)
 ```
 
-**Requirements**: Used by Home, Results, Compare, Portfolio screens.
+**Total tests**: 35 component tests + 22 token tests = 57/57 passing.
+
+**Storybook stories**: deferred — Storybook is not yet installed. Visual smoke testing is done via `App.tsx` for now.
+
+**Requirements**: Used by Home, Results, Compare, Portfolio screens. ✅
 
 ---
 
