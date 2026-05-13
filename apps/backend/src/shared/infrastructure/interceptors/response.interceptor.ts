@@ -6,22 +6,35 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-interface ApiResponse<T> {
-  success: true;
-  data: T;
-  meta: null | Record<string, unknown>;
-}
+import {
+  ApiResponse,
+  isPaginatedPayload,
+} from '../api/api-response.interface';
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
-  intercept(_context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
+export class ResponseInterceptor<T>
+  implements NestInterceptor<T, ApiResponse<T> | ApiResponse<T[]>>
+{
+  intercept(
+    _context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<ApiResponse<T> | ApiResponse<T[]>> {
     return next.handle().pipe(
-      map((data) => ({
-        success: true,
-        data,
-        meta: null,
-      })),
+      map((data): ApiResponse<T> | ApiResponse<T[]> => {
+        if (isPaginatedPayload<T>(data)) {
+          return {
+            success: true,
+            data: data.data,
+            meta: data.meta,
+          };
+        }
+
+        return {
+          success: true,
+          data: data as T,
+          meta: null,
+        };
+      }),
     );
   }
 }
