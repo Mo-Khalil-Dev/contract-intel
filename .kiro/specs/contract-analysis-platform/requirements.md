@@ -1,0 +1,246 @@
+# Requirements Document
+
+## Introduction
+
+The Contract Analysis Platform is an AI-powered, compliance-grade system for ingesting, analyzing, and managing complex legal documents at scale. It serves in-house counsel, M&A teams, and law firms conducting due diligence. The platform extracts and classifies contractual clauses, scores risk, orchestrates multi-user review workflows, and maintains immutable audit trails to satisfy regulatory requirements. This document defines the functional and non-functional requirements derived from the approved technical design.
+
+---
+
+## Glossary
+
+- **Platform**: The Contract Analysis Platform system as a whole.
+- **Tenant**: An organization (law firm, company) with isolated data and configuration within the Platform.
+- **Engagement**: A scoped due diligence project containing one or more documents and assigned reviewers.
+- **Document**: A legal contract file (PDF, Word, or scanned image) uploaded to the Platform.
+- **Clause**: A discrete, semantically meaningful segment of a Document, classified by type (e.g., indemnification, governing law).
+- **Ingestion_Service**: The component responsible for accepting, validating, and storing uploaded Documents.
+- **OCR_Engine**: The component that converts scanned or non-searchable Documents into machine-readable text.
+- **NLP_Classifier**: The AI component that segments Document text into Clauses and assigns a ClauseType to each.
+- **Risk_Engine**: The component that evaluates Clauses against risk rules and produces risk scores and flags.
+- **Workflow_Service**: The component that manages Engagement lifecycle, reviewer assignments, and review progress.
+- **Collaboration_Service**: The component that manages annotations, comments, and clause-level review status.
+- **Audit_Service**: The component that records all significant Platform actions to an immutable, append-only log.
+- **Reporting_Service**: The component that generates structured reports and exports from Engagement data.
+- **Auth_Service**: The component responsible for authentication, authorization, and session management.
+- **Reviewer**: A user assigned to review Clauses within an Engagement.
+- **Lead_Reviewer**: A Reviewer with authority to approve, escalate, or close Clause reviews.
+- **Engagement_Manager**: A user with authority to create Engagements and assign Reviewers.
+- **Tenant_Admin**: A user with full administrative access within a Tenant.
+- **ClauseType**: A classification label for a Clause (e.g., indemnification, limitation_of_liability, governing_law).
+- **RiskLevel**: A categorical risk assessment: low, medium, high, or critical.
+- **AuditEvent**: A structured, immutable record of a significant Platform action.
+- **RetentionPolicy**: Rules governing how long a Document must be retained before it may be deleted.
+
+---
+
+## Requirements
+
+### Requirement 0: User Authentication and Login
+
+**User Story:** As a legal professional (in-house counsel, M&A specialist, or law firm member), I want to authenticate securely with the Platform using my organization's identity provider, so that I can access contract analysis tools with confidence that only authorized team members can view sensitive legal documents.
+
+#### Acceptance Criteria
+
+1. WHEN a user navigates to the Platform without an active session, THE Auth_Service SHALL redirect them to the Auth0 Universal Login interface, preserving the originally requested URL for post-login redirect.
+2. WHEN a user provides valid credentials via Auth0, THE Auth_Service SHALL exchange the authorization code for tokens, encrypt and store them server-side in a `Session` record, and issue a single signed session cookie with HttpOnly, Secure, and SameSite=Strict flags.
+3. WHEN a user successfully authenticates for the first time, THE Auth_Service SHALL create a `User` record in the platform database with their Auth0 subject ID, email, display name, and role assignment.
+4. WHEN a returning user authenticates, THE Auth_Service SHALL retrieve their existing `User` record and update their `lastLoginAt` timestamp.
+5. WHEN a user authenticates, THE Platform SHALL log a `user_login` AuditEvent with the user ID, timestamp, and IP address.
+6. WHEN a request arrives with a valid session cookie, THE Auth_Service SHALL decrypt the session's access token and attach the user's identity and roles to the request context.
+7. WHEN a request arrives and the access token has expired, THE Auth_Service SHALL silently use the stored refresh token to obtain new tokens, update the `Session` record in place, and continue processing the request without requiring re-authentication.
+8. WHEN a refresh token expires or is revoked, THE Auth_Service SHALL delete the `Session` record, clear the session cookie, and redirect the user to login.
+9. WHEN a user clicks "logout", THE Auth_Service SHALL delete the `Session` record, revoke the refresh token at Auth0, clear the session cookie, and redirect to a logout confirmation page.
+10. Auth0 SHALL enforce brute-force protection via its built-in Attack Protection feature; THE Auth_Service SHALL surface the error message returned by Auth0 to the user.
+11. WHEN a user logs in, THE Platform SHALL load their assigned role and access permissions into the session context.
+12. WHEN a user is successfully authenticated, they SHALL be redirected to the Platform dashboard.
+
+---
+
+### Requirement 1: Document Ingestion
+
+**User Story:** As an Engagement_Manager, I want to upload legal documents in multiple formats, so that the Platform can analyze them as part of a due diligence Engagement.
+
+#### Acceptance Criteria
+
+1. WHEN a user uploads a file, THE Ingestion_Service SHALL accept files in PDF, DOCX, TIFF, and PNG formats.
+2. WHEN a file is uploaded, THE Ingestion_Service SHALL reject files exceeding 500 MB and return a descriptive error message.
+3. WHEN a file is uploaded, THE Ingestion_Service SHALL compute and store a SHA-256 checksum of the original file.
+4. WHEN a file is uploaded, THE Ingestion_Service SHALL encrypt the file using AES-256 before writing it to object storage.
+5. WHEN a file is successfully stored, THE Ingestion_Service SHALL return a `documentId` and an initial status of `queued_for_ocr` or `classifying` within 5 seconds.
+6. WHEN a file is uploaded, THE Ingestion_Service SHALL publish a `document.uploaded` event to the message queue to trigger downstream processing.
+7. IF a file fails virus scanning, THEN THE Ingestion_Service SHALL reject the upload and return a `422 Unprocessable Entity` response.
+8. THE Ingestion_Service SHALL enforce per-Tenant storage quotas and reject uploads that would exceed the configured quota.
+
+---
+
+### Requirement 2: OCR Processing
+
+**User Story:** As a Reviewer, I want scanned documents and image-based PDFs to be converted to searchable text, so that the Platform can extract and classify their clauses.
+
+#### Acceptance Criteria
+
+1. WHEN a Document with a non-searchable format is queued, THE OCR_Engine SHALL extract machine-readable text from every page.
+2. WHEN OCR processing completes, THE OCR_Engine SHALL store the extracted text alongside the original Document in object storage.
+3. WHEN OCR processing completes, THE OCR_Engine SHALL record a confidence score between 0.0 and 1.0 for the extraction.
+4. WHEN OCR processing fails after 3 retry attempts, THE OCR_Engine SHALL set the Document status to `failed` and notify the uploading user.
+5. THE OCR_Engine SHALL preserve page structure and page numbers in the extracted text output.
+6. THE OCR_Engine SHALL support documents in English and SHALL be configurable to support additional languages.
+
+---
+
+### Requirement 3: Clause Extraction and Classification
+
+**User Story:** As a Reviewer, I want the Platform to automatically identify and classify contractual clauses, so that I can focus my review on the most relevant and risky provisions.
+
+#### Acceptance Criteria
+
+1. WHEN a Document's text is available, THE NLP_Classifier SHALL segment the text into discrete Clauses.
+2. WHEN a Clause is extracted, THE NLP_Classifier SHALL assign a ClauseType from the supported taxonomy (indemnification, limitation_of_liability, termination, governing_law, dispute_resolution, intellectual_property, confidentiality, payment_terms, representations_warranties, force_majeure, assignment, change_of_control, non_compete, data_protection, other).
+3. WHEN a Clause is classified, THE NLP_Classifier SHALL record a confidence score between 0.0 and 1.0 for the classification.
+4. WHEN a Clause is extracted, THE NLP_Classifier SHALL record the page number, start offset, and end offset within the Document text.
+5. THE NLP_Classifier SHALL support nested sub-clauses by linking child Clauses to a parent Clause via `parentClauseId`.
+6. WHEN classification completes, THE NLP_Classifier SHALL record the model version used to produce the classification.
+7. THE NLP_Classifier SHALL produce an embedding vector for each Clause to support semantic search.
+
+---
+
+### Requirement 4: Risk Scoring
+
+**User Story:** As a Lead_Reviewer, I want each clause to be automatically scored for risk, so that I can prioritize my review on the highest-risk provisions.
+
+#### Acceptance Criteria
+
+1. WHEN Clause extraction is complete for a Document, THE Risk_Engine SHALL score every extracted Clause.
+2. WHEN scoring a Clause, THE Risk_Engine SHALL produce a numeric risk score between 0 and 100 and a categorical RiskLevel (low, medium, high, critical).
+3. WHEN a Clause is scored, THE Risk_Engine SHALL produce one or more RiskFlags identifying the specific risk categories triggered.
+4. WHEN a Clause is scored, THE Risk_Engine SHALL provide a human-readable explanation and a suggested action for each RiskFlag.
+5. WHEN all Clauses in a Document are scored, THE Risk_Engine SHALL compute a document-level `overallRiskScore` that is greater than or equal to the highest individual Clause risk score.
+6. THE Risk_Engine SHALL support configurable risk rule sets per EngagementType (ma_due_diligence, vendor_contract, employment, real_estate, financing).
+7. WHEN a Clause receives a RiskLevel of `high` or `critical`, THE Risk_Engine SHALL emit a `high_risk_detected` event to trigger user notification.
+8. IF the AI scoring model is unavailable, THEN THE Risk_Engine SHALL fall back to rule-based scoring and mark affected Documents with a `degraded_analysis` flag.
+
+---
+
+### Requirement 5: Due Diligence Workflow Management
+
+**User Story:** As an Engagement_Manager, I want to organize documents into engagements and assign reviewers, so that my team can conduct structured due diligence at scale.
+
+#### Acceptance Criteria
+
+1. WHEN an Engagement_Manager creates an Engagement, THE Workflow_Service SHALL create the Engagement with a status of `draft` and associate it with the creating user's Tenant.
+2. WHEN an Engagement is activated, THE Workflow_Service SHALL require at least one Lead_Reviewer to be assigned before the status transitions to `active`.
+3. WHEN a Reviewer is assigned to an Engagement, THE Workflow_Service SHALL restrict that Reviewer's document access to the Documents and ClauseTypes within their assigned ReviewScope.
+4. WHEN a Reviewer updates a Clause review status, THE Workflow_Service SHALL record the reviewing user's ID and the timestamp of the review.
+5. THE Workflow_Service SHALL support multi-stage review gates where Clauses must be reviewed by a Reviewer before a Lead_Reviewer can approve them.
+6. WHEN all Clauses in an Engagement have been reviewed, THE Workflow_Service SHALL update the Engagement status to `under_review` and notify the Lead_Reviewer.
+7. THE Workflow_Service SHALL expose an `EngagementProgress` metric reflecting the fraction of Clauses reviewed, between 0.0 and 1.0.
+8. WHEN an Engagement deadline passes with incomplete reviews, THE Workflow_Service SHALL notify the Engagement_Manager and all assigned Lead_Reviewers.
+
+---
+
+### Requirement 6: Collaboration and Annotation
+
+**User Story:** As a Reviewer, I want to annotate clauses and discuss them with my team, so that we can collaboratively assess risk and reach consensus.
+
+#### Acceptance Criteria
+
+1. WHEN a Reviewer adds an annotation to a Clause, THE Collaboration_Service SHALL persist the annotation with the author's user ID, timestamp, and annotation type (comment, suggestion, issue, approval).
+2. WHEN an annotation is added, THE Collaboration_Service SHALL log an `annotation_added` AuditEvent.
+3. WHEN a Reviewer resolves an annotation, THE Collaboration_Service SHALL record the resolving user's ID and timestamp.
+4. THE Collaboration_Service SHALL maintain a complete, immutable history of all Clause-level status changes and annotations.
+5. WHEN two users simultaneously submit conflicting updates to the same Clause, THE Collaboration_Service SHALL detect the conflict using optimistic concurrency control and return a `409 Conflict` response to the second writer.
+6. THE Collaboration_Service SHALL support @mention notifications that trigger alerts to the mentioned user via the Notification Service.
+7. WHEN a Reviewer escalates a Clause, THE Collaboration_Service SHALL notify the Lead_Reviewer assigned to that Engagement.
+
+---
+
+### Requirement 7: Audit Trail and Compliance
+
+**User Story:** As a platform administrator, I want every significant action in the Platform to be recorded in a tamper-evident, append-only audit log, so that we can satisfy regulatory, evidentiary, and compliance requirements.
+
+#### Acceptance Criteria
+
+1. THE Audit_Service SHALL record an AuditEvent for every action in the AuditAction taxonomy: `user_login`, `user_logout`, `document_uploaded`, `document_deleted`, `document_accessed`, `clauses_extracted`, `risk_scored`, `annotation_added`, `clause_reviewed`, `engagement_created`, `engagement_closed`, `report_exported`, `user_permission_changed`.
+2. WHEN an AuditEvent is written, THE Audit_Service SHALL compute and store a SHA-256 checksum of the event payload (`id|timestamp|actorId|action|resourceId`) for tamper detection.
+3. THE Audit_Service SHALL use an append-only PostgreSQL table where the application database role has INSERT and SELECT permissions only — no UPDATE or DELETE is permitted.
+4. WHEN an AuditEvent is written, THE Audit_Service SHALL store the actor's user ID, IP address, user agent, action, resource type, resource ID, timestamp, and optional JSON metadata.
+5. THE Audit_Service SHALL be invoked via domain event handlers — audit logging is a side effect of domain events, not called directly from command handlers.
+6. THE Audit_Service SHALL support querying audit events by actorId, action, resourceId, and date range with pagination.
+7. THE Audit_Service SHALL support export of the audit log in JSON and CSV formats.
+8. THE Audit_Service SHALL store audit events indefinitely (no retention policy in phase 1).
+9. IF an unauthorized access attempt is detected, THEN THE Audit_Service SHALL log the attempt with the actor's user ID, IP address, and the resource that was requested.
+
+---
+
+### Requirement 8: Access Control and Authentication
+
+**User Story:** As a Tenant_Admin, I want fine-grained access control and strong authentication, so that only authorized users can access sensitive legal documents and engagement data.
+
+#### Acceptance Criteria
+
+1. THE Auth_Service SHALL use Auth0 Universal Login (hosted forms) with the Authorization Code Flow — no custom login UI is built in the platform.
+2. THE Auth_Service SHALL store Auth0 tokens server-side encrypted using AES-256-CBC with PBKDF2 key derivation; tokens are never sent to the browser.
+3. THE Auth_Service SHALL issue a single signed session cookie (HttpOnly, Secure, SameSite=Strict) containing a session reference ID and safe user claims (userId, email, roles).
+4. WHEN a user attempts to access a resource they are not authorized to view, THE Auth_Service SHALL return a `403 Forbidden` response without disclosing details about the resource.
+5. THE Auth_Service SHALL implement role-based access control evaluating user role and resource-level assignment for every request via the `SessionAuthGuard`.
+6. WHEN a user's role or permissions are changed, THE Auth_Service SHALL log a `user_permission_changed` AuditEvent.
+7. THE Auth_Service SHALL invalidate the `Session` record and clear the session cookie when a user's account is suspended.
+8. THE Auth_Service SHALL silently refresh expired access tokens using the stored refresh token without requiring user re-authentication.
+
+---
+
+### Requirement 9: Reporting and Export
+
+**User Story:** As an Engagement_Manager, I want to generate structured due diligence reports and export clause data, so that I can deliver findings to clients and stakeholders.
+
+#### Acceptance Criteria
+
+1. WHEN an Engagement_Manager requests a due diligence report, THE Reporting_Service SHALL generate a report aggregating risk scores, clause classifications, annotations, and review status for all Documents in the Engagement.
+2. THE Reporting_Service SHALL support report export in PDF, DOCX, XLSX, and JSON formats.
+3. WHEN a report export is requested for an Engagement with more than 1,000 Documents, THE Reporting_Service SHALL process the export asynchronously and notify the requesting user when the export is ready.
+4. WHEN a report is exported, THE Reporting_Service SHALL log a `report_exported` AuditEvent including the requesting user, timestamp, and export format.
+5. THE Reporting_Service SHALL enforce export access controls such that only users with explicit export permissions may download report files.
+6. THE Reporting_Service SHALL support configurable report templates including firm-branded and standard due diligence formats.
+7. WHEN a risk summary report is requested for a Document, THE Reporting_Service SHALL include all RiskFlags, risk scores, and suggested actions for every Clause in the Document.
+
+---
+
+### Requirement 10: Multi-Tenant Data Isolation
+
+**User Story:** As a Tenant_Admin, I want my organization's data to be completely isolated from other tenants, so that confidential legal documents are never accessible to unauthorized parties.
+
+#### Acceptance Criteria
+
+1. THE Platform SHALL enforce row-level security at the database layer such that all queries are automatically scoped to the authenticated user's Tenant.
+2. THE Platform SHALL validate the `tenantId` on every read and write operation against the authenticated user's Tenant membership.
+3. WHEN a Document, Clause, or Engagement is created, THE Platform SHALL associate it with the creating user's `tenantId` and reject any attempt to assign it to a different Tenant.
+4. THE Platform SHALL encrypt Documents using per-Tenant encryption keys managed by a dedicated key management service.
+5. WHEN a Tenant is deprovisioned, THE Platform SHALL purge or archive all Tenant data in accordance with the configured RetentionPolicy.
+
+---
+
+### Requirement 11: Performance and Scalability
+
+**User Story:** As a Tenant_Admin, I want the Platform to handle large-scale due diligence engagements without degradation, so that my team can work efficiently under time pressure.
+
+#### Acceptance Criteria
+
+1. THE Platform SHALL support concurrent processing of at least 500 Documents simultaneously by horizontally scaling OCR and NLP workers.
+2. WHEN a clause search query is submitted, THE Platform SHALL return results within 200 milliseconds at the 99th percentile under normal load.
+3. WHEN a semantic search query is submitted, THE Platform SHALL return results within 500 milliseconds at the 99th percentile under normal load.
+4. WHEN a synchronous API request is received, THE Platform SHALL respond within 300 milliseconds at the 99th percentile, excluding long-running operations that are handled asynchronously.
+5. THE Platform SHALL enforce per-Tenant API rate limits at the API Gateway layer to ensure fair resource allocation.
+
+---
+
+### Requirement 12: Notification and Alerting
+
+**User Story:** As a Reviewer, I want to receive timely notifications about document processing completion, risk flags, and workflow events, so that I can act on them without manually polling the system.
+
+#### Acceptance Criteria
+
+1. WHEN a Document completes processing and is ready for review, THE Platform SHALL notify the assigned Reviewers via in-app notification and email.
+2. WHEN a Clause receives a RiskLevel of `high` or `critical`, THE Platform SHALL notify the Lead_Reviewer assigned to the Engagement within 60 seconds of the risk score being computed.
+3. WHEN a Reviewer is @mentioned in an annotation, THE Platform SHALL deliver an in-app notification to the mentioned user within 10 seconds.
+4. WHEN an Engagement deadline is within 24 hours and review is incomplete, THE Platform SHALL send a reminder notification to the Engagement_Manager and all Lead_Reviewers.
+5. THE Platform SHALL support webhook delivery of notification events to external systems configured by the Tenant_Admin.
