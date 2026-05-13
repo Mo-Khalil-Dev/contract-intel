@@ -11,6 +11,7 @@
 ```
 
 Loading order (later overrides earlier):
+
 ```
 .env → .env.{NODE_ENV} → .env.{NODE_ENV}.local → process.env
 ```
@@ -29,27 +30,53 @@ export class AppConfigService {
   ) {}
 
   // Database
-  get databaseUrl(): string { return this.config.getOrThrow('DATABASE_URL') }
+  get databaseUrl(): string {
+    return this.config.getOrThrow('DATABASE_URL');
+  }
 
   // Auth0
-  get auth0Domain(): string { return this.config.getOrThrow('AUTH0_DOMAIN') }
-  get auth0Audience(): string { return this.config.getOrThrow('AUTH0_AUDIENCE') }
+  get auth0Domain(): string {
+    return this.config.getOrThrow('AUTH0_DOMAIN');
+  }
+  get auth0Audience(): string {
+    return this.config.getOrThrow('AUTH0_AUDIENCE');
+  }
 
   // Claude API (from Secret Manager in production)
-  async anthropicApiKey(): Promise<string> { return this.secrets.getSecret('ANTHROPIC_API_KEY') }
+  async anthropicApiKey(): Promise<string> {
+    return this.secrets.getSecret('ANTHROPIC_API_KEY');
+  }
 
   // Drivers
-  get storageDriver(): 'gcs' | 'local' { return this.config.getOrThrow('STORAGE_DRIVER') }
-  get queueDriver(): 'memory' | 'pg-boss' | 'bullmq' { return this.config.getOrThrow('QUEUE_DRIVER') }
-  get ocrDriver(): 'google-document-ai' | 'mock' { return this.config.getOrThrow('OCR_DRIVER') }
-  get loggerDriver(): 'console' | 'pino' { return this.config.get('LOGGER_DRIVER', 'console') }
+  get storageDriver(): 'gcs' | 'local' {
+    return this.config.getOrThrow('STORAGE_DRIVER');
+  }
+  get queueDriver(): 'memory' | 'pg-boss' | 'bullmq' {
+    return this.config.getOrThrow('QUEUE_DRIVER');
+  }
+  get ocrDriver(): 'google-document-ai' | 'mock' {
+    return this.config.getOrThrow('OCR_DRIVER');
+  }
+  get loggerDriver(): 'console' | 'pino' {
+    return this.config.get('LOGGER_DRIVER', 'console');
+  }
 
   // App
-  get nodeEnv(): 'development' | 'test' | 'production' { return this.config.get('NODE_ENV', 'development') }
-  get port(): number { return this.config.get<number>('PORT', 3000) }
-  get isProduction(): boolean { return this.nodeEnv === 'production' }
-  get isDevelopment(): boolean { return this.nodeEnv === 'development' }
-  get corsOrigins(): string[] { return this.config.get('CORS_ORIGINS', 'http://localhost:5173').split(',') }
+  get nodeEnv(): 'development' | 'test' | 'production' {
+    return this.config.get('NODE_ENV', 'development');
+  }
+  get port(): number {
+    return this.config.get<number>('PORT', 3000);
+  }
+  get isProduction(): boolean {
+    return this.nodeEnv === 'production';
+  }
+  get isDevelopment(): boolean {
+    return this.nodeEnv === 'development';
+  }
+  get corsOrigins(): string[] {
+    return this.config.get('CORS_ORIGINS', 'http://localhost:5173').split(',');
+  }
 }
 ```
 
@@ -60,22 +87,24 @@ App refuses to start if required env vars are missing:
 ```typescript
 // src/shared/config/config.validation.ts
 class EnvironmentVariables {
-  @IsEnum(['development', 'test', 'production']) NODE_ENV: string
-  @IsString() @IsNotEmpty() DATABASE_URL: string
-  @IsString() @IsNotEmpty() AUTH0_DOMAIN: string
-  @IsString() @IsNotEmpty() AUTH0_AUDIENCE: string
-  @IsEnum(['gcs', 'local']) STORAGE_DRIVER: string
-  @IsEnum(['memory', 'pg-boss', 'bullmq']) QUEUE_DRIVER: string
-  @IsEnum(['google-document-ai', 'mock']) OCR_DRIVER: string
-  @IsEnum(['gcp-secret-manager', 'env']) SECRETS_DRIVER: string
-  @IsNumber() PORT: number = 3000
+  @IsEnum(['development', 'test', 'production']) NODE_ENV: string;
+  @IsString() @IsNotEmpty() DATABASE_URL: string;
+  @IsString() @IsNotEmpty() AUTH0_DOMAIN: string;
+  @IsString() @IsNotEmpty() AUTH0_AUDIENCE: string;
+  @IsEnum(['gcs', 'local']) STORAGE_DRIVER: string;
+  @IsEnum(['memory', 'pg-boss', 'bullmq']) QUEUE_DRIVER: string;
+  @IsEnum(['google-document-ai', 'mock']) OCR_DRIVER: string;
+  @IsEnum(['gcp-secret-manager', 'env']) SECRETS_DRIVER: string;
+  @IsNumber() PORT: number = 3000;
 }
 
 export function validate(config: Record<string, unknown>) {
-  const validated = plainToInstance(EnvironmentVariables, config, { enableImplicitConversion: true })
-  const errors = validateSync(validated)
-  if (errors.length > 0) throw new Error(`Configuration validation failed:\n${errors.toString()}`)
-  return validated
+  const validated = plainToInstance(EnvironmentVariables, config, {
+    enableImplicitConversion: true,
+  });
+  const errors = validateSync(validated);
+  if (errors.length > 0) throw new Error(`Configuration validation failed:\n${errors.toString()}`);
+  return validated;
 }
 ```
 
@@ -87,7 +116,12 @@ export function validate(config: Record<string, unknown>) {
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [`.env.${process.env.NODE_ENV}.local`, `.env.${process.env.NODE_ENV}`, '.env.local', '.env'],
+      envFilePath: [
+        `.env.${process.env.NODE_ENV}.local`,
+        `.env.${process.env.NODE_ENV}`,
+        '.env.local',
+        '.env',
+      ],
       validate,
     }),
   ],

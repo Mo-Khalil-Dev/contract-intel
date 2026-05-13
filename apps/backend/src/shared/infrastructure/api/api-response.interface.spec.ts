@@ -1,7 +1,4 @@
-import {
-  buildPaginationMeta,
-  isPaginatedPayload,
-} from './api-response.interface';
+import { buildPaginationMeta, isPaginatedPayload } from './api-response.interface';
 
 describe('isPaginatedPayload', () => {
   it('returns true for valid paginated payload', () => {
@@ -104,26 +101,18 @@ describe('buildPaginationMeta', () => {
   });
 
   it('throws when pageSize is 0', () => {
-    expect(() => buildPaginationMeta(100, 1, 0)).toThrow(
-      'pageSize must be greater than 0',
-    );
+    expect(() => buildPaginationMeta(100, 1, 0)).toThrow('pageSize must be greater than 0');
   });
 
   it('throws when pageSize is negative', () => {
-    expect(() => buildPaginationMeta(100, 1, -5)).toThrow(
-      'pageSize must be greater than 0',
-    );
+    expect(() => buildPaginationMeta(100, 1, -5)).toThrow('pageSize must be greater than 0');
   });
 
   it('throws when page is less than 1', () => {
-    expect(() => buildPaginationMeta(100, 0, 20)).toThrow(
-      'page must be 1 or greater',
-    );
+    expect(() => buildPaginationMeta(100, 0, 20)).toThrow('page must be 1 or greater');
   });
 
   it('throws when total is negative', () => {
-    expect(() => buildPaginationMeta(-1, 1, 20)).toThrow(
-      'total cannot be negative',
-    );
+    expect(() => buildPaginationMeta(-1, 1, 20)).toThrow('total cannot be negative');
   });
 });

@@ -29,7 +29,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest();
     const correlationId = uuid();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -48,26 +47,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
         errors = exception.errors;
       }
 
-      this.logger.warn(
-        `${errorType}: ${detail}`,
-        `Correlation-ID: ${correlationId}`,
-      );
+      this.logger.warn(`${errorType}: ${detail}`, `Correlation-ID: ${correlationId}`);
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       detail = exception.message;
       errorType = 'HTTP_EXCEPTION';
       title = this.getTitleFromCode(errorType);
 
-      this.logger.warn(
-        `HTTP ${status}: ${detail}`,
-        `Correlation-ID: ${correlationId}`,
-      );
+      this.logger.warn(`HTTP ${status}: ${detail}`, `Correlation-ID: ${correlationId}`);
     } else if (exception instanceof Error) {
-      this.logger.error(
-        exception.message,
-        exception.stack,
-        `Correlation-ID: ${correlationId}`,
-      );
+      this.logger.error(exception.message, exception.stack, `Correlation-ID: ${correlationId}`);
     } else {
       this.logger.error(
         'Unknown exception',

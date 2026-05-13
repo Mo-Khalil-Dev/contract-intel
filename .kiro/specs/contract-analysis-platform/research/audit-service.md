@@ -8,14 +8,14 @@ The audit service records every significant platform action to a tamper-evident,
 
 ## Design Decisions
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| Storage | PostgreSQL, same DB, INSERT-only role | No extra infrastructure, sufficient for phase 1 |
-| Invocation pattern | Domain event handlers | Decoupled from business logic, consistent coverage |
-| Token storage | Metadata as JSON | Flexible per-action context without schema changes |
-| Sequence numbers | None | Multi-tenancy out of scope for phase 1 |
-| Retention | Indefinite | Simplest approach; retention policies deferred |
-| Tamper detection | SHA-256 checksum per record | Proves records haven't been modified after writing |
+| Decision           | Choice                                | Rationale                                          |
+| ------------------ | ------------------------------------- | -------------------------------------------------- |
+| Storage            | PostgreSQL, same DB, INSERT-only role | No extra infrastructure, sufficient for phase 1    |
+| Invocation pattern | Domain event handlers                 | Decoupled from business logic, consistent coverage |
+| Token storage      | Metadata as JSON                      | Flexible per-action context without schema changes |
+| Sequence numbers   | None                                  | Multi-tenancy out of scope for phase 1             |
+| Retention          | Indefinite                            | Simplest approach; retention policies deferred     |
+| Tamper detection   | SHA-256 checksum per record           | Proves records haven't been modified after writing |
 
 ---
 
@@ -102,14 +102,14 @@ Each audit event gets a SHA-256 checksum computed at write time:
 
 ```typescript
 // src/modules/audit/domain/audit-event.factory.ts
-import { createHash } from 'crypto'
+import { createHash } from 'crypto';
 
 export function computeChecksum(event: {
-  id: string
-  timestamp: Date
-  actorId: string
-  action: string
-  resourceId: string
+  id: string;
+  timestamp: Date;
+  actorId: string;
+  action: string;
+  resourceId: string;
 }): string {
   const payload = [
     event.id,
@@ -117,9 +117,9 @@ export function computeChecksum(event: {
     event.actorId,
     event.action,
     event.resourceId,
-  ].join('|')
+  ].join('|');
 
-  return createHash('sha256').update(payload).digest('hex')
+  return createHash('sha256').update(payload).digest('hex');
 }
 ```
 
@@ -129,22 +129,22 @@ export function computeChecksum(event: {
 // src/modules/audit/application/verify-audit-integrity.usecase.ts
 export class VerifyAuditIntegrityUseCase {
   async execute(): Promise<IntegrityReport> {
-    const events = await this.auditRepo.findAll()
-    const tampered: string[] = []
+    const events = await this.auditRepo.findAll();
+    const tampered: string[] = [];
 
     for (const event of events) {
-      const expected = computeChecksum(event)
+      const expected = computeChecksum(event);
       if (expected !== event.checksum) {
-        tampered.push(event.id)
+        tampered.push(event.id);
         this.logger.error('Audit event tampered', undefined, {
           eventId: event.id,
           action: event.action,
           actorId: event.actorId,
-        })
+        });
       }
     }
 
-    return { total: events.length, tampered }
+    return { total: events.length, tampered };
   }
 }
 ```
@@ -174,7 +174,7 @@ export class AuditDocumentUploadedHandler {
         fileSizeBytes: event.fileSizeBytes,
         engagementId: event.engagementId,
       },
-    })
+    });
   }
 }
 
@@ -192,7 +192,7 @@ export class AuditUserLoginHandler {
       resourceType: 'user',
       resourceId: event.userId,
       metadata: { method: 'auth0' },
-    })
+    });
   }
 }
 ```
@@ -204,31 +204,31 @@ export class AuditUserLoginHandler {
 ```typescript
 // src/modules/audit/domain/audit.service.ts
 export interface AuditService {
-  log(event: CreateAuditEventDto): Promise<void>
-  query(filter: AuditQueryFilter): Promise<PaginatedResult<AuditEvent>>
-  export(filter: AuditQueryFilter, format: 'json' | 'csv'): Promise<Buffer>
-  verifyIntegrity(): Promise<IntegrityReport>
+  log(event: CreateAuditEventDto): Promise<void>;
+  query(filter: AuditQueryFilter): Promise<PaginatedResult<AuditEvent>>;
+  export(filter: AuditQueryFilter, format: 'json' | 'csv'): Promise<Buffer>;
+  verifyIntegrity(): Promise<IntegrityReport>;
 }
 
 export interface CreateAuditEventDto {
-  actorId: string
-  actorIp?: string
-  actorAgent?: string
-  action: AuditAction
-  resourceType: string
-  resourceId: string
-  metadata?: Record<string, unknown>
+  actorId: string;
+  actorIp?: string;
+  actorAgent?: string;
+  action: AuditAction;
+  resourceType: string;
+  resourceId: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface AuditQueryFilter {
-  actorId?: string
-  action?: AuditAction
-  resourceType?: string
-  resourceId?: string
-  from?: Date
-  to?: Date
-  page?: number
-  pageSize?: number
+  actorId?: string;
+  action?: AuditAction;
+  resourceType?: string;
+  resourceId?: string;
+  from?: Date;
+  to?: Date;
+  page?: number;
+  pageSize?: number;
 }
 ```
 
@@ -294,42 +294,60 @@ POST /api/v1/audit/verify       ← trigger integrity check (platform_admin only
 ## TDD Approach
 
 ### Domain Unit Tests
+
 ```typescript
 describe('computeChecksum', () => {
   it('should produce consistent checksums for the same input', () => {
-    const event = { id: 'uuid', timestamp: new Date('2026-01-01'), actorId: 'user-1', action: 'USER_LOGIN', resourceId: 'user-1' }
-    expect(computeChecksum(event)).toBe(computeChecksum(event))
-  })
+    const event = {
+      id: 'uuid',
+      timestamp: new Date('2026-01-01'),
+      actorId: 'user-1',
+      action: 'USER_LOGIN',
+      resourceId: 'user-1',
+    };
+    expect(computeChecksum(event)).toBe(computeChecksum(event));
+  });
 
   it('should produce different checksums when any field changes', () => {
-    const base = { id: 'uuid', timestamp: new Date('2026-01-01'), actorId: 'user-1', action: 'USER_LOGIN', resourceId: 'user-1' }
-    const modified = { ...base, actorId: 'user-2' }
-    expect(computeChecksum(base)).not.toBe(computeChecksum(modified))
-  })
-})
+    const base = {
+      id: 'uuid',
+      timestamp: new Date('2026-01-01'),
+      actorId: 'user-1',
+      action: 'USER_LOGIN',
+      resourceId: 'user-1',
+    };
+    const modified = { ...base, actorId: 'user-2' };
+    expect(computeChecksum(base)).not.toBe(computeChecksum(modified));
+  });
+});
 ```
 
 ### Application Unit Tests
+
 ```typescript
 describe('AuditDocumentUploadedHandler', () => {
   it('should log DOCUMENT_UPLOADED event with correct metadata', async () => {
-    const auditService = mock<AuditService>()
-    const handler = new AuditDocumentUploadedHandler(auditService)
+    const auditService = mock<AuditService>();
+    const handler = new AuditDocumentUploadedHandler(auditService);
 
-    await handler.handle(new DocumentUploadedEvent({
-      documentId: 'doc-123',
-      uploadedBy: 'user-456',
-      fileName: 'contract.pdf',
-      fileSizeBytes: 1024,
-      engagementId: 'eng-789',
-    }))
+    await handler.handle(
+      new DocumentUploadedEvent({
+        documentId: 'doc-123',
+        uploadedBy: 'user-456',
+        fileName: 'contract.pdf',
+        fileSizeBytes: 1024,
+        engagementId: 'eng-789',
+      }),
+    );
 
-    expect(auditService.log).toHaveBeenCalledWith(expect.objectContaining({
-      action: AuditAction.DOCUMENT_UPLOADED,
-      actorId: 'user-456',
-      resourceId: 'doc-123',
-      metadata: expect.objectContaining({ fileName: 'contract.pdf' }),
-    }))
-  })
-})
+    expect(auditService.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: AuditAction.DOCUMENT_UPLOADED,
+        actorId: 'user-456',
+        resourceId: 'doc-123',
+        metadata: expect.objectContaining({ fileName: 'contract.pdf' }),
+      }),
+    );
+  });
+});
 ```

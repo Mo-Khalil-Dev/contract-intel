@@ -22,47 +22,48 @@ Built as a **vertically-sliced NestJS monolith** following **Clean Architecture*
 
 ## Tech Stack
 
-| Concern | Technology |
-|---|---|
-| Backend | NestJS + TypeScript |
-| Frontend | React + TypeScript |
-| ORM | Prisma |
-| Database (production) | PostgreSQL (GCP Cloud SQL) |
-| Database (local dev) | SQLite |
-| Authentication | Auth0 (hosted Universal Login, session cookie) |
-| AI / ML | Claude API (Anthropic) |
-| OCR (scanned docs) | Google Document AI |
-| Document storage | GCP Cloud Storage |
-| Job queue (local) | In-memory |
-| Job queue (demo) | pg-boss (PostgreSQL-backed) |
-| Job queue (production) | BullMQ + Redis (GCP Memorystore) |
-| Logging | pino + nestjs-pino |
-| CQRS / Event Bus | @nestjs/cqrs |
-| API docs | @nestjs/swagger (OpenAPI) |
-| Testing | Jest + Supertest |
-| APM (backend) | Dynatrace (OneAgent) |
-| APM (frontend) | LogRocket |
-| Product analytics | PostHog |
-| Resilience | cockatiel (retry, circuit breaker, timeout) |
+| Concern                | Technology                                     |
+| ---------------------- | ---------------------------------------------- |
+| Backend                | NestJS + TypeScript                            |
+| Frontend               | React + TypeScript                             |
+| ORM                    | Prisma                                         |
+| Database (production)  | PostgreSQL (GCP Cloud SQL)                     |
+| Database (local dev)   | SQLite                                         |
+| Authentication         | Auth0 (hosted Universal Login, session cookie) |
+| AI / ML                | Claude API (Anthropic)                         |
+| OCR (scanned docs)     | Google Document AI                             |
+| Document storage       | GCP Cloud Storage                              |
+| Job queue (local)      | In-memory                                      |
+| Job queue (demo)       | pg-boss (PostgreSQL-backed)                    |
+| Job queue (production) | BullMQ + Redis (GCP Memorystore)               |
+| Logging                | pino + nestjs-pino                             |
+| CQRS / Event Bus       | @nestjs/cqrs                                   |
+| API docs               | @nestjs/swagger (OpenAPI)                      |
+| Testing                | Jest + Supertest                               |
+| APM (backend)          | Dynatrace (OneAgent)                           |
+| APM (frontend)         | LogRocket                                      |
+| Product analytics      | PostHog                                        |
+| Resilience             | cockatiel (retry, circuit breaker, timeout)    |
 
 ---
 
 ## Deployment Environments
 
-| Concern | Local Dev | Railway (Demo) | GCP (Production) |
-|---|---|---|---|
-| Database | SQLite | PostgreSQL | Cloud SQL |
-| Storage | Local filesystem | GCS bucket | GCS bucket |
-| OCR | Mock adapter | Google Document AI | Google Document AI |
-| Queue | In-memory | pg-boss | BullMQ + Memorystore |
-| Secrets | `.env` file | Railway env vars | GCP Secret Manager |
-| Logging | pino-pretty | JSON | JSON → Cloud Logging |
+| Concern  | Local Dev        | Railway (Demo)     | GCP (Production)     |
+| -------- | ---------------- | ------------------ | -------------------- |
+| Database | SQLite           | PostgreSQL         | Cloud SQL            |
+| Storage  | Local filesystem | GCS bucket         | GCS bucket           |
+| OCR      | Mock adapter     | Google Document AI | Google Document AI   |
+| Queue    | In-memory        | pg-boss            | BullMQ + Memorystore |
+| Secrets  | `.env` file      | Railway env vars   | GCP Secret Manager   |
+| Logging  | pino-pretty      | JSON               | JSON → Cloud Logging |
 
 **Local dev**: `npm run dev` — single command, no containers, SQLite, in-memory queue.
 
 **Railway demo**: containerised services, PostgreSQL + Redis managed by Railway, same Docker image as production.
 
 **GCP production**:
+
 - Cloud Run (API service, scales to zero)
 - Cloud Run (Worker service, same image, `npm run worker` entrypoint)
 - Cloud SQL, Cloud Storage, Memorystore, Secret Manager, Cloud Armor
@@ -184,6 +185,7 @@ src/
 **Domain Events**: `DocumentUploadedEvent`, `DocumentOCRStartedEvent`, `DocumentOCRCompletedEvent`, `DocumentOCRFailedEvent`, `DocumentAnalysisStartedEvent`, `DocumentAnalysisCompletedEvent`, `DocumentAnalysisFailedEvent`, `DocumentReadyForReviewEvent`, `DocumentDeletedEvent`
 
 **Invariants**:
+
 - File size ≤ 50MB (requirements reference 500MB; the platform standardises on 50MB as the enforced limit for phase 1 — see Document Processing Pipeline)
 - File type: PDF, DOCX, TIFF, PNG
 - Status transitions: `uploaded → queued → ocr_processing → ocr_complete → analyzing → ready | failed`
@@ -284,6 +286,7 @@ All responses follow a uniform structure. See `research/api-response-structure.m
 Auth0 Universal Login (hosted forms) with **Authorization Code Flow**. Tokens are encrypted server-side using AES-256-CBC with PBKDF2 key derivation and stored in PostgreSQL — they are never sent to the browser. The browser holds only a signed, httpOnly session cookie containing a token reference ID and safe user claims (userId, email, roles). On every request, the backend reads the cookie, fetches the encrypted token record, decrypts it, validates the access token, and refreshes it transparently if expired.
 
 Key security properties:
+
 - Tokens never touch the browser — only a signed reference cookie
 - Rotating encryption keys — compromise of one key does not expose all tokens
 - Per-token salt — prevents rainbow table attacks across token records
@@ -304,35 +307,34 @@ See `research/error-handling.md` for full implementation details.
 
 ## Key Cross-Cutting Decisions
 
-| Concern | Decision | Reference |
-|---|---|---|
-| Infrastructure ports | Ports & adapters, env-driven | `research/infrastructure-ports.md` |
-| Configuration | `AppConfigService` one-stop shop, per-env files, startup validation | `research/configuration-service.md` |
-| Mapper layer | Persistence ↔ Domain ↔ DTO, never expose Prisma to domain | `research/mapper-layer.md` |
-| Error handling | Result pattern (domain), exceptions (app boundary), global filter | `research/error-handling.md` |
-| Auth | Auth0 Authorization Code Flow, encrypted token storage, httpOnly cookie | `research/auth0-integration.md` |
-| Audit service | Append-only PostgreSQL, domain event handlers, SHA-256 tamper detection, indefinite retention | `research/audit-service.md` |
-| Resilience | cockatiel (retry + circuit breaker + timeout) on all external APIs | `research/resilience.md` |
-| Observability | Dynatrace (backend), LogRocket (frontend), PostHog (analytics + flags) | `research/observability.md` |
-| Structured logging | pino, requestId propagation, GCP Cloud Logging | `research/structured-logging.md` |
-| TDD | Red → green → refactor, 3 test layers, factories | `research/tdd-approach.md` |
-| API docs | @nestjs/swagger, DTO annotations, Bearer auth in UI, SDK generation | `research/api-documentation.md` |
-| Frontend architecture | Backend-driven declarative UI, 11 layers, actions + ui in every response | `research/frontend-architecture.md` |
+| Concern               | Decision                                                                                      | Reference                           |
+| --------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Infrastructure ports  | Ports & adapters, env-driven                                                                  | `research/infrastructure-ports.md`  |
+| Configuration         | `AppConfigService` one-stop shop, per-env files, startup validation                           | `research/configuration-service.md` |
+| Mapper layer          | Persistence ↔ Domain ↔ DTO, never expose Prisma to domain                                     | `research/mapper-layer.md`          |
+| Error handling        | Result pattern (domain), exceptions (app boundary), global filter                             | `research/error-handling.md`        |
+| Auth                  | Auth0 Authorization Code Flow, encrypted token storage, httpOnly cookie                       | `research/auth0-integration.md`     |
+| Audit service         | Append-only PostgreSQL, domain event handlers, SHA-256 tamper detection, indefinite retention | `research/audit-service.md`         |
+| Resilience            | cockatiel (retry + circuit breaker + timeout) on all external APIs                            | `research/resilience.md`            |
+| Observability         | Dynatrace (backend), LogRocket (frontend), PostHog (analytics + flags)                        | `research/observability.md`         |
+| Structured logging    | pino, requestId propagation, GCP Cloud Logging                                                | `research/structured-logging.md`    |
+| TDD                   | Red → green → refactor, 3 test layers, factories                                              | `research/tdd-approach.md`          |
+| API docs              | @nestjs/swagger, DTO annotations, Bearer auth in UI, SDK generation                           | `research/api-documentation.md`     |
+| Frontend architecture | Backend-driven declarative UI, 11 layers, actions + ui in every response                      | `research/frontend-architecture.md` |
 
 ---
 
 ## Open Items
 
-| Item | Status |
-|---|---|
-| Clause granularity (paragraph vs section level) | **Decided** — paragraph-level for phase 1; section-level grouping as a future enhancement |
-| Configurable risk rules per engagement type | **Decided** — supported via database-backed rule sets (see Risk_Engine in domain model; `EngagementType` drives rule set selection) |
-| Frontend hosting (NestJS serves React vs Firebase Hosting) | **Decided** — NestJS serves the React build from the same Cloud Run instance for phase 1 |
-| Outbox pattern for reliable event delivery | Deferred — in-process EventBus sufficient for phase 1 |
-| Multi-tenancy | Explicitly out of scope for phase 1 |
-| OpenTelemetry distributed tracing | Deferred — Dynatrace only in phase 1 |
-| Domain modeling detail | **Complete** — see Domain Model section above |
-
+| Item                                                       | Status                                                                                                                              |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Clause granularity (paragraph vs section level)            | **Decided** — paragraph-level for phase 1; section-level grouping as a future enhancement                                           |
+| Configurable risk rules per engagement type                | **Decided** — supported via database-backed rule sets (see Risk_Engine in domain model; `EngagementType` drives rule set selection) |
+| Frontend hosting (NestJS serves React vs Firebase Hosting) | **Decided** — NestJS serves the React build from the same Cloud Run instance for phase 1                                            |
+| Outbox pattern for reliable event delivery                 | Deferred — in-process EventBus sufficient for phase 1                                                                               |
+| Multi-tenancy                                              | Explicitly out of scope for phase 1                                                                                                 |
+| OpenTelemetry distributed tracing                          | Deferred — Dynatrace only in phase 1                                                                                                |
+| Domain modeling detail                                     | **Complete** — see Domain Model section above                                                                                       |
 
 ---
 
@@ -400,11 +402,11 @@ Scaffold → Shared Kernel → Auth → Document Ingestion → OCR → Clause Ex
 
 Once the scaffold and shared kernel are in place, these tracks can proceed in parallel:
 
-| Track A (Core Pipeline) | Track B (Workflow) | Track C (Infrastructure) |
-|---|---|---|
-| Document Ingestion (T4) | Engagement Module (T8) | Background Workers (T14) |
-| OCR Integration (T5) | Annotation Module (T9) | Audit Service (T10) |
-| Clause Extraction (T6) | Notification Service (T12) | Reporting Service (T11) |
-| Risk Scoring (T7) | | GCP Deployment (T15) |
+| Track A (Core Pipeline) | Track B (Workflow)         | Track C (Infrastructure) |
+| ----------------------- | -------------------------- | ------------------------ |
+| Document Ingestion (T4) | Engagement Module (T8)     | Background Workers (T14) |
+| OCR Integration (T5)    | Annotation Module (T9)     | Audit Service (T10)      |
+| Clause Extraction (T6)  | Notification Service (T12) | Reporting Service (T11)  |
+| Risk Scoring (T7)       |                            | GCP Deployment (T15)     |
 
 Track A must complete before Track C workers can be fully wired. Track B can start as soon as Auth and Shared Kernel are done.

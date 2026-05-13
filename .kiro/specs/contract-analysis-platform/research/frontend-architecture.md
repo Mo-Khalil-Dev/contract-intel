@@ -13,12 +13,17 @@ Backend: "Here's the error"    → Frontend: display the error exactly as provid
 ```
 
 **Never:**
+
 ```typescript
 // ❌ Frontend calculating permissions
-if (user.role === 'lead_reviewer' && clause.reviewedByReviewer) { showApprove() }
+if (user.role === 'lead_reviewer' && clause.reviewedByReviewer) {
+  showApprove();
+}
 
 // ✅ Frontend reading backend decision
-if (clause.actions.canApprove.allowed) { showApprove() }
+if (clause.actions.canApprove.allowed) {
+  showApprove();
+}
 ```
 
 ---
@@ -61,26 +66,26 @@ Every response includes `actions` (what's allowed) and `ui` (how to display).
 
 ```typescript
 interface DocumentResponse {
-  id: string
-  fileName: string
-  status: DocumentStatus
-  fileSizeBytes: number
-  createdAt: string
+  id: string;
+  fileName: string;
+  status: DocumentStatus;
+  fileSizeBytes: number;
+  createdAt: string;
 
   actions: {
-    canDelete: ActionPermission
-    canReprocess: ActionPermission
-    canExport: ActionPermission
-    canAssignToEngagement: ActionPermission
-  }
+    canDelete: ActionPermission;
+    canReprocess: ActionPermission;
+    canExport: ActionPermission;
+    canAssignToEngagement: ActionPermission;
+  };
 
   ui: {
-    statusLabel: string           // "Analysis Complete"
-    statusColor: 'green' | 'yellow' | 'red' | 'gray'
-    riskBadge?: string            // "HIGH RISK"
-    riskBadgeColor?: string
-    processingProgress?: number   // 0-100 while processing
-  }
+    statusLabel: string; // "Analysis Complete"
+    statusColor: 'green' | 'yellow' | 'red' | 'gray';
+    riskBadge?: string; // "HIGH RISK"
+    riskBadgeColor?: string;
+    processingProgress?: number; // 0-100 while processing
+  };
 }
 ```
 
@@ -88,27 +93,27 @@ interface DocumentResponse {
 
 ```typescript
 interface ClauseResponse {
-  id: string
-  type: ClauseType
-  text: string
-  riskScore: number
-  riskLevel: RiskLevel
-  reviewStatus: ClauseReviewStatus
+  id: string;
+  type: ClauseType;
+  text: string;
+  riskScore: number;
+  riskLevel: RiskLevel;
+  reviewStatus: ClauseReviewStatus;
 
   actions: {
-    canApprove: ActionPermission    // requires prior reviewer review
-    canFlag: ActionPermission
-    canEscalate: ActionPermission
-    canAnnotate: ActionPermission
-    canWaive: ActionPermission
-  }
+    canApprove: ActionPermission; // requires prior reviewer review
+    canFlag: ActionPermission;
+    canEscalate: ActionPermission;
+    canAnnotate: ActionPermission;
+    canWaive: ActionPermission;
+  };
 
   ui: {
-    riskBadgeColor: string
-    highlightColor: string
-    reviewStatusLabel: string       // "Pending Review", "Approved", etc.
-    riskExplanation: string         // human-readable risk summary
-  }
+    riskBadgeColor: string;
+    highlightColor: string;
+    reviewStatusLabel: string; // "Pending Review", "Approved", etc.
+    riskExplanation: string; // human-readable risk summary
+  };
 }
 ```
 
@@ -116,26 +121,26 @@ interface ClauseResponse {
 
 ```typescript
 interface EngagementResponse {
-  id: string
-  name: string
-  status: EngagementStatus
-  reviewProgress: number
+  id: string;
+  name: string;
+  status: EngagementStatus;
+  reviewProgress: number;
 
   actions: {
-    canActivate: ActionPermission   // requires lead_reviewer assigned
-    canAddDocument: ActionPermission
-    canAssignReviewer: ActionPermission
-    canClose: ActionPermission
-    canExportReport: ActionPermission
-  }
+    canActivate: ActionPermission; // requires lead_reviewer assigned
+    canAddDocument: ActionPermission;
+    canAssignReviewer: ActionPermission;
+    canClose: ActionPermission;
+    canExportReport: ActionPermission;
+  };
 
   ui: {
-    progressLabel: string           // "45 of 120 clauses reviewed"
-    statusLabel: string
-    statusColor: string
-    deadlineWarning?: string        // "Due in 2 days"
-    deadlineWarningColor?: string
-  }
+    progressLabel: string; // "45 of 120 clauses reviewed"
+    statusLabel: string;
+    statusColor: string;
+    deadlineWarning?: string; // "Due in 2 days"
+    deadlineWarningColor?: string;
+  };
 }
 ```
 
@@ -143,11 +148,11 @@ interface EngagementResponse {
 
 ```typescript
 interface ActionPermission {
-  allowed: boolean
-  reason?: string           // why it's not allowed
-  blockedReason?: string    // user-facing message
-  helpText?: string         // guidance on how to unblock
-  confirmation?: string     // confirmation dialog text if allowed
+  allowed: boolean;
+  reason?: string; // why it's not allowed
+  blockedReason?: string; // user-facing message
+  helpText?: string; // guidance on how to unblock
+  confirmation?: string; // confirmation dialog text if allowed
 }
 ```
 
@@ -162,27 +167,27 @@ Types mirror backend response shapes exactly. No business logic definitions.
 ```typescript
 // src/types/api.ts
 export interface ActionPermission {
-  allowed: boolean
-  reason?: string
-  blockedReason?: string
-  helpText?: string
-  confirmation?: string
+  allowed: boolean;
+  reason?: string;
+  blockedReason?: string;
+  helpText?: string;
+  confirmation?: string;
 }
 
 export interface DocumentResponse {
-  id: string
-  fileName: string
-  status: 'uploaded' | 'processing' | 'ready' | 'failed'
+  id: string;
+  fileName: string;
+  status: 'uploaded' | 'processing' | 'ready' | 'failed';
   actions: {
-    canDelete: ActionPermission
-    canReprocess: ActionPermission
-    canExport: ActionPermission
-  }
+    canDelete: ActionPermission;
+    canReprocess: ActionPermission;
+    canExport: ActionPermission;
+  };
   ui: {
-    statusLabel: string
-    statusColor: string
-    riskBadge?: string
-  }
+    statusLabel: string;
+    statusColor: string;
+    riskBadge?: string;
+  };
 }
 ```
 
@@ -192,16 +197,16 @@ Thin HTTP wrapper with automatic response unwrapping. No business logic.
 
 ```typescript
 // src/lib/api-client.ts
-const client = axios.create({ baseURL: import.meta.env.VITE_API_URL })
+const client = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 
 // Attach session cookie automatically (credentials: 'include')
-client.defaults.withCredentials = true
+client.defaults.withCredentials = true;
 
 // Unwrap ApiResponse<T> automatically
 client.interceptors.response.use(
   (response) => response.data.data ?? response.data,
-  (error) => Promise.reject(error.response?.data?.error ?? error)
-)
+  (error) => Promise.reject(error.response?.data?.error ?? error),
+);
 
 // Per-resource API modules
 export const documentsApi = {
@@ -209,14 +214,15 @@ export const documentsApi = {
   get: (id: string) => client.get<DocumentResponse>(`/api/v1/documents/${id}`),
   upload: (formData: FormData) => client.post<DocumentResponse>('/api/v1/documents', formData),
   delete: (id: string) => client.delete(`/api/v1/documents/${id}`),
-}
+};
 
 export const clausesApi = {
-  list: (documentId: string) => client.get<ClauseResponse[]>(`/api/v1/documents/${documentId}/clauses`),
+  list: (documentId: string) =>
+    client.get<ClauseResponse[]>(`/api/v1/documents/${documentId}/clauses`),
   get: (id: string) => client.get<ClauseResponse>(`/api/v1/clauses/${id}`),
   updateStatus: (id: string, status: ClauseReviewStatus) =>
     client.patch<ClauseResponse>(`/api/v1/clauses/${id}/status`, { status }),
-}
+};
 ```
 
 ### Layer 7: Formatting & Display Logic
@@ -228,16 +234,16 @@ Only transforms data for display. Never validates, never decides.
 
 // ✅ Allowed — display transformation
 export const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export const formatDate = (iso: string): string =>
-  new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(iso))
+  new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(iso));
 
 export const truncate = (text: string, maxLength: number): string =>
-  text.length > maxLength ? `${text.slice(0, maxLength)}...` : text
+  text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 
 // ❌ NOT allowed — business logic
 // export const canUserApprove = (user, clause) => ...
@@ -251,25 +257,29 @@ Fetch, cache, update. No business logic.
 ```typescript
 // src/hooks/useClause.ts
 export function useClause(id: string) {
-  const [clause, setClause] = useState<ClauseResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<ApiError | null>(null)
+  const [clause, setClause] = useState<ClauseResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
-    clausesApi.get(id)
+    clausesApi
+      .get(id)
       .then(setClause)
       .catch(setError)
-      .finally(() => setLoading(false))
-  }, [id])
+      .finally(() => setLoading(false));
+  }, [id]);
 
-  const updateStatus = useCallback(async (status: ClauseReviewStatus) => {
-    // Send to backend. Backend decides if it's allowed.
-    const updated = await clausesApi.updateStatus(id, status)
-    // Backend sends back new state with updated actions
-    setClause(updated)
-  }, [id])
+  const updateStatus = useCallback(
+    async (status: ClauseReviewStatus) => {
+      // Send to backend. Backend decides if it's allowed.
+      const updated = await clausesApi.updateStatus(id, status);
+      // Backend sends back new state with updated actions
+      setClause(updated);
+    },
+    [id],
+  );
 
-  return { clause, loading, error, updateStatus }
+  return { clause, loading, error, updateStatus };
 }
 ```
 
@@ -364,25 +374,25 @@ export function ClauseReviewPage() {
 
 Layer 7 is **Formatting & Display Logic** — not business logic.
 
-| ✅ Allowed in Layer 7 | ❌ Not allowed in Layer 7 |
-|---|---|
-| Format date for display | Validate answers |
-| Truncate long text | Check permissions |
-| Format file size (bytes → MB) | Calculate eligibility |
-| Format risk score (75 → "75%") | Apply business rules |
+| ✅ Allowed in Layer 7                   | ❌ Not allowed in Layer 7    |
+| --------------------------------------- | ---------------------------- |
+| Format date for display                 | Validate answers             |
+| Truncate long text                      | Check permissions            |
+| Format file size (bytes → MB)           | Calculate eligibility        |
+| Format risk score (75 → "75%")          | Apply business rules         |
 | Derive display color from status string | Determine if user can submit |
 
 ---
 
 ## Benefits for This Platform
 
-| Concern | Old approach | Backend-driven |
-|---|---|---|
-| "Can reviewer approve?" | Frontend checks role + review status | Backend says in `actions.canApprove` |
-| "What's the risk badge color?" | Frontend maps riskLevel → color | Backend provides in `ui.riskBadgeColor` |
-| "Is deadline warning shown?" | Frontend calculates days remaining | Backend provides `ui.deadlineWarning` |
-| "Can engagement be activated?" | Frontend checks reviewer count | Backend says in `actions.canActivate` |
-| Rule change (e.g. approval threshold) | Change backend + frontend | Change backend only |
+| Concern                               | Old approach                         | Backend-driven                          |
+| ------------------------------------- | ------------------------------------ | --------------------------------------- |
+| "Can reviewer approve?"               | Frontend checks role + review status | Backend says in `actions.canApprove`    |
+| "What's the risk badge color?"        | Frontend maps riskLevel → color      | Backend provides in `ui.riskBadgeColor` |
+| "Is deadline warning shown?"          | Frontend calculates days remaining   | Backend provides `ui.deadlineWarning`   |
+| "Can engagement be activated?"        | Frontend checks reviewer count       | Backend says in `actions.canActivate`   |
+| Rule change (e.g. approval threshold) | Change backend + frontend            | Change backend only                     |
 
 ---
 

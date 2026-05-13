@@ -3,6 +3,7 @@
 ## Progress Summary
 
 **Phase 1: Scaffolding & Cross-Cutting Concerns** — 7/7 tasks completed ✅
+
 - ✅ Task 1.1: Project Structure Setup (Commit: aec01ef)
 - ✅ Task 1.2: Shared Kernel Tests (Commit: 6d4383f)
 - ✅ Task 1.3: Exception Hierarchy Tests (Commit: 896cbe8)
@@ -13,6 +14,7 @@
 - ✅ Task 1.8: Testing Infrastructure (Jest + Supertest + factories + coverage thresholds)
 
 **Completed Work**:
+
 - 33 files created (19 backend, 14 frontend)
 - 1,347 lines of scaffolding code
 - 5 source files + 5 test files (102+ test assertions)
@@ -25,6 +27,7 @@
 This implementation plan follows a **user story-driven approach** with Clean Architecture principles, aligned with the **high-fidelity wireframes** from Claude Design.
 
 Each user story includes:
+
 1. **Domain Model** — aggregates, value objects, domain events
 2. **Clean Architecture Layers** — domain → application → infrastructure
 3. **UI Components** — React components matching the wireframe designs
@@ -36,6 +39,7 @@ The plan starts with **scaffolding and cross-cutting concerns**, then proceeds t
 All frontend tasks follow these mandatory patterns:
 
 ### 1. Component Structure (Every Component)
+
 ```
 ComponentName/
 ├── ComponentName.tsx          # JSX only, max 15 lines, no logic
@@ -46,21 +50,25 @@ ComponentName/
 ```
 
 ### 2. 3-Tier API Call Stack (Every API Call)
+
 ```
-UI Hook (useX.ts) 
-  → Service (src/services/) 
-    → httpService (src/api/httpService.ts) 
+UI Hook (useX.ts)
+  → Service (src/services/)
+    → httpService (src/api/httpService.ts)
       → Axios (client.ts)
 ```
 
 **Rules**:
+
 - Hooks call service methods only (no axios, no fetch, no direct HTTP)
 - Services own domain shape, unwrap `ApiResponse<T>`, handle errors
 - httpService is the ONLY file that imports axios
 - All API URLs defined in `src/api/endpoints.ts`
 
 ### 3. API Response Standard
+
 All backend endpoints return:
+
 ```typescript
 { success: boolean; data?: T; error?: string }
 ```
@@ -68,9 +76,11 @@ All backend endpoints return:
 Every service method must call `.then(unwrap)` — never return raw `ApiResponse` to a hook.
 
 ### 4. Shadcn UI as Base
+
 Use Shadcn UI components as the foundation, then customize with design tokens.
 
 ### 5. Accessibility Built-In (Every Component)
+
 - Focus indicators visible (3px outline)
 - Touch targets ≥44px on mobile
 - ARIA labels on icon buttons
@@ -79,9 +89,11 @@ Use Shadcn UI components as the foundation, then customize with design tokens.
 - Screen reader tested
 
 ### 6. Mobile-First Responsive
+
 Start with 320px baseline, progressively enhance with `min-width` media queries.
 
 ### 7. All SVG Icons Centralized
+
 All SVG icons live in `src/components/core/icons.tsx`. No inline SVGs elsewhere.
 
 ---
@@ -89,6 +101,7 @@ All SVG icons live in `src/components/core/icons.tsx`. No inline SVGs elsewhere.
 ## Wireframe Screens Available
 
 Based on the Claude Design handoff, we have pixel-perfect designs for:
+
 1. **Home Screen** — Dashboard with KPIs, recent contracts, renewals, process explanation
 2. **Upload Screen** — Drag-and-drop file upload with consent checkbox
 3. **Processing Screen** — Animated spinner with progress indicators
@@ -101,6 +114,7 @@ Based on the Claude Design handoff, we have pixel-perfect designs for:
 10. **Export Screen** — Report generation and sharing
 
 All screens include:
+
 - **Design tokens** (colors, typography, spacing) in `tokens.js`
 - **Reusable components** (Button, Badge, RiskBadge, TypePill, Modal, Tabs, etc.)
 - **Responsive breakpoints** (mobile, tablet, desktop)
@@ -111,10 +125,12 @@ All screens include:
 ## Phase 1: Scaffolding & Cross-Cutting Concerns
 
 ### Task 1.1: Project Structure Setup ✅ COMPLETED
+
 **Goal**: Set up monorepo with NestJS backend and React frontend
 **Status**: Completed (Commit: aec01ef)
 
 **Backend Structure**:
+
 ```
 apps/backend/
 ├── src/
@@ -133,6 +149,7 @@ apps/backend/
 ```
 
 **Frontend Structure**:
+
 ```
 apps/frontend/
 ├── src/
@@ -147,6 +164,7 @@ apps/frontend/
 ```
 
 **Deliverables**:
+
 - [x] Monorepo package.json with workspaces
 - [x] Backend: NestJS project with TypeScript, Prisma, Jest
 - [x] Frontend: Vite + React + TypeScript + TailwindCSS
@@ -158,10 +176,12 @@ apps/frontend/
 ---
 
 ### Task 1.2: Shared Kernel (Domain Building Blocks) ✅ COMPLETED
+
 **Goal**: Create base classes for Clean Architecture domain layer
 **Status**: Completed (Commit: 6d4383f)
 
 **Deliverables**:
+
 - [x] `Result<T>` class for domain layer error handling
 - [x] `BaseEntity<T>` with identity equality and domain events
 - [x] `AggregateRoot<T>` extending BaseEntity
@@ -170,6 +190,7 @@ apps/frontend/
 - [x] Unit tests for all base classes (5 test files, 102+ assertions)
 
 **Files**:
+
 ```
 shared/domain/
 ├── result.ts + result.spec.ts (16 tests)
@@ -180,6 +201,7 @@ shared/domain/
 ```
 
 **Coverage**:
+
 - Result: ok/fail/combine/getValueOrThrow
 - BaseEntity: identity equality, reflexivity, symmetry, transitivity
 - ValueObject: value equality, immutability, complex objects
@@ -191,9 +213,11 @@ shared/domain/
 ---
 
 ### Task 1.3: Exception Hierarchy
+
 **Goal**: Three-layer exception system with global filter
 
 **Deliverables**:
+
 - [ ] `AppError` base class (message, code, httpStatus)
 - [ ] `DomainException` for business rule violations (422, 409)
 - [ ] `ApplicationException` for use case failures (404, 403, 409, 503)
@@ -203,6 +227,7 @@ shared/domain/
 - [ ] Unit tests for exception filter
 
 **Files**:
+
 ```
 shared/exceptions/
 ├── app-error.ts
@@ -218,12 +243,14 @@ shared/exceptions/
 **Decision**: Skipped — persistence layer will be introduced incrementally as features need it.
 
 **Rationale**:
+
 - Avoids upfront commitment to a full schema (premature design)
 - Conflicts existed across spec docs (design.md said multi-tenancy out of scope, tasks.md required Tenant model)
 - Each feature module will define its own data model when implementing its persistence adapter
 - Aligns with vertical slicing — features own their full stack including persistence
 
 **What this means going forward**:
+
 - No `prisma/` folder in backend
 - No ORM dependencies installed yet
 - Repository interfaces defined in domain layer (per feature)
@@ -232,9 +259,11 @@ shared/exceptions/
 ---
 
 ### Task 1.5: Configuration Service ✅ COMPLETED
+
 **Goal**: Centralized configuration with validation
 
 **Deliverables**:
+
 - [x] `AppConfigService` with all config properties (typed getters)
 - [x] Environment files (`.env.example` template, `.env.test` for tests)
 - [x] Startup validation using class-validator
@@ -242,6 +271,7 @@ shared/exceptions/
 - [x] Unit tests for service and validation
 
 **Files**:
+
 ```
 config/
 ├── app-config.module.ts            (global, wires validation into ConfigModule)
@@ -252,6 +282,7 @@ config/
 ```
 
 **Validation rules enforced**:
+
 - `NODE_ENV` ∈ {development, test, production}
 - `PORT` integer in [1, 65535]
 - `SESSION_SECRET` minimum 32 characters
@@ -267,9 +298,11 @@ config/
 ---
 
 ### Task 1.6: Logging Infrastructure ✅ COMPLETED
+
 **Goal**: Structured logging with request ID propagation
 
 **Deliverables**:
+
 - [x] pino + nestjs-pino integration via dedicated `LoggerModule`
 - [x] Request ID generation (uuid) and propagation via `x-request-id` header
 - [x] pino-pretty for local development (colorized, single-line off, time translated)
@@ -278,6 +311,7 @@ config/
 - [x] Redaction of sensitive fields (Authorization, Cookie, password, token, sessionSecret)
 
 **Files**:
+
 ```
 shared/infrastructure/logging/
 ├── logger.module.ts
@@ -289,9 +323,11 @@ shared/infrastructure/logging/
 ---
 
 ### Task 1.7: API Response Envelope ✅ COMPLETED
+
 **Goal**: Uniform response structure across all endpoints
 
 **Deliverables**:
+
 - [x] `ApiResponse<T>` interface (success, data, meta)
 - [x] `PaginationMeta` interface (total, page, pageSize, totalPages)
 - [x] `PaginatedPayload<T>` type for controllers returning paginated data
@@ -302,6 +338,7 @@ shared/infrastructure/logging/
 - [x] Unit tests for interface helpers and interceptor
 
 **Files**:
+
 ```
 shared/infrastructure/api/
 ├── api-response.interface.ts
@@ -316,9 +353,11 @@ shared/infrastructure/interceptors/
 ---
 
 ### Task 1.8: Testing Infrastructure ✅ COMPLETED
+
 **Goal**: Jest + Supertest setup with test utilities
 
 **Deliverables**:
+
 - [x] Jest configuration for unit tests (in package.json)
 - [x] Supertest installed + dedicated e2e config (`test/jest-e2e.json`)
 - [x] `test:e2e` script added
@@ -331,6 +370,7 @@ shared/infrastructure/interceptors/
 - ➖ SQLite in-memory test database — N/A (Prisma removed in Task 1.4 decision)
 
 **Files**:
+
 ```
 test/
 ├── setup.ts                  (loads .env.test, defaults SESSION_SECRET)
@@ -348,9 +388,11 @@ src/shared/test/
 ## Phase 2: Design System Implementation (From Wireframes)
 
 ### Task 2.1: Design Tokens Setup
+
 **Goal**: Extract and implement design tokens from wireframes
 
 **Deliverables**:
+
 - [ ] `designTokens.ts` with all color definitions from `tokens.js`
   - Background colors: bg, bgAlt, surface, surfaceAlt
   - Text colors: ink, inkMid, inkSoft, inkMute
@@ -367,6 +409,7 @@ src/shared/test/
 - [ ] Breakpoints (mobile: 420px, sm: 640px, md: 860px, lg: 1100px)
 
 **Files**:
+
 ```
 frontend/src/config/
 └── designTokens.ts
@@ -377,9 +420,11 @@ frontend/src/config/
 ---
 
 ### Task 2.2: Core UI Components (From Wireframes)
+
 **Goal**: Implement reusable components matching wireframe designs using Shadcn UI as base
 
 **Component Structure** (applies to ALL components):
+
 - **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - **ComponentName.module.css**: All styles
@@ -389,9 +434,11 @@ frontend/src/config/
 ---
 
 #### Sub-Task 2.2.1: Button Component (Mobile-First)
+
 **Goal**: Build accessible, responsive Button component
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Touch target: 48px minimum height
   - Padding: 12px 16px
@@ -432,9 +479,11 @@ frontend/src/config/
 ---
 
 #### Sub-Task 2.2.2: Badge Component (Mobile-First)
+
 **Goal**: Build accessible Badge component
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Font size: 11px
   - Padding: 4px 8px
@@ -461,9 +510,11 @@ frontend/src/config/
 ---
 
 #### Sub-Task 2.2.3: RiskBadge Component (Mobile-First)
+
 **Goal**: Build accessible RiskBadge component
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Small size: 16px font, 24px height
   - Large size: 18px font, 28px height
@@ -491,9 +542,11 @@ frontend/src/config/
 ---
 
 #### Sub-Task 2.2.4: TypePill Component (Mobile-First)
+
 **Goal**: Build accessible TypePill component
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Font size: 11px
   - Padding: 4px 10px
@@ -520,9 +573,11 @@ frontend/src/config/
 ---
 
 #### Sub-Task 2.2.5: RiskBar Component (Mobile-First)
+
 **Goal**: Build accessible RiskBar component
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Bar: 60px × 5px
   - Score: 14px DM Mono
@@ -550,9 +605,11 @@ frontend/src/config/
 ---
 
 #### Sub-Task 2.2.6: FlagsSummary Component (Mobile-First)
+
 **Goal**: Build accessible FlagsSummary component
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Dots: 6px diameter
   - Spacing: 4px between dots
@@ -582,6 +639,7 @@ frontend/src/config/
 ---
 
 **Files**:
+
 ```
 frontend/src/components/core/
 ├── Button/
@@ -624,6 +682,7 @@ frontend/src/components/core/
 ```
 
 **Overall Accessibility Requirements** (ALL components):
+
 - [ ] Focus indicators visible (3px outline)
 - [ ] Touch targets ≥44px on mobile, ≥40px on desktop
 - [ ] ARIA labels on icon buttons
@@ -634,6 +693,7 @@ frontend/src/components/core/
 - [ ] Lighthouse a11y score: ≥95
 
 **Overall Testing Requirements** (ALL components):
+
 - [ ] Unit tests for all variants/states
 - [ ] Storybook stories for visual testing
 - [ ] Test on real iPhone (portrait + landscape)
@@ -649,27 +709,31 @@ frontend/src/components/core/
 ---
 
 ### Task 2.2.5: Centralized Icons
+
 **Goal**: Create single source of truth for all SVG icons
 
 **Deliverables**:
+
 - [ ] **src/components/core/icons.tsx**: All SVG icons as React components
+
   ```typescript
   export const UploadIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       {/* SVG path */}
     </svg>
   );
-  
+
   export const CheckIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
       {/* SVG path */}
     </svg>
   );
-  
+
   // ... all other icons
   ```
 
 **Rules**:
+
 - [ ] All SVG icons in one file
 - [ ] No inline SVGs in components
 - [ ] Consistent sizing (24×24 default)
@@ -677,6 +741,7 @@ frontend/src/components/core/
 - [ ] Named exports (not default)
 
 **Files**:
+
 ```
 frontend/src/components/core/
 └── icons.tsx                  # All SVG icons centralized
@@ -687,9 +752,11 @@ frontend/src/components/core/
 ---
 
 ### Task 2.3: Layout Components (From Wireframes)
+
 **Goal**: Implement navigation and page layout components
 
 **Component Structure** (applies to ALL components):
+
 - **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - **ComponentName.module.css**: All styles
@@ -699,9 +766,11 @@ frontend/src/components/core/
 ---
 
 #### Sub-Task 2.3.1: TopNav Component (Mobile-First)
+
 **Goal**: Build accessible, responsive navigation
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Height: 56px, sticky, z-index 200
   - Logo box (28×28, blue background, rounded 7px)
@@ -746,9 +815,11 @@ frontend/src/components/core/
 ---
 
 #### Sub-Task 2.3.2: PageShell Component (Mobile-First)
+
 **Goal**: Build responsive page layout container
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Title: 18px weight 700
   - Subtitle: 13px
@@ -782,9 +853,11 @@ frontend/src/components/core/
 ---
 
 #### Sub-Task 2.3.3: SectionLabel Component (Mobile-First)
+
 **Goal**: Build accessible section heading
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Font: 10px weight 700, uppercase
   - Letter-spacing: 0.08em
@@ -810,9 +883,11 @@ frontend/src/components/core/
 ---
 
 #### Sub-Task 2.3.4: Divider Component (Mobile-First)
+
 **Goal**: Build accessible divider
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Height: 1px, background: #E2E8F0
   - Vertical margin: 12px (configurable)
@@ -831,9 +906,11 @@ frontend/src/components/core/
 ---
 
 #### Sub-Task 2.3.5: StatCard Component (Mobile-First)
+
 **Goal**: Build accessible stat card
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Background: white, border, border-radius: 8px
   - Padding: 16px
@@ -864,6 +941,7 @@ frontend/src/components/core/
 ---
 
 **Files**:
+
 ```
 frontend/src/components/core/
 ├── TopNav/
@@ -899,6 +977,7 @@ frontend/src/components/core/
 ```
 
 **Overall Accessibility Requirements** (ALL components):
+
 - [ ] Focus indicators visible (3px outline)
 - [ ] Touch targets ≥48px on mobile, ≥44px on tablet, ≥40px on desktop
 - [ ] ARIA labels where needed
@@ -910,6 +989,7 @@ frontend/src/components/core/
 - [ ] Lighthouse a11y score: ≥95
 
 **Overall Testing Requirements** (ALL components):
+
 - [ ] Unit tests for all states
 - [ ] Storybook stories for visual testing
 - [ ] Test on real iPhone (portrait + landscape)
@@ -925,9 +1005,11 @@ frontend/src/components/core/
 ---
 
 ### Task 2.4: Modal & Tabs Components (From Wireframes)
+
 **Goal**: Implement modal dialog and tab navigation
 
 **Component Structure** (applies to ALL components):
+
 - **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - **ComponentName.module.css**: All styles
@@ -937,9 +1019,11 @@ frontend/src/components/core/
 ---
 
 #### Sub-Task 2.4.1: Modal Component (Mobile-First)
+
 **Goal**: Build accessible, responsive modal dialog
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Fixed overlay: rgba(0,0,0,0.4)
   - Panel: full-width minus 16px margin, max-height 90vh
@@ -994,9 +1078,11 @@ frontend/src/components/core/
 ---
 
 #### Sub-Task 2.4.2: Tabs Component (Mobile-First)
+
 **Goal**: Build accessible, responsive tab navigation
 
 **Deliverables**:
+
 - [ ] **Mobile Design (320px-640px)**
   - Horizontal tab bar, border-bottom
   - Active tab: blue text, bottom border 2px solid blue, weight 700
@@ -1041,6 +1127,7 @@ frontend/src/components/core/
 ---
 
 **Files**:
+
 ```
 frontend/src/components/core/
 ├── Modal/
@@ -1058,6 +1145,7 @@ frontend/src/components/core/
 ```
 
 **Overall Accessibility Requirements** (ALL components):
+
 - [ ] Focus trap in modal
 - [ ] Focus returns to trigger on close
 - [ ] Escape key closes modal
@@ -1072,6 +1160,7 @@ frontend/src/components/core/
 - [ ] Lighthouse a11y score: ≥95
 
 **Overall Testing Requirements** (ALL components):
+
 - [ ] Unit tests for all interactions
 - [ ] Storybook stories for visual testing
 - [ ] Test on real iPhone (portrait + landscape)
@@ -1087,10 +1176,12 @@ frontend/src/components/core/
 ---
 
 ### Task 2.5: Responsive CSS & Breakpoints
+
 **Goal**: Implement responsive overrides matching wireframe breakpoints
 
 **Deliverables**:
-- [ ] Responsive CSS classes (ci-* prefixed)
+
+- [ ] Responsive CSS classes (ci-\* prefixed)
 - [ ] Breakpoints:
   - lg ≤ 1100px (tablet landscape)
   - md ≤ 860px (tablet)
@@ -1105,6 +1196,7 @@ frontend/src/components/core/
 - [ ] Touch target sizing (≥44px)
 
 **Files**:
+
 ```
 frontend/src/styles/
 ├── responsive.css
@@ -1116,9 +1208,11 @@ frontend/src/styles/
 ---
 
 ### Task 2.6: Tailwind Configuration
+
 **Goal**: Wire design tokens into Tailwind config
 
 **Deliverables**:
+
 - [ ] Tailwind config importing designTokens.ts
 - [ ] Color palette from tokens
 - [ ] Spacing scale from tokens
@@ -1130,6 +1224,7 @@ frontend/src/styles/
 - [ ] Dark mode configuration (class-based)
 
 **Files**:
+
 ```
 frontend/
 ├── tailwind.config.js
@@ -1143,9 +1238,11 @@ frontend/
 ## Phase 3: User Story — Authentication (Requirement 0)
 
 ### Task 2.1: Authentication Domain Model
+
 **Goal**: Define User and Session aggregates with domain events
 
 **Domain Model**:
+
 ```
 Aggregate: User
 ├── Value Objects:
@@ -1179,6 +1276,7 @@ Aggregate: Session
 ```
 
 **Deliverables**:
+
 - [ ] User aggregate with factory
 - [ ] Session aggregate with factory
 - [ ] Value objects: UserId, Email, UserRole, Auth0SubjectId, SessionId, EncryptedToken, SessionExpiry
@@ -1187,6 +1285,7 @@ Aggregate: Session
 - [ ] Unit tests for aggregates and value objects
 
 **Files**:
+
 ```
 modules/auth/domain/
 ├── user.aggregate.ts
@@ -1211,9 +1310,11 @@ modules/auth/domain/
 ---
 
 ### Task 2.2: Authentication Application Layer
+
 **Goal**: Commands, queries, and event handlers for auth flows
 
 **CQRS Structure**:
+
 ```
 Commands:
 ├── LoginCommand → LoginHandler
@@ -1230,6 +1331,7 @@ Event Handlers:
 ```
 
 **Deliverables**:
+
 - [ ] LoginCommand + LoginHandler (Auth0 callback, create session)
 - [ ] LogoutCommand + LogoutHandler (invalidate session, revoke refresh token)
 - [ ] RefreshSessionCommand + RefreshSessionHandler (silent token refresh)
@@ -1239,6 +1341,7 @@ Event Handlers:
 - [ ] Unit tests for all handlers (mock repositories)
 
 **Files**:
+
 ```
 modules/auth/application/
 ├── commands/
@@ -1263,9 +1366,11 @@ modules/auth/application/
 ---
 
 ### Task 2.3: Authentication Infrastructure Layer
+
 **Goal**: Prisma repositories, Auth0 integration, session guard
 
 **Deliverables**:
+
 - [ ] PrismaUserRepository implementing IUserRepository
 - [ ] PrismaSessionRepository implementing ISessionRepository
 - [ ] Auth0Service (token exchange, validation, refresh)
@@ -1278,6 +1383,7 @@ modules/auth/application/
 - [ ] Integration tests (Supertest + in-memory DB)
 
 **Files**:
+
 ```
 modules/auth/infrastructure/
 ├── prisma-user.repository.ts
@@ -1298,17 +1404,20 @@ modules/auth/infrastructure/
 ---
 
 ### Task 2.4: Authentication UI
+
 **Goal**: Login redirect, logout button, session management with 3-tier API architecture
 
 **3-Tier API Call Stack**:
+
 ```
-UI Hook (useAuth.ts) 
-  → Service (authService.ts) 
-    → httpService (httpService.ts) 
+UI Hook (useAuth.ts)
+  → Service (authService.ts)
+    → httpService (httpService.ts)
       → Axios (client.ts)
 ```
 
 **Component Structure** (applies to ALL components):
+
 - **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - **ComponentName.module.css**: All styles
@@ -1316,6 +1425,7 @@ UI Hook (useAuth.ts)
 - **ComponentName.stories.tsx**: Storybook story
 
 **API Layer**:
+
 - [ ] Add to **src/api/endpoints.ts**:
   ```typescript
   export const API = {
@@ -1328,41 +1438,41 @@ UI Hook (useAuth.ts)
   ```
 
 **Service Layer**:
+
 - [ ] **src/services/authService.ts**
   - Calls httpService for auth endpoints
   - Unwraps ApiResponse<T>
   - No axios imports
+
   ```typescript
   export const authService = {
     getCurrentUser: async (): Promise<User> => {
-      return httpService
-        .get<User>(API.CURRENT_USER)
-        .then(unwrap);
+      return httpService.get<User>(API.CURRENT_USER).then(unwrap);
     },
-    
+
     logout: async (): Promise<void> => {
-      return httpService
-        .post<void>(API.LOGOUT, {})
-        .then(unwrap);
+      return httpService.post<void>(API.LOGOUT, {}).then(unwrap);
     },
   };
   ```
 
 **Hook Layer**:
+
 - [ ] **useAuth.ts**: React Query hook
   - Calls authService methods
   - No httpService or axios imports
   - Returns { user, isLoading, logout, refetch }
+
   ```typescript
   export function useAuth() {
     const queryClient = useQueryClient();
-    
+
     const { data: user, isLoading } = useQuery({
       queryKey: ['current-user'],
       queryFn: authService.getCurrentUser,
       retry: false,
     });
-    
+
     const logoutMutation = useMutation({
       mutationFn: authService.logout,
       onSuccess: () => {
@@ -1370,7 +1480,7 @@ UI Hook (useAuth.ts)
         window.location.href = '/login';
       },
     });
-    
+
     return {
       user,
       isLoading,
@@ -1380,6 +1490,7 @@ UI Hook (useAuth.ts)
   ```
 
 **UI Components**:
+
 - [ ] **LoginCallbackPage** component
   - Handles Auth0 redirect
   - No custom login UI (Auth0 Universal Login)
@@ -1405,6 +1516,7 @@ UI Hook (useAuth.ts)
   - No UI (background process)
 
 **Files**:
+
 ```
 frontend/src/
 ├── api/
@@ -1439,6 +1551,7 @@ frontend/src/
 ```
 
 **Accessibility Requirements**:
+
 - [ ] Focus indicators visible on logout button
 - [ ] Touch target ≥44px
 - [ ] ARIA label on logout button
@@ -1446,6 +1559,7 @@ frontend/src/
 - [ ] Screen reader announces logout action
 
 **Testing Requirements**:
+
 - [ ] Mock at service boundary (not axios)
 - [ ] Test hooks against mocked authService
 - [ ] Test components with mocked useAuth hook
@@ -1458,9 +1572,11 @@ frontend/src/
 ## Phase 4: User Story — Home Screen (US-008, Wireframe Screen 1)
 
 ### Task 4.1: Home Screen Data Layer
+
 **Goal**: Backend API for home screen dashboard data
 
 **Domain Model**:
+
 ```
 Read Model: DashboardViewModel
 ├── User info (name, email, role, orgName)
@@ -1476,6 +1592,7 @@ Read Model: DashboardViewModel
 ```
 
 **Deliverables**:
+
 - [ ] GET /api/v1/reference-data endpoint
 - [ ] Query handler to compute dashboard metrics
 - [ ] Business logic for KPI calculations:
@@ -1507,6 +1624,7 @@ Read Model: DashboardViewModel
 - [ ] Integration tests
 
 **Files**:
+
 ```
 backend/src/modules/reference-data/
 ├── application/queries/
@@ -1523,9 +1641,11 @@ backend/src/modules/reference-data/
 ---
 
 ### Task 4.1.5: Frontend API Infrastructure Setup
+
 **Goal**: Set up 3-tier API call stack infrastructure
 
 **3-Tier Architecture**:
+
 ```
 Layer 1: UI Hooks (useX.ts)
   ↓ calls
@@ -1537,10 +1657,12 @@ Axios (src/api/client.ts)
 ```
 
 **Deliverables**:
+
 - [ ] **src/api/client.ts**: Axios instance configuration
+
   ```typescript
   import axios from 'axios';
-  
+
   export const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
     timeout: 30000,
@@ -1549,9 +1671,10 @@ Axios (src/api/client.ts)
   ```
 
 - [ ] **src/api/httpService.ts**: HTTP wrapper (ONLY file that imports axios)
+
   ```typescript
   import { apiClient } from './client';
-  
+
   export const httpService = {
     get: <T>(url: string) => apiClient.get<ApiResponse<T>>(url),
     post: <T>(url: string, data: any) => apiClient.post<ApiResponse<T>>(url, data),
@@ -1562,6 +1685,7 @@ Axios (src/api/client.ts)
   ```
 
 - [ ] **src/api/endpoints.ts**: All API URL constants
+
   ```typescript
   export const API = {
     REFERENCE_DATA: '/api/v1/reference-data',
@@ -1573,13 +1697,14 @@ Axios (src/api/client.ts)
   ```
 
 - [ ] **src/api/unwrap.ts**: ApiResponse<T> unwrapper utility
+
   ```typescript
   export interface ApiResponse<T> {
     success: boolean;
     data?: T;
     error?: string;
   }
-  
+
   export function unwrap<T>(response: ApiResponse<T>): T {
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Unknown error');
@@ -1589,6 +1714,7 @@ Axios (src/api/client.ts)
   ```
 
 - [ ] **src/types/api.ts**: Shared API types
+
   ```typescript
   export interface ApiResponse<T> {
     success: boolean;
@@ -1596,7 +1722,7 @@ Axios (src/api/client.ts)
     error?: string;
     meta?: PaginationMeta;
   }
-  
+
   export interface PaginationMeta {
     total: number;
     page: number;
@@ -1606,6 +1732,7 @@ Axios (src/api/client.ts)
   ```
 
 **Files**:
+
 ```
 frontend/src/
 ├── api/
@@ -1618,6 +1745,7 @@ frontend/src/
 ```
 
 **Rules**:
+
 - [ ] ONLY httpService.ts imports axios
 - [ ] Services call httpService, never axios directly
 - [ ] Hooks call services, never httpService or axios
@@ -1626,6 +1754,7 @@ frontend/src/
 - [ ] No URL string literals outside endpoints.ts
 
 **Testing**:
+
 - [ ] Mock at service boundary (not axios)
 - [ ] Test services with mocked httpService
 - [ ] Test hooks with mocked services
@@ -1635,17 +1764,20 @@ frontend/src/
 ---
 
 ### Task 4.2: Home Screen UI Components
+
 **Goal**: Implement all home screen sections matching wireframe with 3-tier API architecture
 
 **3-Tier API Call Stack**:
+
 ```
-UI Hook (useHomePage.ts) 
-  → Service (referenceDataService.ts) 
-    → httpService (httpService.ts) 
+UI Hook (useHomePage.ts)
+  → Service (referenceDataService.ts)
+    → httpService (httpService.ts)
       → Axios (client.ts)
 ```
 
 **Component Structure** (applies to ALL components):
+
 - **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - **ComponentName.module.css**: All styles
@@ -1653,6 +1785,7 @@ UI Hook (useHomePage.ts)
 - **ComponentName.stories.tsx**: Storybook story
 
 **API Layer Setup**:
+
 - [ ] **src/api/client.ts**: Axios instance only
 - [ ] **src/api/httpService.ts**: HTTP wrapper (only file that imports axios)
 - [ ] **src/api/endpoints.ts**: All API URL constants
@@ -1673,6 +1806,7 @@ UI Hook (useHomePage.ts)
   ```
 
 **Service Layer**:
+
 - [ ] **src/services/referenceDataService.ts**
   - Calls httpService.get(API.REFERENCE_DATA)
   - Unwraps ApiResponse<ReferenceDataResponse>
@@ -1681,14 +1815,13 @@ UI Hook (useHomePage.ts)
   ```typescript
   export const referenceDataService = {
     getReferenceData: async (): Promise<ReferenceDataResponse> => {
-      return httpService
-        .get<ReferenceDataResponse>(API.REFERENCE_DATA)
-        .then(unwrap);
+      return httpService.get<ReferenceDataResponse>(API.REFERENCE_DATA).then(unwrap);
     },
   };
   ```
 
 **Hook Layer**:
+
 - [ ] **useReferenceData.ts**: React Query hook
   - Calls referenceDataService.getReferenceData()
   - No httpService or axios imports
@@ -1704,6 +1837,7 @@ UI Hook (useHomePage.ts)
   ```
 
 **UI Components**:
+
 - [ ] **HomePage** component (main container)
   - Uses useReferenceData hook
   - Passes data to child components
@@ -1753,6 +1887,7 @@ UI Hook (useHomePage.ts)
   - Mobile-first: stack vertically
 
 **Files**:
+
 ```
 frontend/src/
 ├── api/
@@ -1822,6 +1957,7 @@ frontend/src/
 ```
 
 **Accessibility Requirements** (ALL components):
+
 - [ ] Focus indicators visible (3px outline)
 - [ ] Touch targets ≥44px on mobile
 - [ ] ARIA labels where needed
@@ -1831,6 +1967,7 @@ frontend/src/
 - [ ] Screen reader tested
 
 **Testing Requirements**:
+
 - [ ] Mock at service boundary (not axios)
 - [ ] Test hooks against mocked services
 - [ ] Test components with mocked hooks
@@ -1843,9 +1980,11 @@ frontend/src/
 ## Phase 5: User Story — Upload Screen (Wireframe Screen 2)
 
 ### Task 5.1: Document Upload Domain Model
+
 **Goal**: Define Document aggregate with upload workflow
 
 **Domain Model**:
+
 ```
 Aggregate: Document
 ├── Value Objects:
@@ -1869,6 +2008,7 @@ Aggregate: Document
 ```
 
 **Deliverables**:
+
 - [ ] Document aggregate with factory
 - [ ] Value objects: DocumentId, DocumentName, DocumentType, FileSize, UploadStatus, StorageKey
 - [ ] Domain events: DocumentUploadStartedEvent, DocumentUploadCompletedEvent, DocumentUploadFailedEvent
@@ -1877,6 +2017,7 @@ Aggregate: Document
 - [ ] Property test: File size validation, status transitions
 
 **Files**:
+
 ```
 modules/documents/domain/
 ├── document.aggregate.ts
@@ -1896,9 +2037,11 @@ modules/documents/domain/
 ---
 
 ### Task 5.2: Document Upload Application Layer
+
 **Goal**: Commands and queries for document upload workflow
 
 **CQRS Structure**:
+
 ```
 Commands:
 ├── InitiateUploadCommand → InitiateUploadHandler
@@ -1920,6 +2063,7 @@ Queries:
 ```
 
 **Deliverables**:
+
 - [ ] InitiateUploadCommand + InitiateUploadHandler
 - [ ] CompleteUploadCommand + CompleteUploadHandler
 - [ ] FailUploadCommand + FailUploadHandler
@@ -1927,6 +2071,7 @@ Queries:
 - [ ] Unit tests for all handlers (mock repositories, storage service)
 
 **Files**:
+
 ```
 modules/documents/application/
 ├── commands/
@@ -1946,9 +2091,11 @@ modules/documents/application/
 ---
 
 ### Task 5.3: Document Upload Infrastructure Layer
+
 **Goal**: Prisma repository, storage service, and upload controller
 
 **Deliverables**:
+
 - [ ] PrismaDocumentRepository implementing IDocumentRepository
 - [ ] StorageService (GCS presigned URLs, local filesystem for dev)
 - [ ] DocumentController with endpoints:
@@ -1961,6 +2108,7 @@ modules/documents/application/
 - [ ] Integration tests (full upload flow)
 
 **Files**:
+
 ```
 modules/documents/infrastructure/
 ├── prisma-document.repository.ts
@@ -1980,17 +2128,20 @@ modules/documents/infrastructure/
 ---
 
 ### Task 5.4: Upload Screen UI
+
 **Goal**: Drag-and-drop upload interface with 3-tier API architecture
 
 **3-Tier API Call Stack**:
+
 ```
-UI Hook (useUpload.ts) 
-  → Service (documentService.ts) 
-    → httpService (httpService.ts) 
+UI Hook (useUpload.ts)
+  → Service (documentService.ts)
+    → httpService (httpService.ts)
       → Axios (client.ts)
 ```
 
 **Component Structure** (applies to ALL components):
+
 - **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - **ComponentName.module.css**: All styles
@@ -1998,6 +2149,7 @@ UI Hook (useUpload.ts)
 - **ComponentName.stories.tsx**: Storybook story
 
 **API Layer**:
+
 - [ ] Add to **src/api/endpoints.ts**:
   ```typescript
   export const API = {
@@ -2009,10 +2161,12 @@ UI Hook (useUpload.ts)
   ```
 
 **Service Layer**:
+
 - [ ] **src/services/documentService.ts**
   - Calls httpService for upload endpoints
   - Unwraps ApiResponse<T>
   - No axios imports
+
   ```typescript
   export const documentService = {
     initiateUpload: async (file: File): Promise<UploadResponse> => {
@@ -2024,7 +2178,7 @@ UI Hook (useUpload.ts)
         })
         .then(unwrap);
     },
-    
+
     uploadToStorage: async (url: string, file: File): Promise<void> => {
       // Direct upload to GCS presigned URL (not through httpService)
       await fetch(url, {
@@ -2033,43 +2187,41 @@ UI Hook (useUpload.ts)
         headers: { 'Content-Type': file.type },
       });
     },
-    
+
     completeUpload: async (documentId: string): Promise<void> => {
-      return httpService
-        .post<void>(API.COMPLETE_UPLOAD, { documentId })
-        .then(unwrap);
+      return httpService.post<void>(API.COMPLETE_UPLOAD, { documentId }).then(unwrap);
     },
-    
+
     getUploadStatus: async (documentId: string): Promise<UploadStatus> => {
-      return httpService
-        .get<UploadStatus>(API.UPLOAD_STATUS(documentId))
-        .then(unwrap);
+      return httpService.get<UploadStatus>(API.UPLOAD_STATUS(documentId)).then(unwrap);
     },
   };
   ```
 
 **Hook Layer**:
+
 - [ ] **useUpload.ts**: React Query mutation hook
   - Calls documentService methods
   - No httpService or axios imports
   - Returns { upload, isUploading, progress, error }
+
   ```typescript
   export function useUpload() {
     const uploadMutation = useMutation({
       mutationFn: async (file: File) => {
         // 1. Initiate upload
         const { uploadUrl, documentId } = await documentService.initiateUpload(file);
-        
+
         // 2. Upload to storage
         await documentService.uploadToStorage(uploadUrl, file);
-        
+
         // 3. Complete upload
         await documentService.completeUpload(documentId);
-        
+
         return { documentId };
       },
     });
-    
+
     return {
       upload: uploadMutation.mutate,
       isUploading: uploadMutation.isPending,
@@ -2079,6 +2231,7 @@ UI Hook (useUpload.ts)
   ```
 
 **UI Components**:
+
 - [ ] **UploadPage** component
   - Uses useUpload hook
   - Passes upload function to child components
@@ -2109,6 +2262,7 @@ UI Hook (useUpload.ts)
   - ARIA live region for status updates
 
 **Files**:
+
 ```
 frontend/src/
 ├── api/
@@ -2151,6 +2305,7 @@ frontend/src/
 ```
 
 **Accessibility Requirements** (ALL components):
+
 - [ ] Focus indicators visible (3px outline)
 - [ ] Touch targets ≥44px on mobile
 - [ ] ARIA labels on all interactive elements
@@ -2160,6 +2315,7 @@ frontend/src/
 - [ ] Screen reader tested
 
 **Testing Requirements**:
+
 - [ ] Mock at service boundary (not axios)
 - [ ] Test hooks against mocked services
 - [ ] Test components with mocked hooks
@@ -2172,9 +2328,11 @@ frontend/src/
 ## Phase 4: User Story — Audit Service (Requirement 7)
 
 ### Task 4.1: Audit Domain Model
+
 **Goal**: Define AuditEvent aggregate with tamper detection
 
 **Domain Model**:
+
 ```
 Aggregate: AuditEvent
 ├── Value Objects:
@@ -2194,6 +2352,7 @@ Aggregate: AuditEvent
 ```
 
 **Deliverables**:
+
 - [ ] AuditEvent aggregate with factory
 - [ ] Value objects: AuditEventId, AuditAction, ActorId, ResourceId, Checksum, SequenceNumber
 - [ ] Domain event: AuditEventRecordedEvent
@@ -2202,6 +2361,7 @@ Aggregate: AuditEvent
 - [ ] Property test: Checksum verification
 
 **Files**:
+
 ```
 modules/audit/domain/
 ├── audit-event.aggregate.ts
@@ -2221,9 +2381,11 @@ modules/audit/domain/
 ---
 
 ### Task 4.2: Audit Application Layer
+
 **Goal**: Command handler and query handler for audit events
 
 **CQRS Structure**:
+
 ```
 Commands:
 └── RecordAuditEventCommand → RecordAuditEventHandler
@@ -2244,6 +2406,7 @@ Event Handlers:
 ```
 
 **Deliverables**:
+
 - [ ] RecordAuditEventCommand + RecordAuditEventHandler
 - [ ] QueryAuditEventsQuery + QueryAuditEventsHandler (pagination, filters)
 - [ ] ExportAuditLogQuery + ExportAuditLogHandler (JSON, CSV, PDF)
@@ -2252,6 +2415,7 @@ Event Handlers:
 - [ ] Property test: Sequence number monotonicity
 
 **Files**:
+
 ```
 modules/audit/application/
 ├── commands/
@@ -2273,9 +2437,11 @@ modules/audit/application/
 ---
 
 ### Task 4.3: Audit Infrastructure Layer
+
 **Goal**: Append-only Prisma repository and audit controller
 
 **Deliverables**:
+
 - [ ] PrismaAuditEventRepository (INSERT + SELECT only, no UPDATE/DELETE)
 - [ ] Database role configuration (no UPDATE/DELETE permissions)
 - [ ] AuditController (query endpoint, export endpoint)
@@ -2286,6 +2452,7 @@ modules/audit/application/
 - [ ] Property test: Immutable audit log (attempt UPDATE/DELETE, verify rejection)
 
 **Files**:
+
 ```
 modules/audit/infrastructure/
 ├── prisma-audit-event.repository.ts
@@ -2303,9 +2470,11 @@ modules/audit/infrastructure/
 ---
 
 ### Task 4.4: Audit UI (Optional)
+
 **Goal**: Admin screen to view audit log
 
 **Deliverables**:
+
 - [ ] AuditLogPage (admin only)
 - [ ] AuditLogTable component (filterable, paginated)
 - [ ] AuditEventDetail component (modal)
@@ -2314,6 +2483,7 @@ modules/audit/infrastructure/
 - [ ] API client for /audit endpoints
 
 **Files**:
+
 ```
 frontend/src/
 ├── pages/
@@ -2350,6 +2520,7 @@ frontend/src/
 Every frontend task MUST follow these patterns. Use this checklist to verify compliance:
 
 ### ✅ Component Structure (Every Component)
+
 - [ ] **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - [ ] **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - [ ] **ComponentName.module.css**: All styles
@@ -2357,6 +2528,7 @@ Every frontend task MUST follow these patterns. Use this checklist to verify com
 - [ ] **ComponentName.stories.tsx**: Storybook story
 
 ### ✅ 3-Tier API Call Stack (Every API Call)
+
 - [ ] **Layer 1 - UI Hook (useX.ts)**: Calls service methods only
 - [ ] **Layer 2 - Service (src/services/)**: Calls httpService, unwraps ApiResponse<T>
 - [ ] **Layer 3 - httpService (src/api/httpService.ts)**: ONLY file that imports axios
@@ -2364,22 +2536,26 @@ Every frontend task MUST follow these patterns. Use this checklist to verify com
 - [ ] **All API URLs** defined in src/api/endpoints.ts
 
 ### ✅ API Response Standard (Every Service Method)
+
 - [ ] Backend returns `{ success: boolean; data?: T; error?: string }`
 - [ ] Service calls `.then(unwrap)` to extract data
 - [ ] Never return raw ApiResponse to hooks
 
 ### ✅ Shadcn UI Integration (Every Component)
+
 - [ ] Use Shadcn UI components as base (Button, Dialog, Tabs, Checkbox, etc.)
 - [ ] Customize with design tokens
 - [ ] Never build from scratch if Shadcn has it
 
 ### ✅ Centralized Icons (Every Icon)
+
 - [ ] All SVG icons in `src/components/core/icons.tsx`
 - [ ] No inline SVGs in components
 - [ ] Named exports (not default)
 - [ ] Consistent sizing (24×24 default)
 
 ### ✅ Accessibility (Every Component)
+
 - [ ] Focus indicators visible (3px outline)
 - [ ] Touch targets ≥44px on mobile
 - [ ] ARIA labels on icon buttons
@@ -2388,11 +2564,13 @@ Every frontend task MUST follow these patterns. Use this checklist to verify com
 - [ ] Screen reader tested
 
 ### ✅ Mobile-First Responsive (Every Component)
+
 - [ ] Start with 320px baseline
 - [ ] Use `min-width` media queries (not `max-width`)
 - [ ] Test on real devices (iPhone, Android, iPad, desktop)
 
 ### ✅ Testing (Every Component)
+
 - [ ] Mock at service boundary (not axios)
 - [ ] Test hooks against mocked services
 - [ ] Test components with mocked hooks
@@ -2403,6 +2581,7 @@ Every frontend task MUST follow these patterns. Use this checklist to verify com
 ## File Structure Reference
 
 ### Backend (NestJS + Clean Architecture)
+
 ```
 apps/backend/src/
 ├── modules/{feature}/
@@ -2437,6 +2616,7 @@ apps/backend/src/
 ```
 
 ### Frontend (React + 3-Tier Architecture)
+
 ```
 apps/frontend/src/
 ├── api/                          # Layer 3: HTTP client

@@ -1,7 +1,10 @@
 import { DomainEvent } from '../domain-event';
 
 class UserCreatedEvent extends DomainEvent {
-  constructor(aggregateId: string, public readonly email: string) {
+  constructor(
+    aggregateId: string,
+    public readonly email: string,
+  ) {
     super(aggregateId);
   }
 
@@ -34,12 +37,8 @@ describe('DomainEvent', () => {
       expect(event.occurredOn).toBeInstanceOf(Date);
     });
 
-    it('should accept custom timestamp', () => {
-      const aggregateId = 'user-123';
-      const customDate = new Date('2024-01-01');
-      const event = new UserCreatedEvent(aggregateId, 'test@example.com');
-      // Note: Our implementation doesn't support custom dates in constructor
-      // but the occurredOn should be a Date instance
+    it('should set occurredOn to a Date instance', () => {
+      const event = new UserCreatedEvent('user-123', 'test@example.com');
 
       expect(event.occurredOn).toBeInstanceOf(Date);
     });
@@ -49,9 +48,7 @@ describe('DomainEvent', () => {
       const event = new UserCreatedEvent('user-123', 'test@example.com');
       const after = new Date();
 
-      expect(event.occurredOn.getTime()).toBeGreaterThanOrEqual(
-        before.getTime(),
-      );
+      expect(event.occurredOn.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(event.occurredOn.getTime()).toBeLessThanOrEqual(after.getTime());
     });
   });
@@ -73,11 +70,7 @@ describe('DomainEvent', () => {
     });
 
     it('should return the event type for DocumentUploadedEvent', () => {
-      const event = new DocumentUploadedEvent(
-        'doc-456',
-        'contract.pdf',
-        5000,
-      );
+      const event = new DocumentUploadedEvent('doc-456', 'contract.pdf', 5000);
 
       expect(event.getEventType()).toBe('document.uploaded');
     });
@@ -101,11 +94,7 @@ describe('DomainEvent', () => {
     it('should preserve multiple additional properties', () => {
       const fileName = 'contract.pdf';
       const sizeBytes = 5000;
-      const event = new DocumentUploadedEvent(
-        'doc-456',
-        fileName,
-        sizeBytes,
-      );
+      const event = new DocumentUploadedEvent('doc-456', fileName, sizeBytes);
 
       expect(event.fileName).toBe(fileName);
       expect(event.sizeBytes).toBe(sizeBytes);
@@ -118,9 +107,7 @@ describe('DomainEvent', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
       const event2 = new UserCreatedEvent('user-2', 'user2@example.com');
 
-      expect(event2.occurredOn.getTime()).toBeGreaterThan(
-        event1.occurredOn.getTime(),
-      );
+      expect(event2.occurredOn.getTime()).toBeGreaterThan(event1.occurredOn.getTime());
     });
   });
 

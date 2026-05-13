@@ -1,14 +1,13 @@
-
 // Main App — routing + tweaks
 
 const { useState } = React;
 
-const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "accentColor": "#1d6fff",
-  "fontScale": 1,
-  "density": "comfortable",
-  "showRiskBars": true
-}/*EDITMODE-END*/;
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/ {
+  accentColor: '#1d6fff',
+  fontScale: 1,
+  density: 'comfortable',
+  showRiskBars: true,
+}; /*EDITMODE-END*/
 
 function App() {
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
@@ -29,7 +28,9 @@ function App() {
 
   // Apply tweaks as CSS vars
   const appStyle = {
-    display: 'flex', height: '100vh', overflow: 'hidden',
+    display: 'flex',
+    height: '100vh',
+    overflow: 'hidden',
     fontFamily: "'Inter', sans-serif",
     '--accent': tweaks.accentColor,
     '--font-scale': tweaks.fontScale,
@@ -43,7 +44,13 @@ function App() {
 
   return (
     <div style={appStyle}>
-      <Sidebar active={screen === 'detail' ? 'dashboard' : screen} onNav={s => { setSelectedContract(null); setScreen(s); }} />
+      <Sidebar
+        active={screen === 'detail' ? 'dashboard' : screen}
+        onNav={(s) => {
+          setSelectedContract(null);
+          setScreen(s);
+        }}
+      />
 
       {screen === 'dashboard' && (
         <DashboardScreen onSelect={handleSelectContract} onUpload={() => setShowUpload(true)} />
@@ -52,12 +59,10 @@ function App() {
         <ContractDetailScreen
           contractId={selectedContract}
           onBack={handleBack}
-          onNav={id => setSelectedContract(id)}
+          onNav={(id) => setSelectedContract(id)}
         />
       )}
-      {screen === 'portfolio' && (
-        <PortfolioScreen onSelectContract={handleSelectContract} />
-      )}
+      {screen === 'portfolio' && <PortfolioScreen onSelectContract={handleSelectContract} />}
       {screen === 'calendar' && <RenewalCalendarScreen />}
       {screen === 'templates' && <TemplatesScreen />}
       {screen === 'settings' && <SettingsScreen />}
@@ -67,14 +72,34 @@ function App() {
 
       <TweaksPanel>
         <TweakSection label="Brand">
-          <TweakColor label="Accent Color" value={tweaks.accentColor} onChange={v => setTweak('accentColor', v)} />
+          <TweakColor
+            label="Accent Color"
+            value={tweaks.accentColor}
+            onChange={(v) => setTweak('accentColor', v)}
+          />
         </TweakSection>
         <TweakSection label="Typography">
-          <TweakSlider label="Font Scale" value={tweaks.fontScale} min={0.85} max={1.2} step={0.05} onChange={v => setTweak('fontScale', v)} />
+          <TweakSlider
+            label="Font Scale"
+            value={tweaks.fontScale}
+            min={0.85}
+            max={1.2}
+            step={0.05}
+            onChange={(v) => setTweak('fontScale', v)}
+          />
         </TweakSection>
         <TweakSection label="Layout">
-          <TweakRadio label="Density" value={tweaks.density} options={['compact', 'comfortable']} onChange={v => setTweak('density', v)} />
-          <TweakToggle label="Show Risk Bars" value={tweaks.showRiskBars} onChange={v => setTweak('showRiskBars', v)} />
+          <TweakRadio
+            label="Density"
+            value={tweaks.density}
+            options={['compact', 'comfortable']}
+            onChange={(v) => setTweak('density', v)}
+          />
+          <TweakToggle
+            label="Show Risk Bars"
+            value={tweaks.showRiskBars}
+            onChange={(v) => setTweak('showRiskBars', v)}
+          />
         </TweakSection>
       </TweaksPanel>
 

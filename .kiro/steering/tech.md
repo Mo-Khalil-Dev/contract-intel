@@ -23,7 +23,7 @@
 - **Framework**: React 18 + TypeScript
 - **Build Tool**: Vite
 - **Styling**: TailwindCSS + Design Tokens
-- **State Management**: 
+- **State Management**:
   - React Query (server state / data fetching)
   - Redux Toolkit (complex shared state) or React Context (simple local state)
 - **HTTP Client**: Axios (with response unwrapping interceptor)
@@ -34,16 +34,17 @@
 
 ## Infrastructure & External Services
 
-| Service | Local Dev | Railway Demo | GCP Production |
-|---------|-----------|--------------|----------------|
-| Storage | Local filesystem | GCS bucket | GCS bucket |
-| OCR | Mock | Google Document AI | Google Document AI |
-| AI | Claude API | Claude API | Claude API |
-| Queue | In-memory | pg-boss | BullMQ + Memorystore Redis |
-| Secrets | .env file | Railway env vars | GCP Secret Manager |
-| Logging | pino-pretty | JSON | JSON → Cloud Logging |
+| Service | Local Dev        | Railway Demo       | GCP Production             |
+| ------- | ---------------- | ------------------ | -------------------------- |
+| Storage | Local filesystem | GCS bucket         | GCS bucket                 |
+| OCR     | Mock             | Google Document AI | Google Document AI         |
+| AI      | Claude API       | Claude API         | Claude API                 |
+| Queue   | In-memory        | pg-boss            | BullMQ + Memorystore Redis |
+| Secrets | .env file        | Railway env vars   | GCP Secret Manager         |
+| Logging | pino-pretty      | JSON               | JSON → Cloud Logging       |
 
 **Observability**:
+
 - Backend APM: Dynatrace (OneAgent)
 - Frontend APM: LogRocket (session replay + error tracking)
 - Analytics: PostHog (product analytics + feature flags)
@@ -53,12 +54,14 @@
 ## Common Commands
 
 ### Installation
+
 ```bash
 # Install all dependencies (root + workspaces)
 npm install
 ```
 
 ### Development
+
 ```bash
 # Run both backend and frontend concurrently
 npm run dev
@@ -71,6 +74,7 @@ npm run dev:frontend
 ```
 
 ### Backend-Specific Commands
+
 ```bash
 cd apps/backend
 
@@ -91,6 +95,7 @@ npm run prisma:seed
 ```
 
 ### Testing
+
 ```bash
 # Run all tests (all workspaces)
 npm test
@@ -132,6 +137,7 @@ npm run test:all
 ### Testing by Layer (12-Layer Architecture)
 
 #### Layer 1: Static Analysis
+
 ```bash
 # ESLint
 npm run lint
@@ -144,6 +150,7 @@ npm run lint && npm run type-check
 ```
 
 #### Layer 2-3: Unit Tests (Components + Hooks)
+
 ```bash
 # Run unit tests
 npm test
@@ -159,6 +166,7 @@ npm test ComponentName.test.tsx
 ```
 
 #### Layer 4: Integration Tests
+
 ```bash
 # Backend integration tests (real database)
 cd apps/backend
@@ -170,6 +178,7 @@ npm run test:integration
 ```
 
 #### Layer 5: API Tests
+
 ```bash
 # Backend API tests (Supertest)
 cd apps/backend
@@ -177,6 +186,7 @@ npm run test:api
 ```
 
 #### Layer 6: E2E Tests
+
 ```bash
 # Run E2E tests (Cypress/Playwright)
 npm run test:e2e
@@ -189,6 +199,7 @@ npm run test:e2e -- --spec "cypress/e2e/contract-workflow.cy.ts"
 ```
 
 #### Layer 7: Accessibility Tests
+
 ```bash
 # Run accessibility tests (axe-core + Lighthouse)
 npm run test:a11y
@@ -198,6 +209,7 @@ npm run lighthouse
 ```
 
 #### Layer 8: Performance Tests
+
 ```bash
 # Frontend performance tests
 npm run test:perf
@@ -207,6 +219,7 @@ k6 run test/load-test.js
 ```
 
 #### Layer 9: Security Tests
+
 ```bash
 # Dependency scanning
 npm audit
@@ -222,6 +235,7 @@ sonar-scanner
 ```
 
 #### Layer 10: Visual Regression Tests
+
 ```bash
 # Run Storybook
 npm run storybook
@@ -235,20 +249,21 @@ npx chromatic --project-token=$CHROMATIC_TOKEN
 
 ### Testing Quick Reference
 
-| Layer | Command | When | Speed |
-|-------|---------|------|-------|
-| 1. Static | `npm run lint && npm run type-check` | On save | ⚡ <1s |
-| 2. Unit | `npm test` | On commit | ⚡ <5s |
-| 3. Hooks | `npm test` | On commit | ⚡ <5s |
-| 4. Integration | `npm run test:integration` | On commit | ⏱️ <60s |
-| 5. API | `npm run test:api` | On commit | ⏱️ <60s |
-| 6. E2E | `npm run test:e2e` | Before deploy | ⏱️ 5-30m |
-| 7. A11y | `npm run test:a11y` | On commit | ⚡ <1s |
-| 8. Performance | `npm run test:perf` | Nightly | ⏱️ <60s |
-| 9. Security | `npm audit` | On commit | ⏱️ <10s |
-| 10. Visual | `npm run storybook` | On PR merge | ⏱️ 2-5s |
+| Layer          | Command                              | When          | Speed    |
+| -------------- | ------------------------------------ | ------------- | -------- |
+| 1. Static      | `npm run lint && npm run type-check` | On save       | ⚡ <1s   |
+| 2. Unit        | `npm test`                           | On commit     | ⚡ <5s   |
+| 3. Hooks       | `npm test`                           | On commit     | ⚡ <5s   |
+| 4. Integration | `npm run test:integration`           | On commit     | ⏱️ <60s  |
+| 5. API         | `npm run test:api`                   | On commit     | ⏱️ <60s  |
+| 6. E2E         | `npm run test:e2e`                   | Before deploy | ⏱️ 5-30m |
+| 7. A11y        | `npm run test:a11y`                  | On commit     | ⚡ <1s   |
+| 8. Performance | `npm run test:perf`                  | Nightly       | ⏱️ <60s  |
+| 9. Security    | `npm audit`                          | On commit     | ⏱️ <10s  |
+| 10. Visual     | `npm run storybook`                  | On PR merge   | ⏱️ 2-5s  |
 
 ### Linting & Formatting
+
 ```bash
 # Lint all workspaces
 npm run lint
@@ -261,6 +276,7 @@ npm run lint -- --fix
 ```
 
 ### Building
+
 ```bash
 # Build all workspaces
 npm run build
@@ -273,6 +289,7 @@ npm run build --workspace=apps/frontend
 ```
 
 ### API Documentation
+
 ```bash
 # Start backend in dev mode
 npm run dev:backend
@@ -282,6 +299,7 @@ open http://localhost:3000/api/docs
 ```
 
 ### Storybook (Frontend Component Development)
+
 ```bash
 cd apps/frontend
 
@@ -295,6 +313,7 @@ npm run build-storybook
 ## Environment Variables
 
 ### Backend (.env)
+
 ```bash
 # Database
 DATABASE_URL="file:./dev.db"  # SQLite for local dev
@@ -325,6 +344,7 @@ REDIS_URL="..."
 ```
 
 ### Frontend (.env)
+
 ```bash
 VITE_API_BASE_URL="http://localhost:3000/api/v1"
 VITE_AUTH0_DOMAIN="your-tenant.auth0.com"
@@ -336,6 +356,7 @@ VITE_LOGROCKET_APP_ID="..."
 ## Key Architectural Patterns
 
 ### Backend Module Structure (Vertical Slice)
+
 ```
 src/modules/{feature}/
   domain/              # Pure domain logic (no framework deps)
@@ -362,6 +383,7 @@ src/modules/{feature}/
 ```
 
 ### Frontend Component Structure
+
 ```
 src/components/{ComponentName}/
   ComponentName.tsx           # JSX only (max 15 lines)
@@ -372,14 +394,16 @@ src/components/{ComponentName}/
 ```
 
 ### Frontend API Call Stack (3-Tier)
+
 ```
-UI Hook (useX.ts) 
-  → Service (src/services/) 
-    → httpService (src/api/httpService.ts) 
+UI Hook (useX.ts)
+  → Service (src/services/)
+    → httpService (src/api/httpService.ts)
       → Axios (client.ts)
 ```
 
 **Rules**:
+
 - Hooks call service methods only (no direct axios)
 - Services own domain shape, unwrap `ApiResponse<T>`
 - httpService is the only file that imports axios
@@ -398,11 +422,13 @@ UI Hook (useX.ts)
 ## Deployment
 
 ### Railway (Demo)
+
 ```bash
 railway up
 ```
 
 ### GCP Cloud Run (Production)
+
 ```bash
 # Build
 npm run build
@@ -420,6 +446,7 @@ gcloud run deploy contract-intel-web --source ./apps/frontend
 - **npm**: >= 10.0.0
 
 Check with:
+
 ```bash
 node --version
 npm --version

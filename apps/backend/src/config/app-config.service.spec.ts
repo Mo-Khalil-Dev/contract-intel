@@ -1,13 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { AppConfigService } from './app-config.service';
-import {
-  LogLevel,
-  NodeEnv,
-  OcrDriver,
-  QueueDriver,
-  StorageDriver,
-} from './environment-variables';
+import { LogLevel, NodeEnv, OcrDriver, QueueDriver, StorageDriver } from './environment-variables';
 
 describe('AppConfigService', () => {
   let service: AppConfigService;
@@ -39,10 +33,7 @@ describe('AppConfigService', () => {
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AppConfigService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
+      providers: [AppConfigService, { provide: ConfigService, useValue: mockConfigService }],
     }).compile();
 
     service = module.get<AppConfigService>(AppConfigService);
@@ -96,9 +87,7 @@ describe('AppConfigService', () => {
 
   describe('Auth0 configuration', () => {
     it('should return AUTH0_DOMAIN', async () => {
-      await setupService(
-        buildConfig({ AUTH0_DOMAIN: 'mycompany.auth0.com' }),
-      );
+      await setupService(buildConfig({ AUTH0_DOMAIN: 'mycompany.auth0.com' }));
       expect(service.auth0Domain).toBe('mycompany.auth0.com');
     });
 
@@ -142,9 +131,7 @@ describe('AppConfigService', () => {
 
   describe('Storage configuration', () => {
     it('should return STORAGE_DRIVER as enum', async () => {
-      await setupService(
-        buildConfig({ STORAGE_DRIVER: StorageDriver.Gcs }),
-      );
+      await setupService(buildConfig({ STORAGE_DRIVER: StorageDriver.Gcs }));
       expect(service.storageDriver).toBe(StorageDriver.Gcs);
     });
 
@@ -156,9 +143,7 @@ describe('AppConfigService', () => {
 
   describe('OCR configuration', () => {
     it('should return OCR_DRIVER as enum', async () => {
-      await setupService(
-        buildConfig({ OCR_DRIVER: OcrDriver.GoogleDocumentAi }),
-      );
+      await setupService(buildConfig({ OCR_DRIVER: OcrDriver.GoogleDocumentAi }));
       expect(service.ocrDriver).toBe(OcrDriver.GoogleDocumentAi);
     });
   });

@@ -56,11 +56,7 @@ describe('Result<T>', () => {
     it('should return first failure when any result fails', () => {
       const error1 = new Error('First error');
       const error2 = new Error('Second error');
-      const results = [
-        Result.ok(1),
-        Result.fail(error1),
-        Result.fail(error2),
-      ];
+      const results = [Result.ok(1), Result.fail(error1), Result.fail(error2)];
       const combined = Result.combine(results);
 
       expect(combined.isSuccess).toBe(false);

@@ -3,7 +3,7 @@
 **Epic**: Core Screens  
 **Priority**: P1  
 **Story Points**: 13  
-**Status**: Ready for Implementation  
+**Status**: Ready for Implementation
 
 ---
 
@@ -18,14 +18,16 @@ As a **legal operations user**, I want to upload contract documents (PDF/DOCX) v
 ### 3-Tier API Architecture (MANDATORY)
 
 **API Call Stack**:
+
 ```
-UI Hook (useUpload.ts) 
-  → Service (documentService.ts) 
-    → httpService (httpService.ts) 
+UI Hook (useUpload.ts)
+  → Service (documentService.ts)
+    → httpService (httpService.ts)
       → Axios (client.ts)
 ```
 
 **Rules**:
+
 - [ ] **Layer 1 - UI Hook**: Calls service methods only, no httpService or axios imports
 - [ ] **Layer 2 - Service**: Calls httpService, unwraps `ApiResponse<T>`, no axios imports
 - [ ] **Layer 3 - httpService**: ONLY file that imports axios
@@ -33,6 +35,7 @@ UI Hook (useUpload.ts)
 - [ ] **Every service method**: Calls `.then(unwrap)` to extract data
 
 ### Component Structure (MANDATORY - ALL Components)
+
 - [ ] **ComponentName.tsx**: JSX only, max 15 lines, no logic
 - [ ] **useComponentName.ts**: All UI logic (hooks, state, handlers)
 - [ ] **ComponentName.module.css**: All styles
@@ -40,6 +43,7 @@ UI Hook (useUpload.ts)
 - [ ] **ComponentName.stories.tsx**: Storybook story
 
 ### Layout & Structure
+
 - [ ] Page uses PageShell component
 - [ ] Title: "Upload contract"
 - [ ] Subtitle: "Drop a PDF or Word file to begin analysis"
@@ -49,6 +53,7 @@ UI Hook (useUpload.ts)
 ### Upload Dropzone (Mobile-First)
 
 #### Mobile Design (320px-640px)
+
 - [ ] Dropzone: full-width, min-height 240px
 - [ ] Dashed border: 2px dashed #CBD5E1
 - [ ] Border-radius: 12px
@@ -64,6 +69,7 @@ UI Hook (useUpload.ts)
 - [ ] Tested on real Android phone
 
 #### Tablet Design (640px-1024px)
+
 - [ ] Dropzone: max-width 600px, min-height 280px
 - [ ] Padding: 40px 32px
 - [ ] Icon: 40×40
@@ -72,6 +78,7 @@ UI Hook (useUpload.ts)
 - [ ] Tested on real iPad
 
 #### Desktop Design (1024px+)
+
 - [ ] Dropzone: max-width 720px, min-height 320px
 - [ ] Padding: 48px 40px
 - [ ] Icon: 48×48
@@ -81,6 +88,7 @@ UI Hook (useUpload.ts)
 - [ ] Tested on desktop monitor with mouse
 
 ### File Validation
+
 - [ ] **File size**: ≤50MB (show error if exceeded)
 - [ ] **File type**: PDF or DOCX only (show error if invalid)
 - [ ] **Error message**: Red text below dropzone, ARIA live region
@@ -89,6 +97,7 @@ UI Hook (useUpload.ts)
   - "Only PDF and DOCX files are supported"
 
 ### Selected File Display
+
 - [ ] Shows file name (truncated if > 40 chars)
 - [ ] Shows file size (formatted: "2.4 MB")
 - [ ] Shows file type icon (PDF or DOCX)
@@ -96,6 +105,7 @@ UI Hook (useUpload.ts)
 - [ ] Remove button: ≥44px touch target, ARIA label "Remove file"
 
 ### Consent Checkbox (Base: Shadcn UI Checkbox)
+
 - [ ] Checkbox + label: "I confirm this document is authorized for review and does not contain confidential information beyond standard contract terms."
 - [ ] Required before upload (button disabled until checked)
 - [ ] Keyboard accessible (Space to toggle)
@@ -104,6 +114,7 @@ UI Hook (useUpload.ts)
 - [ ] Focus indicator visible (3px outline)
 
 ### Upload Button
+
 - [ ] Text: "Upload and analyze"
 - [ ] Variant: primary
 - [ ] Size: lg on mobile, md on tablet/desktop
@@ -117,6 +128,7 @@ UI Hook (useUpload.ts)
 - [ ] ARIA label: "Upload contract for analysis"
 
 ### Upload Progress
+
 - [ ] Progress bar (0-100%)
 - [ ] Status text:
   - "Uploading..." (0-50%)
@@ -127,6 +139,7 @@ UI Hook (useUpload.ts)
 - [ ] Cancel button: ≥44px touch target, ARIA label "Cancel upload"
 
 ### Upload Flow
+
 1. User selects file (drag-and-drop or file picker)
 2. File validation (size, type)
 3. File info displayed
@@ -140,6 +153,7 @@ UI Hook (useUpload.ts)
 11. Frontend redirects to processing screen
 
 ### Accessibility Requirements (WCAG 2.1 AA)
+
 - [ ] **Focus indicators**: 3px outline, visible on all interactive elements
 - [ ] **Touch targets**: ≥48px on mobile, ≥44px on tablet, ≥40px on desktop
 - [ ] **ARIA labels**: All buttons, checkbox, file input
@@ -149,6 +163,7 @@ UI Hook (useUpload.ts)
 - [ ] **Screen reader tested**: VoiceOver (iOS/macOS), NVDA (Windows)
 
 ### Testing Requirements
+
 - [ ] **Mock at service boundary**: Test hooks against mocked `documentService`
 - [ ] **Unit tests**: All components (dropzone, checkbox, button, progress)
 - [ ] **Unit tests**: File validation (size, type)
@@ -171,6 +186,7 @@ UI Hook (useUpload.ts)
 ## Design Specifications
 
 ### Colors Used
+
 - Background: #FAFAF9
 - Surface: #FFFFFF
 - Border: #CBD5E1
@@ -185,16 +201,19 @@ UI Hook (useUpload.ts)
 - Accent (blue): #2563EB
 
 ### Typography
+
 - Font family: DM Sans (all text)
 - Monospace: DM Mono (file size)
 - Sizes: 11px (file types), 12px (sub-text), 14px (main text), 15px (tablet), 16px (desktop)
 
 ### Spacing
+
 - Container padding: 32px horizontal
 - Dropzone padding: 32px 24px (mobile), 40px 32px (tablet), 48px 40px (desktop)
 - Element gaps: 12px (vertical spacing)
 
 ### Border Radius
+
 - Dropzone: 12px
 - Buttons: 8px
 - File display: 8px
@@ -204,6 +223,7 @@ UI Hook (useUpload.ts)
 ## API Layer Setup
 
 ### src/api/endpoints.ts
+
 ```typescript
 export const API = {
   // ... existing endpoints
@@ -214,6 +234,7 @@ export const API = {
 ```
 
 ### src/services/documentService.ts
+
 ```typescript
 export const documentService = {
   initiateUpload: async (file: File): Promise<UploadResponse> => {
@@ -225,7 +246,7 @@ export const documentService = {
       })
       .then(unwrap);
   },
-  
+
   uploadToStorage: async (url: string, file: File): Promise<void> => {
     // Direct upload to GCS presigned URL (not through httpService)
     await fetch(url, {
@@ -234,39 +255,36 @@ export const documentService = {
       headers: { 'Content-Type': file.type },
     });
   },
-  
+
   completeUpload: async (documentId: string): Promise<void> => {
-    return httpService
-      .post<void>(API.COMPLETE_UPLOAD, { documentId })
-      .then(unwrap);
+    return httpService.post<void>(API.COMPLETE_UPLOAD, { documentId }).then(unwrap);
   },
-  
+
   getUploadStatus: async (documentId: string): Promise<UploadStatus> => {
-    return httpService
-      .get<UploadStatus>(API.UPLOAD_STATUS(documentId))
-      .then(unwrap);
+    return httpService.get<UploadStatus>(API.UPLOAD_STATUS(documentId)).then(unwrap);
   },
 };
 ```
 
 ### src/hooks/useUpload.ts
+
 ```typescript
 export function useUpload() {
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       // 1. Initiate upload
       const { uploadUrl, documentId } = await documentService.initiateUpload(file);
-      
+
       // 2. Upload to storage
       await documentService.uploadToStorage(uploadUrl, file);
-      
+
       // 3. Complete upload
       await documentService.completeUpload(documentId);
-      
+
       return { documentId };
     },
   });
-  
+
   return {
     upload: uploadMutation.mutate,
     isUploading: uploadMutation.isPending,
@@ -325,9 +343,11 @@ frontend/src/
 ## Implementation Tasks
 
 ### Task 1: API Infrastructure Setup
+
 **Goal**: Set up 3-tier API call stack for upload
 
 **Deliverables**:
+
 - [ ] Add upload endpoints to `src/api/endpoints.ts`
 - [ ] Create `src/services/documentService.ts`
   - `initiateUpload(file)`: Calls httpService, unwraps response
@@ -346,9 +366,11 @@ frontend/src/
 ---
 
 ### Task 2: UploadDropzone Component (Mobile-First)
+
 **Goal**: Build drag-and-drop file picker with Shadcn UI base
 
 **Deliverables**:
+
 - [ ] Create UploadDropzone component (5 files)
 - [ ] Implement mobile design (320px-640px):
   - Full-width, min-height 240px
@@ -388,9 +410,11 @@ frontend/src/
 ---
 
 ### Task 3: ConsentCheckbox Component
+
 **Goal**: Build accessible consent checkbox with Shadcn UI base
 
 **Deliverables**:
+
 - [ ] Install Shadcn UI Checkbox: `npx shadcn-ui@latest add checkbox`
 - [ ] Create ConsentCheckbox component (5 files)
 - [ ] Checkbox + label: "I confirm this document is authorized..."
@@ -406,9 +430,11 @@ frontend/src/
 ---
 
 ### Task 4: UploadButton Component
+
 **Goal**: Build upload button with loading state
 
 **Deliverables**:
+
 - [ ] Create UploadButton component (5 files)
 - [ ] Text: "Upload and analyze"
 - [ ] Variant: primary
@@ -428,9 +454,11 @@ frontend/src/
 ---
 
 ### Task 5: UploadProgress Component
+
 **Goal**: Build progress indicator with status updates
 
 **Deliverables**:
+
 - [ ] Create UploadProgress component (5 files)
 - [ ] Progress bar (0-100%)
 - [ ] Status text:
@@ -449,9 +477,11 @@ frontend/src/
 ---
 
 ### Task 6: UploadPage Integration
+
 **Goal**: Integrate all components into UploadPage
 
 **Deliverables**:
+
 - [ ] Create UploadPage component (5 files)
 - [ ] Uses useUpload hook
 - [ ] Passes upload function to child components
@@ -474,9 +504,11 @@ frontend/src/
 ---
 
 ### Task 7: Testing
+
 **Goal**: Comprehensive testing on all devices
 
 **Deliverables**:
+
 - [ ] Mock at service boundary (not axios)
 - [ ] Unit tests for all components
 - [ ] Unit tests for file validation
@@ -500,22 +532,26 @@ frontend/src/
 ## Edge Cases & States
 
 ### No File Selected
+
 - [ ] Upload button disabled
 - [ ] Dropzone shows default state
 
 ### File Too Large
+
 - [ ] Error message: "File size exceeds 50 MB limit"
 - [ ] Error shown below dropzone
 - [ ] ARIA live region announces error
 - [ ] Upload button disabled
 
 ### Invalid File Type
+
 - [ ] Error message: "Only PDF and DOCX files are supported"
 - [ ] Error shown below dropzone
 - [ ] ARIA live region announces error
 - [ ] Upload button disabled
 
 ### Upload Failed
+
 - [ ] Error message: "Upload failed. Please try again."
 - [ ] Error shown below progress bar
 - [ ] ARIA live region announces error
@@ -523,6 +559,7 @@ frontend/src/
 - [ ] File selection retained
 
 ### Upload Cancelled
+
 - [ ] Progress bar hidden
 - [ ] Status text: "Upload cancelled"
 - [ ] Upload button re-enabled

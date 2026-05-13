@@ -5,6 +5,7 @@
 This project follows **Clean Architecture + DDD + CQRS + Vertical Slicing + Ports & Adapters**.
 
 Key principles:
+
 - Dependencies point inward (domain has zero framework dependencies)
 - Domain layer is pure business logic
 - CQRS: commands mutate, queries read directly from DB
@@ -49,6 +50,7 @@ src/modules/{feature}/
 ### Domain Layer Rules
 
 **Result Pattern** for error handling:
+
 ```typescript
 static create(props): Result<T> {
   if (invalid) return Result.fail(new DomainException(...))
@@ -57,6 +59,7 @@ static create(props): Result<T> {
 ```
 
 **Repository Convention**:
+
 - Returns `T | null` (null = not found)
 - Throws `InfrastructureException` on failure
 - Never returns Prisma types (always domain aggregates)
@@ -64,6 +67,7 @@ static create(props): Result<T> {
 ### Exception Hierarchy
 
 Three-layer system:
+
 - `DomainException` — business rule violations (422, 409)
 - `ApplicationException` — use case failures (404, 403, 409, 503)
 - `InfrastructureException` — external failures (500)
@@ -73,9 +77,11 @@ Global `HttpExceptionFilter` returns RFC 7807 Problem Details.
 ### Mapper Layer
 
 Three representations (never leak between layers):
+
 - `Persistence` (Prisma) ↔ `Domain` (Aggregate) ↔ `DTO` (API Response)
 
 Each module has `{Feature}Mapper` implementing:
+
 ```typescript
 interface Mapper<Domain, Persistence, Response> {
   toDomain(persistence: Persistence): Domain;
@@ -87,6 +93,7 @@ interface Mapper<Domain, Persistence, Response> {
 ### API Response Envelope
 
 All endpoints return:
+
 ```typescript
 // Success
 { "success": true, "data": { ... }, "meta": null }
@@ -106,13 +113,13 @@ All endpoints return:
 
 All infrastructure concerns abstracted behind interfaces:
 
-| Port | Env var | Local | Demo | Production |
-|---|---|---|---|---|
-| `StorageService` | `STORAGE_DRIVER` | `local` | `gcs` | `gcs` |
-| `OCRService` | `OCR_DRIVER` | `mock` | `google-document-ai` | `google-document-ai` |
-| `QueueService` | `QUEUE_DRIVER` | `memory` | `pg-boss` | `bullmq` |
-| `SecretsService` | `SECRETS_DRIVER` | `env` | `env` | `gcp-secret-manager` |
-| `LoggerService` | `LOGGER_DRIVER` | `console` | `pino` | `pino` |
+| Port             | Env var          | Local     | Demo                 | Production           |
+| ---------------- | ---------------- | --------- | -------------------- | -------------------- |
+| `StorageService` | `STORAGE_DRIVER` | `local`   | `gcs`                | `gcs`                |
+| `OCRService`     | `OCR_DRIVER`     | `mock`    | `google-document-ai` | `google-document-ai` |
+| `QueueService`   | `QUEUE_DRIVER`   | `memory`  | `pg-boss`            | `bullmq`             |
+| `SecretsService` | `SECRETS_DRIVER` | `env`     | `env`                | `gcp-secret-manager` |
+| `LoggerService`  | `LOGGER_DRIVER`  | `console` | `pino`               | `pino`               |
 
 ---
 
@@ -132,6 +139,7 @@ ComponentName/
 ```
 
 **Rules**:
+
 - JSX file: rendering only, no business logic
 - Hook file: all state, effects, handlers, computed values
 - CSS file: component-specific styles (Tailwind for utilities)
@@ -143,13 +151,14 @@ ComponentName/
 Every API call MUST flow through these layers:
 
 ```
-UI Hook (useX.ts) 
-  → Service (src/services/) 
-    → httpService (src/api/httpService.ts) 
+UI Hook (useX.ts)
+  → Service (src/services/)
+    → httpService (src/api/httpService.ts)
       → Axios (client.ts)
 ```
 
 **Rules**:
+
 - Hooks call service methods only (no axios, no fetch, no direct HTTP)
 - Services own domain shape, unwrap `ApiResponse<T>`, handle errors
 - httpService is the ONLY file that imports axios
@@ -158,6 +167,7 @@ UI Hook (useX.ts)
 ### API Response Standard
 
 All backend endpoints return:
+
 ```typescript
 { success: boolean; data?: T; error?: string }
 ```
@@ -208,6 +218,7 @@ Every component MUST include:
 - **Screen reader tested**: VoiceOver on iOS/macOS, NVDA on Windows
 
 **Testing checklist**:
+
 - [ ] axe DevTools: 0 critical violations
 - [ ] Lighthouse a11y score: ≥95
 - [ ] Keyboard navigation works
@@ -287,7 +298,7 @@ Every response includes `actions` (what's allowed) and `ui` (how to display):
 ```typescript
 {
   "resource": { /* data */ },
-  
+
   "actions": {
     "canSubmit": {
       "allowed": false,
@@ -296,7 +307,7 @@ Every response includes `actions` (what's allowed) and `ui` (how to display):
     },
     "canSave": { "allowed": true }
   },
-  
+
   "ui": {
     "submitButtonLabel": "Submit for Review",
     "submitButtonColor": "primary",
@@ -318,7 +329,8 @@ if (response.actions.canSubmit.allowed) {
 }
 
 // ❌ DON'T: Calculate
-if (answers.length === total) {  // Never do this
+if (answers.length === total) {
+  // Never do this
   renderSubmitButton();
 }
 ```
@@ -334,28 +346,30 @@ GET /api/v1/reference-data
 ```
 
 **Response structure**:
+
 ```typescript
 interface ReferenceDataResponse {
-  user: { id, name, email, role, orgName }
+  user: { id; name; email; role; orgName };
   views: {
-    dashboard: DashboardViewModel
-    contractsList?: ContractsListViewModel
+    dashboard: DashboardViewModel;
+    contractsList?: ContractsListViewModel;
     // new views added here over time
-  }
+  };
   actions: {
-    canUploadDocument: ActionPermission
-    canCreateEngagement: ActionPermission
+    canUploadDocument: ActionPermission;
+    canCreateEngagement: ActionPermission;
     // ...
-  }
+  };
   ui: {
-    orgBannerText: string
-    systemStatus: 'operational' | 'degraded' | 'maintenance'
-    systemStatusColor: string
-  }
+    orgBannerText: string;
+    systemStatus: 'operational' | 'degraded' | 'maintenance';
+    systemStatusColor: string;
+  };
 }
 ```
 
 **Rules**:
+
 - Fetch all views in one call
 - Backend computes all KPIs, colors, labels, sorted lists
 - Frontend never calculates business values
@@ -371,6 +385,7 @@ interface ReferenceDataResponse {
 **Invocation**: Domain event handlers (audit is a side effect)
 
 **Data model**:
+
 ```typescript
 AuditEvent {
   id: string
@@ -387,6 +402,7 @@ AuditEvent {
 ```
 
 **Rules**:
+
 - INSERT-only (no UPDATE/DELETE on audit table)
 - Tamper detection via SHA-256 checksum
 - Indefinite retention
@@ -416,12 +432,12 @@ AuditEvent {
 
 Using `cockatiel`:
 
-| API | Retry | Circuit Breaker | Timeout |
-|---|---|---|---|
-| Claude API | 3x exponential backoff | Yes (5 failures) | 60s |
-| Google Document AI | 3x exponential backoff | Yes (5 failures) | 30s |
-| Auth0 | 2x fixed 1s | No | 10s |
-| GCS | 3x exponential backoff | No | 30s |
+| API                | Retry                  | Circuit Breaker  | Timeout |
+| ------------------ | ---------------------- | ---------------- | ------- |
+| Claude API         | 3x exponential backoff | Yes (5 failures) | 60s     |
+| Google Document AI | 3x exponential backoff | Yes (5 failures) | 30s     |
+| Auth0              | 2x fixed 1s            | No               | 10s     |
+| GCS                | 3x exponential backoff | No               | 30s     |
 
 Circuit open → `ExternalServiceUnavailableException` → 503
 
@@ -470,11 +486,13 @@ Testing is a layered, intentional discipline that catches bugs at every stage—
 **When to run**: On every file save (IDE), on every commit
 
 **Tools**:
+
 - ESLint (JavaScript/TypeScript)
 - TypeScript strict mode
 - Prettier (code formatting)
 
 **Configuration**:
+
 ```json
 {
   "eslintConfig": {
@@ -490,6 +508,7 @@ Testing is a layered, intentional discipline that catches bugs at every stage—
 ```
 
 **Commands**:
+
 ```bash
 npm run lint         # ESLint checks
 npm run type-check   # TypeScript checks
@@ -506,12 +525,14 @@ npm run type-check   # TypeScript checks
 **When to run**: Before merging to main
 
 **Branch Protection Rules**:
+
 - ✓ Require 1 code review
 - ✓ Require approving reviews
 - ✓ Dismiss stale reviews on new commits
 - ✓ Require status checks to pass
 
 **Review Checklist**:
+
 - [ ] Code follows our style guide
 - [ ] Changes include tests
 - [ ] Logging/error handling is present
@@ -533,6 +554,7 @@ npm run type-check   # TypeScript checks
 **Test Organization**: Arrange → Act → Assert
 
 **Example (Domain Layer)**:
+
 ```typescript
 // test/domain/entities/contract.spec.ts
 describe('Contract Entity', () => {
@@ -544,22 +566,23 @@ describe('Contract Entity', () => {
         { type: 'liability', risk: 'medium' },
       ],
     });
-    
+
     expect(contract.calculateRiskScore()).toBe(75);
   });
-  
+
   it('should prevent approval if high-risk flags unresolved', () => {
     const contract = new Contract({
       id: '1',
       flags: [{ severity: 'high', resolved: false }],
     });
-    
+
     expect(() => contract.approve()).toThrow('Cannot approve with unresolved high-risk flags');
   });
 });
 ```
 
 **Commands**:
+
 ```bash
 npm test                    # Run all tests
 npm test -- --watch        # Watch mode (rerun on change)
@@ -567,6 +590,7 @@ npm test -- --coverage     # Show coverage %
 ```
 
 **Target Coverage**:
+
 - Domain layer: ≥ 90%
 - Application layer: ≥ 80%
 - Infrastructure layer: ≥ 70%
@@ -582,12 +606,13 @@ npm test -- --coverage     # Show coverage %
 **When to run**: On every commit (CI pipeline)
 
 **Example (Repository Integration)**:
+
 ```typescript
 // test/infrastructure/repositories/contract.repository.integration.spec.ts
 describe('ContractRepository Integration', () => {
   let repository: ContractRepository;
   let dataSource: DataSource;
-  
+
   beforeAll(async () => {
     dataSource = await new DataSource({
       type: 'postgres',
@@ -595,16 +620,16 @@ describe('ContractRepository Integration', () => {
       port: 5433,
       database: 'test_contract_intel',
       synchronize: true,
-      dropSchema: true,  // Fresh DB each test
+      dropSchema: true, // Fresh DB each test
     }).initialize();
-    
+
     repository = new ContractRepository(dataSource);
   });
-  
+
   afterAll(async () => {
     await dataSource.destroy();
   });
-  
+
   it('should create and retrieve contract end-to-end', async () => {
     // 1. Create contract
     const contract = await repository.save({
@@ -613,40 +638,37 @@ describe('ContractRepository Integration', () => {
       status: 'pending',
     });
     expect(contract.id).toBeDefined();
-    
+
     // 2. Retrieve contract
     const retrieved = await repository.findById(contract.id);
     expect(retrieved.name).toBe('Test Contract');
-    
+
     // 3. Verify in database
-    const dbRecord = await dataSource.query(
-      'SELECT * FROM contracts WHERE id = $1',
-      [contract.id]
-    );
+    const dbRecord = await dataSource.query('SELECT * FROM contracts WHERE id = $1', [contract.id]);
     expect(dbRecord).toHaveLength(1);
   });
-  
+
   it('should use index for contract lookup by userId', async () => {
     // Create 100 contracts
     await Promise.all(
       Array.from({ length: 100 }, (_, i) =>
-        repository.save({ userId: 'user1', name: `Contract ${i}` })
-      )
+        repository.save({ userId: 'user1', name: `Contract ${i}` }),
+      ),
     );
-    
+
     // Query should use index
-    const plan = await dataSource.query(
-      'EXPLAIN SELECT * FROM contracts WHERE user_id = $1',
-      ['user1']
-    );
-    
+    const plan = await dataSource.query('EXPLAIN SELECT * FROM contracts WHERE user_id = $1', [
+      'user1',
+    ]);
+
     // Verify index is used (not seq scan)
-    expect(plan.some(row => row['Node Type'] === 'Index Scan')).toBe(true);
+    expect(plan.some((row) => row['Node Type'] === 'Index Scan')).toBe(true);
   });
 });
 ```
 
 **Commands**:
+
 ```bash
 npm run test:integration        # Run integration tests only
 npm run test:integration:watch  # Watch mode
@@ -663,6 +685,7 @@ npm run test:integration:watch  # Watch mode
 **When to run**: On every commit (CI pipeline)
 
 **Example (API Endpoint)**:
+
 ```typescript
 // test/api/contracts.api.spec.ts
 import request from 'supertest';
@@ -678,23 +701,23 @@ describe('Contracts API', () => {
           name: 'Test Contract',
           type: 'vendor',
         });
-      
-      expect(response.status).toBe(201);  // Created
+
+      expect(response.status).toBe(201); // Created
       expect(response.body).toHaveProperty('id');
       expect(response.body.name).toBe('Test Contract');
-      expect(response.body).not.toHaveProperty('internalNotes');  // No leaks
+      expect(response.body).not.toHaveProperty('internalNotes'); // No leaks
     });
-    
+
     it('should reject unauthorized request', async () => {
       const response = await request(app)
         .post('/api/v1/contracts')
         // No Authorization header
         .send({ name: 'Test' });
-      
-      expect(response.status).toBe(401);  // Unauthorized
+
+      expect(response.status).toBe(401); // Unauthorized
       expect(response.body.message).toContain('authentication');
     });
-    
+
     it('should return 400 for missing required field', async () => {
       const response = await request(app)
         .post('/api/v1/contracts')
@@ -703,41 +726,41 @@ describe('Contracts API', () => {
           // Missing name
           type: 'vendor',
         });
-      
+
       expect(response.status).toBe(400);
-      expect(response.body.errors).toContainEqual(
-        expect.objectContaining({ field: 'name' })
-      );
+      expect(response.body.errors).toContainEqual(expect.objectContaining({ field: 'name' }));
     });
   });
-  
+
   describe('GET /contracts/:id', () => {
     it('should return 404 for nonexistent contract', async () => {
       const response = await request(app)
         .get('/api/v1/contracts/99999')
         .set('Authorization', `Bearer ${authToken}`);
-      
+
       expect(response.status).toBe(404);
     });
-    
+
     it('should return 403 if user lacks access', async () => {
       const response = await request(app)
         .get('/api/v1/contracts/other-user-contract')
         .set('Authorization', `Bearer ${userToken}`);
-      
-      expect(response.status).toBe(403);  // Forbidden
+
+      expect(response.status).toBe(403); // Forbidden
     });
   });
 });
 ```
 
 **Commands**:
+
 ```bash
 npm run test:api          # Run API tests
 npm run test:api:watch    # Watch mode
 ```
 
 **Test Coverage for Each Endpoint**:
+
 1. Happy path (200/201)
 2. Auth required (401)
 3. Missing fields (400)
@@ -756,6 +779,7 @@ npm run test:api:watch    # Watch mode
 **When to run**: On PR merge (before production), nightly, not locally (too slow)
 
 **Example (Cypress)**:
+
 ```typescript
 // cypress/e2e/contract-workflow.cy.ts
 describe('Contract Upload and Analysis Workflow', () => {
@@ -763,41 +787,42 @@ describe('Contract Upload and Analysis Workflow', () => {
     cy.visit('http://localhost:3000');
     cy.login('test@example.com', 'password');
   });
-  
+
   it('should upload and analyze contract', () => {
     // Navigate to upload
     cy.contains('Upload Contract').click();
     cy.url().should('include', '/upload');
-    
+
     // Upload file
     cy.get('[data-cy=file-upload]').attachFile('test-contract.pdf');
     cy.get('[data-cy=contract-name]').type('Vendor Agreement');
     cy.get('[data-cy=submit-btn]').click();
-    
+
     // Wait for processing
     cy.contains('Processing...').should('be.visible');
     cy.contains('Analysis Complete', { timeout: 60000 }).should('be.visible');
-    
+
     // Verify results
     cy.url().should('include', '/contracts/');
     cy.get('[data-cy=risk-score]').should('contain', '%');
     cy.get('[data-cy=flags-count]').should('be.visible');
   });
-  
+
   it('should show validation errors for invalid upload', () => {
     cy.contains('Upload Contract').click();
-    
+
     // Try to submit without file
     cy.get('[data-cy=submit-btn]').click();
-    
+
     // Should show error
     cy.contains('Please select a file').should('be.visible');
-    cy.url().should('not.include', '/contracts');  // Still on form
+    cy.url().should('not.include', '/contracts'); // Still on form
   });
 });
 ```
 
 **Commands**:
+
 ```bash
 npm run test:e2e              # Run E2E tests
 npm run test:e2e -- --headed  # With browser visible
@@ -805,11 +830,13 @@ npm run test:e2e:debug        # Debug mode
 ```
 
 **Priority**:
+
 1. Critical user journeys (contract upload → analysis → review)
 2. High-value flows (export report, share result)
 3. Error scenarios (network error handling)
 
 **Skip**:
+
 - Every button click (use unit tests)
 - Every input validation (use API tests)
 - UI implementation details (use visual tests)
@@ -827,6 +854,7 @@ npm run test:e2e:debug        # Debug mode
 **Tools**: k6, JMeter, Gatling, Locust
 
 **Example (k6 script)**:
+
 ```javascript
 // test/load-test.js
 import http from 'k6/http';
@@ -834,21 +862,21 @@ import { check, sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '1m', target: 10 },   // Ramp up to 10 users
-    { duration: '2m', target: 50 },   // Ramp up to 50 users
-    { duration: '2m', target: 100 },  // Ramp up to 100 users
-    { duration: '1m', target: 0 },    // Ramp down to 0 users
+    { duration: '1m', target: 10 }, // Ramp up to 10 users
+    { duration: '2m', target: 50 }, // Ramp up to 50 users
+    { duration: '2m', target: 100 }, // Ramp up to 100 users
+    { duration: '1m', target: 0 }, // Ramp down to 0 users
   ],
   thresholds: {
-    'http_req_duration': ['p(95)<500'],  // P95 latency < 500ms
-    'http_req_failed': ['rate<0.1'],     // Error rate < 10%
+    http_req_duration: ['p(95)<500'], // P95 latency < 500ms
+    http_req_failed: ['rate<0.1'], // Error rate < 10%
   },
 };
 
-export default function() {
+export default function () {
   const baseUrl = 'http://localhost:3000/api/v1';
   const authToken = 'test-token';
-  
+
   // Upload contract
   const uploadRes = http.post(
     `${baseUrl}/contracts`,
@@ -858,27 +886,29 @@ export default function() {
     }),
     {
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        Authorization: `Bearer ${authToken}`,
         'Content-Type': 'application/json',
       },
-    }
+    },
   );
-  
+
   check(uploadRes, {
     'Upload status 201': (r) => r.status === 201,
     'Upload response time < 200ms': (r) => r.timings.duration < 200,
   });
-  
+
   sleep(1);
 }
 ```
 
 **Commands**:
+
 ```bash
 k6 run test/load-test.js
 ```
 
 **Thresholds**:
+
 - P95 latency < 500ms
 - Error rate < 1%
 - No memory leaks (check after soak test)
@@ -894,6 +924,7 @@ k6 run test/load-test.js
 **When to run**: On every commit (dependencies), nightly (full scan)
 
 **Tools**:
+
 - npm audit (dependency scanning)
 - Snyk (detailed vulnerability analysis)
 - TruffleHog (secret scanning)
@@ -901,6 +932,7 @@ k6 run test/load-test.js
 - OWASP ZAP (DAST)
 
 **Commands**:
+
 ```bash
 # Dependency scanning
 npm audit                    # Built-in; check for known CVEs
@@ -917,6 +949,7 @@ sonar-scanner \
 ```
 
 **CI/CD Integration**:
+
 ```yaml
 # .github/workflows/security.yml
 name: Security Scan
@@ -930,15 +963,15 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      
+
       # Dependency scanning
       - run: npm audit --audit-level=moderate
-      
+
       # Secret scanning
       - uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-      
+
       # SAST
       - uses: SonarSource/sonarcloud-github-action@master
 ```
@@ -956,6 +989,7 @@ jobs:
 **Tools**: axe, Lighthouse, Pa11y
 
 **Example (Jest + axe)**:
+
 ```typescript
 // test/accessibility.spec.ts
 import { render } from '@testing-library/react';
@@ -970,17 +1004,17 @@ describe('ContractUploadForm Accessibility', () => {
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
-  
+
   it('should have proper labels', () => {
     const { getByLabelText } = render(<ContractUploadForm />);
-    
+
     const fileInput = getByLabelText('Contract File');
     expect(fileInput).toBeInTheDocument();
   });
-  
+
   it('should be keyboard navigable', () => {
     const { getByRole } = render(<ContractUploadForm />);
-    
+
     const submitButton = getByRole('button', { name: /upload/i });
     submitButton.focus();
     expect(document.activeElement).toBe(submitButton);
@@ -989,12 +1023,14 @@ describe('ContractUploadForm Accessibility', () => {
 ```
 
 **Commands**:
+
 ```bash
 npm run test:a11y          # Automated scanning
 # Manual: Use NVDA (Windows) or VoiceOver (Mac) to test
 ```
 
 **WCAG AA Requirements**:
+
 - Color contrast ≥ 4.5:1
 - Keyboard navigation works
 - Screen reader announces content
@@ -1014,6 +1050,7 @@ npm run test:a11y          # Automated scanning
 **Tools**: Pact, Spring Cloud Contract
 
 **Example (Pact)**:
+
 ```typescript
 // test/contracts/contract-service.pact.spec.ts
 import { PactV3 } from '@pact-foundation/pact';
@@ -1024,7 +1061,7 @@ describe('Contract Service API Contract', () => {
     provider: 'ContractService',
     consumer: 'DashboardService',
   });
-  
+
   it('should get contract by ID', () => {
     return provider
       .addInteraction({
@@ -1045,10 +1082,8 @@ describe('Contract Service API Contract', () => {
         },
       })
       .executeTest(async (mockServer) => {
-        const response = await axios.get(
-          `${mockServer.url}/contracts/123`
-        );
-        
+        const response = await axios.get(`${mockServer.url}/contracts/123`);
+
         expect(response.status).toBe(200);
         expect(response.data.riskScore).toBe(75);
       });
@@ -1057,6 +1092,7 @@ describe('Contract Service API Contract', () => {
 ```
 
 **Commands**:
+
 ```bash
 npm run test:contract  # Generates pact/*.json files
 ```
@@ -1072,6 +1108,7 @@ npm run test:contract  # Generates pact/*.json files
 **When to run**: On every deploy (check logs make sense), daily (health checks)
 
 **Example (Verify Logs)**:
+
 ```typescript
 // test/observability.spec.ts
 import { logger } from '../src/logger';
@@ -1079,23 +1116,21 @@ import { logger } from '../src/logger';
 describe('Observability', () => {
   it('should log contract upload', () => {
     const logSpy = jest.spyOn(logger, 'info');
-    
+
     contractService.upload(contract);
-    
+
     expect(logSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'contract_uploaded',
         contractId: expect.any(String),
         userId: expect.any(String),
-      })
+      }),
     );
   });
-  
+
   it('should expose metrics', async () => {
-    const response = await request(app)
-      .get('/metrics')
-      .expect(200);
-    
+    const response = await request(app).get('/metrics').expect(200);
+
     expect(response.text).toContain('contract_uploaded_total');
     expect(response.text).toContain('http_request_duration_seconds');
   });
@@ -1103,6 +1138,7 @@ describe('Observability', () => {
 ```
 
 **Verify in Production**:
+
 ```bash
 # Check if logs are meaningful
 curl http://localhost:3000/metrics | grep contract_uploaded_total
@@ -1123,6 +1159,7 @@ curl -s "http://elasticsearch:9200/logs-*/_search" \
 **When to run**: Always (production 24/7)
 
 **Tools**:
+
 - Sentry (error tracking)
 - Prometheus (metrics)
 - Grafana (dashboards)
@@ -1130,14 +1167,15 @@ curl -s "http://elasticsearch:9200/logs-*/_search" \
 - LogRocket (frontend monitoring)
 
 **Setup (Sentry + Prometheus + Grafana)**:
+
 ```typescript
 // src/main.ts - Set up error tracking
-import * as Sentry from "@sentry/node";
+import * as Sentry from '@sentry/node';
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.1,  // 10% of requests
+  tracesSampleRate: 0.1, // 10% of requests
 });
 
 app.use(Sentry.Handlers.requestHandler());
@@ -1148,6 +1186,7 @@ app.use(Sentry.Handlers.errorHandler());
 ```
 
 **Alert Rules**:
+
 ```yaml
 # alerts.yml
 groups:
@@ -1157,16 +1196,17 @@ groups:
         expr: rate(contract_errors_total[5m]) > 0.01
         for: 5m
         annotations:
-          summary: "Error rate > 1%"
-      
+          summary: 'Error rate > 1%'
+
       - alert: HighLatency
         expr: histogram_quantile(0.95, http_request_duration_seconds) > 0.5
         for: 5m
         annotations:
-          summary: "P95 latency > 500ms"
+          summary: 'P95 latency > 500ms'
 ```
 
 **On-Call Runbook**:
+
 ```
 # If Error Rate Alert Fires
 
@@ -1193,13 +1233,13 @@ groups:
 
 ### Testing Matrix by Clean Architecture Layer
 
-| Layer | Test Type | Database | Mock Deps | Speed | Example |
-|---|---|---|---|---|---|
-| **Domain/Entity** | Unit | ❌ None | ❌ None | ⚡ ms | contract.calculateRiskScore() |
-| **Application/UC** | Unit | ❌ None | ✅ Repos | ⚡ ms | uploadContractUseCase.execute() |
-| **Presentation** | API | ❌ None | ✅ Use Cases | ⏱️ sec | POST /contracts |
-| **Infrastructure** | Integration | ✅ Test DB | ❌ None | ⏱️ sec | repository.save() |
-| **End-to-End** | E2E | ✅ Test DB | ❌ None | ⏱️ min | User journey |
+| Layer              | Test Type   | Database   | Mock Deps    | Speed  | Example                         |
+| ------------------ | ----------- | ---------- | ------------ | ------ | ------------------------------- |
+| **Domain/Entity**  | Unit        | ❌ None    | ❌ None      | ⚡ ms  | contract.calculateRiskScore()   |
+| **Application/UC** | Unit        | ❌ None    | ✅ Repos     | ⚡ ms  | uploadContractUseCase.execute() |
+| **Presentation**   | API         | ❌ None    | ✅ Use Cases | ⏱️ sec | POST /contracts                 |
+| **Infrastructure** | Integration | ✅ Test DB | ❌ None      | ⏱️ sec | repository.save()               |
+| **End-to-End**     | E2E         | ✅ Test DB | ❌ None      | ⏱️ min | User journey                    |
 
 ---
 
@@ -1222,6 +1262,7 @@ The rule: **closer to domain = faster and more isolated. Closer to infrastructur
 ```
 
 **Domain Layer** — Unit tests, no mocks, no DB:
+
 ```typescript
 // src/modules/contracts/domain/__tests__/contract.aggregate.spec.ts
 describe('Contract Aggregate', () => {
@@ -1242,6 +1283,7 @@ describe('Contract Aggregate', () => {
 ```
 
 **Application Layer** — Unit tests, mock repositories only:
+
 ```typescript
 // src/modules/contracts/application/commands/__tests__/upload-contract.handler.spec.ts
 describe('UploadContractHandler', () => {
@@ -1265,6 +1307,7 @@ describe('UploadContractHandler', () => {
 ```
 
 **Presentation Layer** — API tests via Supertest, mock use cases:
+
 ```typescript
 // src/modules/contracts/infrastructure/__tests__/contract.controller.api.spec.ts
 describe('ContractController API', () => {
@@ -1289,6 +1332,7 @@ describe('ContractController API', () => {
 ```
 
 **Infrastructure Layer** — Integration tests, real test DB:
+
 ```typescript
 // src/modules/contracts/infrastructure/__tests__/prisma-contract.repository.integration.spec.ts
 describe('PrismaContractRepository Integration', () => {
@@ -1304,6 +1348,7 @@ describe('PrismaContractRepository Integration', () => {
 ```
 
 **Decision Matrix** — which test to write:
+
 ```
 What am I testing?
 ├─ Pure business logic (no dependencies)?
@@ -1323,6 +1368,7 @@ What am I testing?
 ```
 
 **Practical Tips**:
+
 - ✅ Test behavior, not implementation
 - ✅ Use descriptive test names
 - ✅ Test happy path + error cases + edge cases
@@ -1335,26 +1381,25 @@ What am I testing?
 
 ---
 
-
-
-| Layer | Target Speed | When to Run |
-|---|---|---|
-| Layer 1 (Static) | < 30 seconds | On every save |
-| Layer 2 (Review) | < 1 hour | Within business day |
-| Layer 3 (Unit) | < 5 seconds | On every save |
-| Layer 4 (Integration) | < 60 seconds | On commit |
-| Layer 5 (API) | < 60 seconds | On commit |
-| Layer 6 (E2E) | < 5 minutes | On PR merge only |
+| Layer                 | Target Speed | When to Run               |
+| --------------------- | ------------ | ------------------------- |
+| Layer 1 (Static)      | < 30 seconds | On every save             |
+| Layer 2 (Review)      | < 1 hour     | Within business day       |
+| Layer 3 (Unit)        | < 5 seconds  | On every save             |
+| Layer 4 (Integration) | < 60 seconds | On commit                 |
+| Layer 5 (API)         | < 60 seconds | On commit                 |
+| Layer 6 (E2E)         | < 5 minutes  | On PR merge only          |
 | Layer 7 (Performance) | < 10 minutes | Nightly or before release |
-| Layer 8 (Security) | < 2 minutes | On every commit |
-| Layer 9 (A11y) | < 1 minute | Nightly |
-| Layer 10 (Contract) | < 1 minute | On API change |
+| Layer 8 (Security)    | < 2 minutes  | On every commit           |
+| Layer 9 (A11y)        | < 1 minute   | Nightly                   |
+| Layer 10 (Contract)   | < 1 minute   | On API change             |
 
 ---
 
 ### Testing Strategy by Feature Type
 
 **Critical Features** (Contract Upload, Analysis, Approval):
+
 - Layer 1: Static analysis ✓
 - Layer 2: Code review (1 peer) ✓
 - Layer 3: Unit tests (80%+ coverage) ✓
@@ -1366,6 +1411,7 @@ What am I testing?
 - Layer 12: Production monitoring ✓
 
 **Medium Features** (Export Report, Search):
+
 - Layer 1: Static analysis ✓
 - Layer 2: Code review (1 peer) ✓
 - Layer 3: Unit tests (60%+ coverage) ✓
@@ -1375,6 +1421,7 @@ What am I testing?
 - Layer 7: Performance test (nightly) ✓
 
 **Low-Risk Features** (UI Theme, Layout):
+
 - Layer 1: Static analysis ✓
 - Layer 2: Code review (1 peer) ✓
 - Layer 3: Unit tests (if has logic)
@@ -1443,23 +1490,27 @@ npm run test:all
 ### Implementation Timeline
 
 **Week 1: Foundation (Layers 1-3)**
+
 - Day 1-2: Setup ESLint + TypeScript
 - Day 3-5: Write unit tests (80% coverage on 1 service)
 - Day 6-7: Enable code review in GitHub
 
 **Week 2: Integration & API (Layers 4-5)**
+
 - Day 8-9: Add integration tests (real DB)
 - Day 10-11: Add API tests (all endpoints)
 - Day 12-13: Add basic E2E test (1 user journey)
 - Day 14: Fix any failing tests
 
 **Week 3: Quality & Security (Layers 6, 8)**
+
 - Day 15-16: Add security scanning (npm audit, secrets)
 - Day 17-18: Add performance baseline
 - Day 19-20: Setup monitoring (Prometheus + Grafana)
 - Day 21: Test everything together
 
 **Week 4: Polish & Launch (Layers 7, 9, 10-12)**
+
 - Day 22-24: Add E2E for critical flows
 - Day 25-26: Add accessibility scanning
 - Day 27-28: Setup production monitoring
@@ -1479,19 +1530,20 @@ npm run test:all
 
 ## Deployment Environments
 
-| Concern | Local Dev | Railway (Demo) | GCP (Production) |
-|---|---|---|---|
-| Database | SQLite | PostgreSQL | Cloud SQL |
-| Storage | Local filesystem | GCS bucket | GCS bucket |
-| Queue | In-memory | pg-boss | BullMQ + Memorystore |
-| Secrets | `.env` file | Railway env vars | GCP Secret Manager |
-| Logging | pino-pretty | JSON | JSON → Cloud Logging |
+| Concern  | Local Dev        | Railway (Demo)   | GCP (Production)     |
+| -------- | ---------------- | ---------------- | -------------------- |
+| Database | SQLite           | PostgreSQL       | Cloud SQL            |
+| Storage  | Local filesystem | GCS bucket       | GCS bucket           |
+| Queue    | In-memory        | pg-boss          | BullMQ + Memorystore |
+| Secrets  | `.env` file      | Railway env vars | GCP Secret Manager   |
+| Logging  | pino-pretty      | JSON             | JSON → Cloud Logging |
 
 ---
 
 ## Key Rules Summary
 
 ### Backend
+
 1. Domain layer has zero framework dependencies
 2. CQRS: commands mutate, queries read directly
 3. Repository returns `T | null`, throws on failure
@@ -1501,6 +1553,7 @@ npm run test:all
 7. All responses wrapped in `ApiResponse<T>`
 
 ### Frontend
+
 1. Component structure: TSX + hook + CSS + test + story
 2. 3-tier API stack: hook → service → httpService → axios
 3. httpService is ONLY file that imports axios
@@ -1511,6 +1564,7 @@ npm run test:all
 8. Backend-driven UI (read from response, never calculate)
 
 ### Testing
+
 1. **12-layer testing architecture** — each layer catches different bugs at different costs
 2. **By Clean Architecture layer**:
    - Domain/Entity → Unit tests (no mocks, no DB)
@@ -1526,6 +1580,7 @@ npm run test:all
 8. **Test behavior, not implementation** — test what it does, not how
 
 ### Security
+
 1. Auth0 Authorization Code Flow
 2. Tokens in HttpOnly cookies
 3. Tokens encrypted in DB (AES-256-CBC)
@@ -1577,13 +1632,10 @@ Distribution:
 **When**: On every save (IDE), on every commit
 
 **Config**:
+
 ```json
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended"
-  ],
+  "extends": ["eslint:recommended", "plugin:react/recommended", "plugin:react-hooks/recommended"],
   "rules": {
     "react/prop-types": "warn",
     "react-hooks/rules-of-hooks": "error",
@@ -1594,6 +1646,7 @@ Distribution:
 ```
 
 **TypeScript**:
+
 ```typescript
 // ❌ CAUGHT BY LAYER 1
 const ContractCard = ({ contractId, onApprove, missingProp }) => { ... }
@@ -1619,6 +1672,7 @@ const ContractCard: React.FC<Props> = ({ contractId, onApprove }) => { ... }
 **When**: On every save (watch mode), on every commit
 
 **Example**:
+
 ```typescript
 // src/components/ContractCard/ContractCard.test.tsx
 import { render, screen } from '@testing-library/react';
@@ -1692,6 +1746,7 @@ describe('ContractCard Component', () => {
 ```
 
 **Rules**:
+
 - ✅ Test user interactions (click, type, submit)
 - ✅ Test conditional rendering (loading, error, empty states)
 - ✅ Test all prop combinations
@@ -1711,6 +1766,7 @@ describe('ContractCard Component', () => {
 **When**: On every commit
 
 **Example**:
+
 ```typescript
 // src/hooks/useContracts.test.ts
 import { renderHook, waitFor } from '@testing-library/react';
@@ -1768,6 +1824,7 @@ describe('useContracts Hook', () => {
 **When**: On every commit
 
 **Example**:
+
 ```typescript
 // src/pages/ContractDetailPage/ContractDetailPage.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
@@ -1854,6 +1911,7 @@ describe('ContractDetailPage Integration', () => {
 **When**: On every commit
 
 **Example**:
+
 ```typescript
 // src/components/RiskBadge/RiskBadge.test.tsx
 import { render } from '@testing-library/react';
@@ -1885,6 +1943,7 @@ describe('RiskBadge Snapshots', () => {
 **When**: On every commit
 
 **Example**:
+
 ```typescript
 // src/routing/routing.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
@@ -1955,6 +2014,7 @@ describe('Routing', () => {
 **When**: On every commit (automated), quarterly (manual)
 
 **Example**:
+
 ```typescript
 // src/components/ContractUploadForm/ContractUploadForm.test.tsx
 import { render } from '@testing-library/react';
@@ -2004,6 +2064,7 @@ describe('ContractUploadForm Accessibility', () => {
 **When**: On performance-critical paths, nightly
 
 **Example**:
+
 ```typescript
 // src/components/ContractList/ContractList.perf.test.tsx
 import { render } from '@testing-library/react';
@@ -2060,6 +2121,7 @@ describe('ContractList Performance', () => {
 **When**: On every commit (if paid), nightly (if free)
 
 **Storybook + Chromatic** (preferred approach for this project):
+
 ```typescript
 // src/components/ContractCard/ContractCard.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react';
@@ -2115,6 +2177,7 @@ export const Approved: Story = {
 **When**: Before deployment, nightly, not on every commit
 
 **Example (Cypress)**:
+
 ```typescript
 // cypress/e2e/contract-review-workflow.cy.ts
 describe('Contract Review Workflow', () => {
@@ -2160,6 +2223,7 @@ describe('Contract Review Workflow', () => {
 ```
 
 **Priority**:
+
 1. Critical user journeys (upload → analysis → review → approve)
 2. High-value flows (export report, playbook comparison)
 3. Error scenarios (network error, invalid file)
@@ -2179,6 +2243,7 @@ describe('Contract Review Workflow', () => {
 **When**: Always (production 24/7)
 
 **Setup**:
+
 ```typescript
 // src/main.tsx
 import * as Sentry from '@sentry/react';
@@ -2203,20 +2268,20 @@ const SentryRoutes = Sentry.withSentryRouting(Routes);
 
 ### Frontend Testing Quick Reference
 
-| Layer | Test Type | Tool | Speed |
-|---|---|---|---|
-| 1. Static | ESLint, TypeScript | `npm run lint` | ⚡ <1s |
-| 2. Component | Unit | React Testing Library | ⚡ <1s |
-| 3. Hooks | Unit | `renderHook` | ⚡ <1s |
-| 4. Integration | Integration | MSW + RTL | ⏱️ 1-3s |
-| 5. Snapshot | Snapshot | Jest | ⚡ <1s |
-| 6. Routing | Integration | React Router | ⏱️ 1-2s |
-| 7. A11y | Automated + Manual | jest-axe | ⚡ <1s |
-| 8. Performance | Profiler | React DevTools | ⚡ <1s |
-| 9. Mobile | Unit (RN) | RN Testing Library | ⚡ <1s |
-| 10. Visual | Screenshot | Chromatic/Percy | ⏱️ 2-5s |
-| 11. E2E | Browser automation | Cypress/Playwright | ⏱️ 5-30m |
-| 12. Production | Monitoring | Sentry, LogRocket | 💰 Ongoing |
+| Layer          | Test Type          | Tool                  | Speed      |
+| -------------- | ------------------ | --------------------- | ---------- |
+| 1. Static      | ESLint, TypeScript | `npm run lint`        | ⚡ <1s     |
+| 2. Component   | Unit               | React Testing Library | ⚡ <1s     |
+| 3. Hooks       | Unit               | `renderHook`          | ⚡ <1s     |
+| 4. Integration | Integration        | MSW + RTL             | ⏱️ 1-3s    |
+| 5. Snapshot    | Snapshot           | Jest                  | ⚡ <1s     |
+| 6. Routing     | Integration        | React Router          | ⏱️ 1-2s    |
+| 7. A11y        | Automated + Manual | jest-axe              | ⚡ <1s     |
+| 8. Performance | Profiler           | React DevTools        | ⚡ <1s     |
+| 9. Mobile      | Unit (RN)          | RN Testing Library    | ⚡ <1s     |
+| 10. Visual     | Screenshot         | Chromatic/Percy       | ⏱️ 2-5s    |
+| 11. E2E        | Browser automation | Cypress/Playwright    | ⏱️ 5-30m   |
+| 12. Production | Monitoring         | Sentry, LogRocket     | 💰 Ongoing |
 
 ### Frontend Testing Strategy for ContractIntel
 

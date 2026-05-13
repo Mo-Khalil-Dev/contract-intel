@@ -4,12 +4,12 @@ Uses **`cockatiel`** — TypeScript equivalent of .NET's Polly.
 
 ## Policy Per External API
 
-| API | Retry | Circuit Breaker | Timeout |
-|---|---|---|---|
-| Claude API | 3 attempts, exponential backoff | Yes — open after 5 failures | 60s |
-| Google Document AI | 3 attempts, exponential backoff | Yes — open after 5 failures | 30s |
-| Auth0 token exchange | 2 attempts, fixed 1s delay | No | 10s |
-| GCS upload/download | 3 attempts, exponential backoff | No | 30s |
+| API                  | Retry                           | Circuit Breaker             | Timeout |
+| -------------------- | ------------------------------- | --------------------------- | ------- |
+| Claude API           | 3 attempts, exponential backoff | Yes — open after 5 failures | 60s     |
+| Google Document AI   | 3 attempts, exponential backoff | Yes — open after 5 failures | 30s     |
+| Auth0 token exchange | 2 attempts, fixed 1s delay      | No                          | 10s     |
+| GCS upload/download  | 3 attempts, exponential backoff | No                          | 30s     |
 
 ## Implementation Pattern
 

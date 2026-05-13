@@ -1,11 +1,12 @@
-
 // App — Lloyds theme — PRINT version: stacks all screens, one per page
 
 const { useState: useStatePrint } = React;
 
 function PrintPage({ label, children }) {
   return (
-    <section className="print-page" data-label={label}
+    <section
+      className="print-page"
+      data-label={label}
       style={{
         width: '100%',
         minHeight: '100vh',
@@ -17,23 +18,23 @@ function PrintPage({ label, children }) {
         breakInside: 'avoid',
       }}
     >
-      <div style={{
-        padding: '6px 16px',
-        background: W.accent,
-        color: '#fff',
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: 10,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        display: 'flex',
-        justifyContent: 'space-between',
-      }}>
+      <div
+        style={{
+          padding: '6px 16px',
+          background: W.accent,
+          color: '#fff',
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: 10,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          display: 'flex',
+          justifyContent: 'space-between',
+        }}
+      >
         <span>ContractIntel · Lloyds</span>
         <span>{label}</span>
       </div>
-      <div style={{ flex: 1, position: 'relative' }}>
-        {children}
-      </div>
+      <div style={{ flex: 1, position: 'relative' }}>{children}</div>
     </section>
   );
 }
@@ -77,7 +78,10 @@ function AppV4Print() {
       </PrintPage>
 
       <PrintPage label="08 · Processing">
-        <ProcessingScreen4 files={[{ name: 'Acme Vendor Agreement 2024.pdf', size: 1457280 }]} onBack={noop} />
+        <ProcessingScreen4
+          files={[{ name: 'Acme Vendor Agreement 2024.pdf', size: 1457280 }]}
+          onBack={noop}
+        />
       </PrintPage>
 
       <style>{`

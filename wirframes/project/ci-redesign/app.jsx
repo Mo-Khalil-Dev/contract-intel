@@ -1,12 +1,12 @@
 // ContractIntel Redesign — App Shell
 const { useState } = React;
 
-const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "layoutVariant": "table",
-  "riskStyle": "accordion",
-  "uploadStyle": "default",
-  "accentColor": "#2563EB"
-}/*EDITMODE-END*/;
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/ {
+  layoutVariant: 'table',
+  riskStyle: 'accordion',
+  uploadStyle: 'default',
+  accentColor: '#2563EB',
+}; /*EDITMODE-END*/
 
 function App() {
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
@@ -32,17 +32,35 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', fontFamily: "'DM Sans', sans-serif", background: T.bg }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden',
+        fontFamily: "'DM Sans', sans-serif",
+        background: T.bg,
+      }}
+    >
       <TopNav screen={screen} onNav={handleNav} />
 
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        {screen === 'home' && (
-          <HomeScreen onNav={handleNav} />
-        )}
+      <div
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
+        {screen === 'home' && <HomeScreen onNav={handleNav} />}
         {screen === 'upload' && (
           <UploadScreen
             onBack={() => goTo('portfolio')}
-            onDone={files => { setUploadedFiles(files); goTo('processing'); }}
+            onDone={(files) => {
+              setUploadedFiles(files);
+              goTo('processing');
+            }}
             layoutVariant={tweaks.layoutVariant}
             uploadStyle={tweaks.uploadStyle}
           />
@@ -50,16 +68,19 @@ function App() {
         {screen === 'processing' && (
           <ProcessingScreen
             files={uploadedFiles}
-            onDone={() => { setContractId(1); goTo('results', { contractId: 1 }); }}
+            onDone={() => {
+              setContractId(1);
+              goTo('results', { contractId: 1 });
+            }}
           />
         )}
         {screen === 'results' && contractId && (
           <ResultsScreen
             contractId={contractId}
             onBack={() => goTo('portfolio')}
-            onDeepDive={fid => goTo('deepdive', { flagId: fid })}
+            onDeepDive={(fid) => goTo('deepdive', { flagId: fid })}
             onExport={() => goTo('export')}
-            onNav={id => goTo('results', { contractId: id })}
+            onNav={(id) => goTo('results', { contractId: id })}
             riskStyle={tweaks.riskStyle}
           />
         )}
@@ -71,27 +92,20 @@ function App() {
           />
         )}
         {screen === 'compare' && (
-          <CompareScreen
-            onSelectContract={id => goTo('results', { contractId: id })}
-          />
+          <CompareScreen onSelectContract={(id) => goTo('results', { contractId: id })} />
         )}
         {screen === 'portfolio' && (
           <PortfolioScreen
-            onSelect={id => goTo('results', { contractId: id })}
+            onSelect={(id) => goTo('results', { contractId: id })}
             onUpload={() => goTo('upload')}
             layoutVariant={tweaks.layoutVariant}
           />
         )}
         {screen === 'playbook' && (
-          <PlaybookScreen
-            onSelectContract={id => goTo('results', { contractId: id })}
-          />
+          <PlaybookScreen onSelectContract={(id) => goTo('results', { contractId: id })} />
         )}
         {screen === 'export' && (
-          <ExportScreen
-            contractId={contractId}
-            onBack={() => goTo('results', { contractId })}
-          />
+          <ExportScreen contractId={contractId} onBack={() => goTo('results', { contractId })} />
         )}
         {screen === 'renewals' && <RenewalsScreen />}
         {screen === 'settings' && <SettingsScreen />}
@@ -102,26 +116,40 @@ function App() {
           <TweakRadio
             label="Contract list view"
             value={tweaks.layoutVariant}
-            options={[{ value: 'table', label: 'Table' }, { value: 'card', label: 'Cards' }, { value: 'minimal', label: 'Minimal' }]}
-            onChange={v => setTweak('layoutVariant', v)}
+            options={[
+              { value: 'table', label: 'Table' },
+              { value: 'card', label: 'Cards' },
+              { value: 'minimal', label: 'Minimal' },
+            ]}
+            onChange={(v) => setTweak('layoutVariant', v)}
           />
           <TweakRadio
             label="Risk flag style"
             value={tweaks.riskStyle}
-            options={[{ value: 'accordion', label: 'Accordion' }, { value: 'cards', label: 'Cards' }]}
-            onChange={v => setTweak('riskStyle', v)}
+            options={[
+              { value: 'accordion', label: 'Accordion' },
+              { value: 'cards', label: 'Cards' },
+            ]}
+            onChange={(v) => setTweak('riskStyle', v)}
           />
         </TweakSection>
         <TweakSection label="Upload flow">
           <TweakRadio
             label="Drop zone size"
             value={tweaks.uploadStyle}
-            options={[{ value: 'default', label: 'Default' }, { value: 'simple', label: 'Large' }]}
-            onChange={v => setTweak('uploadStyle', v)}
+            options={[
+              { value: 'default', label: 'Default' },
+              { value: 'simple', label: 'Large' },
+            ]}
+            onChange={(v) => setTweak('uploadStyle', v)}
           />
         </TweakSection>
         <TweakSection label="Brand">
-          <TweakColor label="Accent color" value={tweaks.accentColor} onChange={v => setTweak('accentColor', v)} />
+          <TweakColor
+            label="Accent color"
+            value={tweaks.accentColor}
+            onChange={(v) => setTweak('accentColor', v)}
+          />
         </TweakSection>
         <TweakSection label="Quick nav">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -137,16 +165,23 @@ function App() {
               { label: 'Export', s: 'export', extra: { contractId: 1 } },
               { label: 'Renewals', s: 'renewals' },
               { label: 'Settings', s: 'settings' },
-            ].map(item => (
-              <button key={item.s + (item.extra?.contractId || '') + (item.extra?.flagId || '')}
+            ].map((item) => (
+              <button
+                key={item.s + (item.extra?.contractId || '') + (item.extra?.flagId || '')}
                 onClick={() => goTo(item.s, item.extra || {})}
                 style={{
                   background: screen === item.s ? T.blueLight : 'transparent',
                   color: screen === item.s ? T.blue : T.inkSoft,
-                  border: 'none', borderRadius: 5, padding: '5px 8px',
-                  textAlign: 'left', cursor: 'pointer', fontSize: 12,
-                  fontFamily: "'DM Sans', sans-serif", fontWeight: screen === item.s ? 600 : 400,
-                }}>
+                  border: 'none',
+                  borderRadius: 5,
+                  padding: '5px 8px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontWeight: screen === item.s ? 600 : 400,
+                }}
+              >
                 {item.label}
               </button>
             ))}

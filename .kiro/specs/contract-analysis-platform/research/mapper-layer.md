@@ -13,9 +13,9 @@ Persistence (Prisma) ←→ Domain (Aggregate) ←→ DTO (API Response)
 ```typescript
 // src/shared/mapper.ts
 export interface Mapper<Domain, Persistence, Response> {
-  toDomain(persistence: Persistence): Domain
-  toPersistence(domain: Domain): Persistence
-  toResponse(domain: Domain): Response
+  toDomain(persistence: Persistence): Domain;
+  toPersistence(domain: Domain): Persistence;
+  toResponse(domain: Domain): Response;
 }
 ```
 
@@ -24,7 +24,6 @@ export interface Mapper<Domain, Persistence, Response> {
 ```typescript
 // src/modules/documents/infrastructure/document.mapper.ts
 export class DocumentMapper implements Mapper<Document, PrismaDocument, DocumentResponseDto> {
-
   toDomain(record: PrismaDocument): Document {
     return Document.reconstitute({
       id: DocumentId.from(record.id),
@@ -34,7 +33,7 @@ export class DocumentMapper implements Mapper<Document, PrismaDocument, Document
       fileSizeBytes: record.fileSizeBytes,
       uploadedBy: record.uploadedBy,
       createdAt: record.createdAt,
-    })
+    });
   }
 
   toPersistence(domain: Document): Omit<PrismaDocument, 'createdAt' | 'updatedAt'> {
@@ -45,7 +44,7 @@ export class DocumentMapper implements Mapper<Document, PrismaDocument, Document
       storageKey: domain.storageKey,
       fileSizeBytes: domain.fileSizeBytes,
       uploadedBy: domain.uploadedBy,
-    }
+    };
   }
 
   toResponse(domain: Document): DocumentResponseDto {
@@ -56,7 +55,7 @@ export class DocumentMapper implements Mapper<Document, PrismaDocument, Document
       fileSizeBytes: domain.fileSizeBytes,
       uploadedBy: domain.uploadedBy,
       createdAt: domain.createdAt.toISOString(),
-    }
+    };
   }
 }
 ```
@@ -64,6 +63,7 @@ export class DocumentMapper implements Mapper<Document, PrismaDocument, Document
 ## Usage
 
 **Repository (Persistence ↔ Domain):**
+
 ```typescript
 async findById(id: DocumentId): Promise<Document | null> {
   const record = await this.prisma.document.findUnique({ where: { id: id.value } })
@@ -77,6 +77,7 @@ async save(document: Document): Promise<void> {
 ```
 
 **Query handler (Domain → DTO):**
+
 ```typescript
 async execute(query: GetDocumentQuery): Promise<DocumentResponseDto> {
   const document = await this.repo.findById(DocumentId.from(query.id))

@@ -42,6 +42,7 @@ contract-intel-v2/
 ### Installation
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
@@ -73,6 +74,7 @@ npm run dev:frontend
 ### API Documentation
 
 When running in development mode, Swagger docs are available at:
+
 - http://localhost:3000/api/docs
 
 ### Testing
@@ -113,6 +115,7 @@ npm run format
 ## Tech Stack Details
 
 ### Backend
+
 - **Framework**: NestJS 10
 - **CQRS**: @nestjs/cqrs
 - **Logging**: pino + nestjs-pino
@@ -121,6 +124,7 @@ npm run format
 - **Testing**: Jest + Supertest
 
 ### Frontend
+
 - **Framework**: React 18
 - **Build Tool**: Vite
 - **Styling**: TailwindCSS
@@ -131,6 +135,7 @@ npm run format
 - **Testing**: Vitest
 
 ### Infrastructure
+
 - **Storage**: GCP Cloud Storage
 - **OCR**: Google Document AI
 - **AI**: Claude API (Anthropic)
@@ -144,6 +149,7 @@ npm run format
 See `apps/backend/.env.example` for all available configuration options.
 
 Key variables:
+
 - `AUTH0_*`: Auth0 configuration
 - `STORAGE_DRIVER`: local | gcs
 - `OCR_DRIVER`: mock | google-document-ai
@@ -153,12 +159,14 @@ Key variables:
 ## Deployment
 
 ### Railway (Demo)
+
 ```bash
 # Deploy via Railway CLI
 railway up
 ```
 
 ### GCP (Production)
+
 ```bash
 # Build and deploy to Cloud Run
 npm run build
@@ -170,6 +178,7 @@ gcloud run deploy contract-intel-api --source .
 See `.kiro/specs/contract-analysis-platform/design.md` for detailed architecture documentation.
 
 Key patterns:
+
 - **Clean Architecture**: Dependencies point inward
 - **DDD Domain Layer**: Aggregates, entities, value objects, domain events
 - **CQRS**: Commands mutate, queries read directly

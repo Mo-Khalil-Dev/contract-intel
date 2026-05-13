@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LoggerModule, REQUEST_ID_HEADER } from './logger.module';
 import { AppConfigService } from '../../../config/app-config.service';
-import { AppConfigModule } from '../../../config/app-config.module';
 import { NodeEnv, LogLevel } from '../../../config/environment-variables';
 
 describe('LoggerModule', () => {
@@ -85,9 +84,7 @@ describe('LoggerModule', () => {
     ];
 
     it('should document the paths that must be redacted', () => {
-      expect(sensitivePathsThatMustBeRedacted).toContain(
-        'req.headers.authorization',
-      );
+      expect(sensitivePathsThatMustBeRedacted).toContain('req.headers.authorization');
       expect(sensitivePathsThatMustBeRedacted).toContain('req.body.password');
     });
   });

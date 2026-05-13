@@ -109,9 +109,7 @@ export class EnvironmentVariables {
   CORS_ORIGIN: string = 'http://localhost:5173';
 }
 
-export function validateEnvironment(
-  config: Record<string, unknown>,
-): EnvironmentVariables {
+export function validateEnvironment(config: Record<string, unknown>): EnvironmentVariables {
   const validatedConfig = plainToInstance(EnvironmentVariables, config, {
     enableImplicitConversion: true,
   });
@@ -142,14 +140,10 @@ export function validateEnvironment(
       'CLAUDE_API_KEY',
     ];
 
-    const missing = requiredInProduction.filter(
-      (key) => !validatedConfig[key],
-    );
+    const missing = requiredInProduction.filter((key) => !validatedConfig[key]);
 
     if (missing.length > 0) {
-      throw new Error(
-        `Missing required production environment variables: ${missing.join(', ')}`,
-      );
+      throw new Error(`Missing required production environment variables: ${missing.join(', ')}`);
     }
   }
 

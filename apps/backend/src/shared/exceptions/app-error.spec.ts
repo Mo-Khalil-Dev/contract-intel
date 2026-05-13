@@ -122,10 +122,7 @@ describe('ApplicationException', () => {
 
 describe('InfrastructureException', () => {
   it('should have 500 HTTP status (Internal Server Error)', () => {
-    const error = new InfrastructureException(
-      'DATABASE_ERROR',
-      'Database connection failed',
-    );
+    const error = new InfrastructureException('DATABASE_ERROR', 'Database connection failed');
 
     expect(error.getHttpStatus()).toBe(500);
     expect(error.getCode()).toBe('DATABASE_ERROR');

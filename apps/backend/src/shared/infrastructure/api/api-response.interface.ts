@@ -16,9 +16,7 @@ export interface PaginatedPayload<T> {
   meta: PaginationMeta;
 }
 
-export function isPaginatedPayload<T>(
-  value: unknown,
-): value is PaginatedPayload<T> {
+export function isPaginatedPayload<T>(value: unknown): value is PaginatedPayload<T> {
   if (value === null || typeof value !== 'object') {
     return false;
   }
@@ -34,11 +32,7 @@ export function isPaginatedPayload<T>(
   );
 }
 
-export function buildPaginationMeta(
-  total: number,
-  page: number,
-  pageSize: number,
-): PaginationMeta {
+export function buildPaginationMeta(total: number, page: number, pageSize: number): PaginationMeta {
   if (pageSize <= 0) {
     throw new Error('pageSize must be greater than 0');
   }

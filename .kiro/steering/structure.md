@@ -154,6 +154,7 @@ src/components/{ComponentName}/
 ```
 
 **Rules**:
+
 - JSX file: rendering only, no business logic
 - Hook file: all state, effects, handlers, computed values
 - CSS file: component-specific styles (Tailwind for utilities)
@@ -162,6 +163,7 @@ src/components/{ComponentName}/
 - Everything related to the component stays in its folder
 
 **Testing Requirements per Component**:
+
 - **Layer 1 (Static)**: TypeScript strict mode, ESLint checks
 - **Layer 2 (Unit)**: Test all variants, sizes, states, props
 - **Layer 5 (Snapshot)**: Snapshot tests for visual components
@@ -169,6 +171,7 @@ src/components/{ComponentName}/
 - **Layer 10 (Visual)**: Storybook stories for all combinations
 
 **Example Structure**:
+
 ```
 src/components/
 ├── core/                       # Design system components
@@ -206,6 +209,7 @@ src/components/
 ```
 
 **Import Pattern**:
+
 ```typescript
 // ✅ DO: Import from component folder
 import { Button } from '@/components/core/Button';
@@ -289,6 +293,7 @@ src/config/
 ## Naming Conventions
 
 ### Backend
+
 - **Aggregates**: PascalCase, singular (e.g., `Contract`, `Document`)
 - **Value Objects**: PascalCase with suffix (e.g., `ContractId`, `RiskScore`)
 - **Commands**: PascalCase with verb (e.g., `CreateContractCommand`)
@@ -299,6 +304,7 @@ src/config/
 - **Files**: kebab-case (e.g., `contract.aggregate.ts`)
 
 ### Frontend
+
 - **Components**: PascalCase (e.g., `Button`, `ContractCard`)
 - **Hooks**: camelCase with `use` prefix (e.g., `useContracts`, `useButton`)
 - **Services**: camelCase with suffix (e.g., `contractService`)
@@ -308,6 +314,7 @@ src/config/
 ## Key Directories
 
 ### Backend
+
 - `src/modules/`: Feature modules (vertical slices)
 - `src/shared/`: Shared kernel (domain base classes, exceptions, ports)
 - `src/config/`: Configuration service
@@ -315,6 +322,7 @@ src/config/
 - `test/`: E2E tests
 
 ### Frontend
+
 - `src/pages/`: Route-level page components
 - `src/components/core/`: Design system components (Button, Badge, Card, etc.)
 - `src/components/features/`: Feature-specific components
@@ -327,6 +335,7 @@ src/config/
 ## File Naming Patterns
 
 ### Backend
+
 - Aggregates: `{feature}.aggregate.ts`
 - Value Objects: `{feature}-{name}.vo.ts`
 - Commands: `{action}-{feature}.command.ts`
@@ -337,6 +346,7 @@ src/config/
 - Repositories: `{feature}.repository.ts` (interface), `prisma-{feature}.repository.ts` (implementation)
 
 ### Frontend
+
 - Components: `{ComponentName}.tsx`
 - Hooks: `use{ComponentName}.ts`
 - Styles: `{ComponentName}.module.css`
@@ -349,6 +359,7 @@ src/config/
 **Status**: Project structure defined, implementation not yet started
 
 **Next Steps**:
+
 1. Create `apps/backend/` and `apps/frontend/` directories
 2. Initialize NestJS backend with Clean Architecture structure
 3. Initialize React frontend with Vite + TailwindCSS
@@ -356,6 +367,7 @@ src/config/
 5. Implement core screens (US-008 onwards)
 
 **Existing Files**:
+
 - Design handoff plan with 27 user stories
 - Spec documents (requirements, design, tasks) in `.kiro/specs/contract-analysis-platform/`
 - Sample user story (US-008 Home Screen) in `USER_STORIES/`

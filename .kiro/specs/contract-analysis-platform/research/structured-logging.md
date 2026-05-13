@@ -23,15 +23,15 @@ The platform uses **pino** for structured JSON logging with **nestjs-pino** inte
 
 ```typescript
 // src/config/logger.config.ts
-import { Params } from 'nestjs-pino'
+import { Params } from 'nestjs-pino';
 
 export const getLoggerConfig = (env: string): Params => {
-  const isDev = env === 'local'
+  const isDev = env === 'local';
 
   return {
     pinoHttp: {
       level: isDev ? 'debug' : 'info',
-      
+
       // Pretty print in local dev, JSON in production
       transport: isDev
         ? {
@@ -89,24 +89,24 @@ export const getLoggerConfig = (env: string): Params => {
 
       // Custom log level based on response status
       customLogLevel: (req, res, err) => {
-        if (res.statusCode >= 500 || err) return 'error'
-        if (res.statusCode >= 400) return 'warn'
-        if (res.statusCode >= 300) return 'info'
-        return 'info'
+        if (res.statusCode >= 500 || err) return 'error';
+        if (res.statusCode >= 400) return 'warn';
+        if (res.statusCode >= 300) return 'info';
+        return 'info';
       },
 
       // Custom success message
       customSuccessMessage: (req, res) => {
-        return `${req.method} ${req.url} ${res.statusCode}`
+        return `${req.method} ${req.url} ${res.statusCode}`;
       },
 
       // Custom error message
       customErrorMessage: (req, res, err) => {
-        return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`
+        return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`;
       },
     },
-  }
-}
+  };
+};
 ```
 
 ### Production (GCP Cloud Logging)
@@ -114,18 +114,18 @@ export const getLoggerConfig = (env: string): Params => {
 ```typescript
 // GCP Cloud Logging expects specific fields for proper indexing
 export const getLoggerConfig = (env: string): Params => {
-  const isProduction = env === 'production'
+  const isProduction = env === 'production';
 
   return {
     pinoHttp: {
       level: 'info',
-      
+
       // GCP-specific field mappings
       formatters: {
         level: (label) => ({ severity: label.toUpperCase() }),
         log: (object) => {
-          const { req, res, err, ...rest } = object
-          
+          const { req, res, err, ...rest } = object;
+
           return {
             ...rest,
             // GCP Cloud Logging fields
@@ -141,16 +141,20 @@ export const getLoggerConfig = (env: string): Params => {
                   latency: object.responseTime ? `${object.responseTime}ms` : undefined,
                 }
               : undefined,
-          }
+          };
         },
       },
 
       // Same redaction, serializers, etc. as above
-      redact: { /* ... */ },
-      serializers: { /* ... */ },
+      redact: {
+        /* ... */
+      },
+      serializers: {
+        /* ... */
+      },
     },
-  }
-}
+  };
+};
 ```
 
 ---
@@ -161,38 +165,38 @@ export const getLoggerConfig = (env: string): Params => {
 
 ```typescript
 // src/common/middleware/request-context.middleware.ts
-import { Injectable, NestMiddleware } from '@nestjs/common'
-import { Request, Response, NextFunction } from 'express'
-import { AsyncLocalStorage } from 'async_hooks'
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
+import { AsyncLocalStorage } from 'async_hooks';
 
 export interface RequestContext {
-  requestId: string
-  userId?: string
-  tenantId?: string
-  startTime: number
+  requestId: string;
+  userId?: string;
+  tenantId?: string;
+  startTime: number;
 }
 
-export const requestContextStorage = new AsyncLocalStorage<RequestContext>()
+export const requestContextStorage = new AsyncLocalStorage<RequestContext>();
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
-    const requestId = req.id || crypto.randomUUID()
+    const requestId = req.id || crypto.randomUUID();
     const context: RequestContext = {
       requestId,
       startTime: Date.now(),
-    }
+    };
 
     // Store in AsyncLocalStorage for access anywhere in the call stack
     requestContextStorage.run(context, () => {
       // Attach to request for easy access
-      req.requestId = requestId
-      
+      req.requestId = requestId;
+
       // Set response header for client-side correlation
-      res.setHeader('X-Request-ID', requestId)
-      
-      next()
-    })
+      res.setHeader('X-Request-ID', requestId);
+
+      next();
+    });
   }
 }
 ```
@@ -201,49 +205,43 @@ export class RequestContextMiddleware implements NestMiddleware {
 
 ```typescript
 // src/common/logging/logger.service.ts
-import { Injectable, Inject } from '@nestjs/common'
-import { Logger } from 'nestjs-pino'
-import { requestContextStorage } from '../middleware/request-context.middleware'
+import { Injectable, Inject } from '@nestjs/common';
+import { Logger } from 'nestjs-pino';
+import { requestContextStorage } from '../middleware/request-context.middleware';
 
 @Injectable()
 export class AppLogger {
   constructor(@Inject(Logger) private readonly logger: Logger) {}
 
   private enrichContext(context?: Record<string, any>) {
-    const requestContext = requestContextStorage.getStore()
-    
+    const requestContext = requestContextStorage.getStore();
+
     return {
       ...context,
       requestId: requestContext?.requestId,
       userId: requestContext?.userId,
       tenantId: requestContext?.tenantId,
-    }
+    };
   }
 
   debug(message: string, context?: Record<string, any>) {
-    this.logger.debug(this.enrichContext(context), message)
+    this.logger.debug(this.enrichContext(context), message);
   }
 
   info(message: string, context?: Record<string, any>) {
-    this.logger.info(this.enrichContext(context), message)
+    this.logger.info(this.enrichContext(context), message);
   }
 
   warn(message: string, context?: Record<string, any>) {
-    this.logger.warn(this.enrichContext(context), message)
+    this.logger.warn(this.enrichContext(context), message);
   }
 
   error(message: string, error?: Error, context?: Record<string, any>) {
-    this.logger.error(
-      this.enrichContext({ ...context, err: error }),
-      message
-    )
+    this.logger.error(this.enrichContext({ ...context, err: error }), message);
   }
 
   fatal(message: string, error?: Error, context?: Record<string, any>) {
-    this.logger.fatal(
-      this.enrichContext({ ...context, err: error }),
-      message
-    )
+    this.logger.fatal(this.enrichContext({ ...context, err: error }), message);
   }
 }
 ```
@@ -261,23 +259,23 @@ export class UploadDocumentHandler {
       fileName: command.fileName,
       fileSize: command.fileSizeBytes,
       engagementId: command.engagementId,
-    })
+    });
 
     try {
       // ... business logic ...
-      
+
       this.logger.info('Document uploaded successfully', {
         documentId: document.id.value,
         storageKey: document.storageKey.value,
-      })
+      });
 
-      return Result.ok(document.id)
+      return Result.ok(document.id);
     } catch (error) {
       this.logger.error('Document upload failed', error, {
         fileName: command.fileName,
-      })
-      
-      return Result.fail(error.message)
+      });
+
+      return Result.fail(error.message);
     }
   }
 }
@@ -414,12 +412,12 @@ jsonPayload.responseTime>1000
 
 ## Log Retention
 
-| Environment | Retention | Storage |
-|---|---|---|
-| Local dev | Not persisted | stdout only |
-| Railway demo | 7 days | Railway logs |
-| GCP production | 30 days (default) | Cloud Logging |
-| GCP production (audit logs) | 7 years | Cloud Storage bucket |
+| Environment                 | Retention         | Storage              |
+| --------------------------- | ----------------- | -------------------- |
+| Local dev                   | Not persisted     | stdout only          |
+| Railway demo                | 7 days            | Railway logs         |
+| GCP production              | 30 days (default) | Cloud Logging        |
+| GCP production (audit logs) | 7 years           | Cloud Storage bucket |
 
 Audit logs are exported to a separate Cloud Storage bucket with lifecycle policies for long-term retention.
 
@@ -441,35 +439,35 @@ Audit logs are exported to a separate Cloud Storage bucket with lifecycle polici
 
 ```typescript
 describe('AppLogger', () => {
-  let logger: AppLogger
-  let pinoLogger: jest.Mocked<Logger>
+  let logger: AppLogger;
+  let pinoLogger: jest.Mocked<Logger>;
 
   beforeEach(() => {
     pinoLogger = {
       info: jest.fn(),
       error: jest.fn(),
-    } as any
-    
-    logger = new AppLogger(pinoLogger)
-  })
+    } as any;
+
+    logger = new AppLogger(pinoLogger);
+  });
 
   it('should enrich logs with request context', () => {
-    const context = { requestId: 'req-123', userId: 'user-456' }
-    
+    const context = { requestId: 'req-123', userId: 'user-456' };
+
     requestContextStorage.run(context, () => {
-      logger.info('Test message', { customField: 'value' })
-      
+      logger.info('Test message', { customField: 'value' });
+
       expect(pinoLogger.info).toHaveBeenCalledWith(
         {
           requestId: 'req-123',
           userId: 'user-456',
           customField: 'value',
         },
-        'Test message'
-      )
-    })
-  })
-})
+        'Test message',
+      );
+    });
+  });
+});
 ```
 
 ### Integration Tests
@@ -480,16 +478,16 @@ describe('Request ID propagation', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/documents')
       .attach('file', 'test.pdf')
-      .expect(201)
+      .expect(201);
 
-    const requestId = response.headers['x-request-id']
-    expect(requestId).toBeDefined()
+    const requestId = response.headers['x-request-id'];
+    expect(requestId).toBeDefined();
 
     // Verify all logs for this request include the same requestId
-    const logs = await getLogsForRequest(requestId)
-    expect(logs.every(log => log.requestId === requestId)).toBe(true)
-  })
-})
+    const logs = await getLogsForRequest(requestId);
+    expect(logs.every((log) => log.requestId === requestId)).toBe(true);
+  });
+});
 ```
 
 ---

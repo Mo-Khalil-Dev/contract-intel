@@ -18,12 +18,12 @@ npm install @nestjs/swagger swagger-ui-express
 
 ```typescript
 // src/main.ts
-import { NestFactory } from '@nestjs/core'
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
-import { AppModule } from './app.module'
+import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule);
 
   // Only expose Swagger UI in non-production environments
   if (process.env.NODE_ENV !== 'production') {
@@ -31,14 +31,10 @@ async function bootstrap() {
       .setTitle('Contract Analysis Platform API')
       .setDescription(
         'AI-powered platform for ingesting, analyzing, and managing legal documents. ' +
-        'Provides clause extraction, risk scoring, and due diligence workflow management.'
+          'Provides clause extraction, risk scoring, and due diligence workflow management.',
       )
       .setVersion('1.0')
-      .setContact(
-        'Platform Team',
-        'https://contractintel.io',
-        'api@contractintel.io'
-      )
+      .setContact('Platform Team', 'https://contractintel.io', 'api@contractintel.io')
       .setLicense('Proprietary', 'https://contractintel.io/terms')
       .addServer('http://localhost:3000', 'Local Development')
       .addServer('https://demo.contractintel.io', 'Railway Demo')
@@ -46,7 +42,8 @@ async function bootstrap() {
         type: 'apiKey',
         in: 'cookie',
         name: 'session',
-        description: 'Session cookie set after Auth0 login. Use /api/v1/auth/login to authenticate.',
+        description:
+          'Session cookie set after Auth0 login. Use /api/v1/auth/login to authenticate.',
       })
       .addTag('auth', 'Authentication and session management')
       .addTag('documents', 'Document ingestion and management')
@@ -55,7 +52,7 @@ async function bootstrap() {
       .addTag('annotations', 'Clause annotations and collaboration')
       .addTag('reports', 'Report generation and export')
       .addTag('audit', 'Audit trail and compliance')
-      .build()
+      .build();
 
     const document = SwaggerModule.createDocument(app, config, {
       // Include all modules
@@ -66,7 +63,7 @@ async function bootstrap() {
       ignoreGlobalPrefix: false,
       // Extra models not directly referenced in controllers
       extraModels: [],
-    })
+    });
 
     // Serve Swagger UI
     SwaggerModule.setup('api/docs', app, document, {
@@ -90,14 +87,14 @@ async function bootstrap() {
         .swagger-ui .topbar { background-color: #1a1a2e; }
         .swagger-ui .topbar-wrapper img { content: url('/logo.png'); }
       `,
-    })
+    });
 
     // Export OpenAPI spec as JSON (for SDK generation)
-    const fs = await import('fs')
-    fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2))
+    const fs = await import('fs');
+    fs.writeFileSync('./openapi.json', JSON.stringify(document, null, 2));
   }
 
-  await app.listen(3000)
+  await app.listen(3000);
 }
 ```
 
@@ -109,8 +106,8 @@ async function bootstrap() {
 
 ```typescript
 // src/modules/documents/infrastructure/dtos/upload-document.dto.ts
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsString, IsUUID, IsOptional, IsEnum } from 'class-validator'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsUUID, IsOptional, IsEnum } from 'class-validator';
 
 export class UploadDocumentDto {
   @ApiProperty({
@@ -119,7 +116,7 @@ export class UploadDocumentDto {
     format: 'uuid',
   })
   @IsUUID()
-  engagementId: string
+  engagementId: string;
 
   @ApiPropertyOptional({
     description: 'Optional display name for the document (defaults to filename)',
@@ -128,7 +125,7 @@ export class UploadDocumentDto {
   })
   @IsOptional()
   @IsString()
-  displayName?: string
+  displayName?: string;
 }
 ```
 
@@ -136,7 +133,7 @@ export class UploadDocumentDto {
 
 ```typescript
 // src/modules/documents/infrastructure/dtos/document.response.dto.ts
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum DocumentStatusDto {
   UPLOADED = 'uploaded',
@@ -154,13 +151,13 @@ export class DocumentResponseDto {
     example: '550e8400-e29b-41d4-a716-446655440000',
     format: 'uuid',
   })
-  id: string
+  id: string;
 
   @ApiProperty({
     description: 'Original filename as uploaded',
     example: 'acquisition-agreement.pdf',
   })
-  fileName: string
+  fileName: string;
 
   @ApiProperty({
     description: 'File size in bytes',
@@ -168,34 +165,34 @@ export class DocumentResponseDto {
     minimum: 1,
     maximum: 52428800, // 50MB
   })
-  fileSizeBytes: number
+  fileSizeBytes: number;
 
   @ApiProperty({
     description: 'Current processing status',
     enum: DocumentStatusDto,
     example: DocumentStatusDto.READY,
   })
-  status: DocumentStatusDto
+  status: DocumentStatusDto;
 
   @ApiPropertyOptional({
     description: 'SHA-256 checksum of the original file',
     example: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
   })
-  checksum?: string
+  checksum?: string;
 
   @ApiProperty({
     description: 'ISO 8601 timestamp of upload',
     example: '2024-01-01T12:00:00.000Z',
     format: 'date-time',
   })
-  uploadedAt: string
+  uploadedAt: string;
 
   @ApiPropertyOptional({
     description: 'ISO 8601 timestamp when processing completed',
     example: '2024-01-01T12:02:30.000Z',
     format: 'date-time',
   })
-  processedAt?: string
+  processedAt?: string;
 }
 ```
 
@@ -203,32 +200,32 @@ export class DocumentResponseDto {
 
 ```typescript
 // src/common/dtos/paginated-response.dto.ts
-import { ApiProperty } from '@nestjs/swagger'
+import { ApiProperty } from '@nestjs/swagger';
 
 export class PaginationMetaDto {
   @ApiProperty({ example: 142 })
-  total: number
+  total: number;
 
   @ApiProperty({ example: 1 })
-  page: number
+  page: number;
 
   @ApiProperty({ example: 20 })
-  pageSize: number
+  pageSize: number;
 
   @ApiProperty({ example: 8 })
-  totalPages: number
+  totalPages: number;
 }
 
 export function PaginatedResponseDto<T>(ItemDto: new () => T) {
   class PaginatedResponse {
     @ApiProperty({ type: [ItemDto] })
-    data: T[]
+    data: T[];
 
     @ApiProperty({ type: PaginationMetaDto })
-    meta: PaginationMetaDto
+    meta: PaginationMetaDto;
   }
 
-  return PaginatedResponse
+  return PaginatedResponse;
 }
 
 // Usage:
@@ -239,19 +236,19 @@ export class PaginatedDocumentsDto extends PaginatedResponseDto(DocumentResponse
 
 ```typescript
 // src/common/dtos/error-response.dto.ts
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ValidationErrorDto {
   @ApiProperty({ example: 'engagementId' })
-  field: string
+  field: string;
 
   @ApiProperty({ example: 'engagementId must be a UUID' })
-  message: string
+  message: string;
 }
 
 export class ErrorResponseDto {
   @ApiProperty({ example: false })
-  success: boolean
+  success: boolean;
 
   @ApiProperty({
     type: 'object',
@@ -265,13 +262,13 @@ export class ErrorResponseDto {
     },
   })
   error: {
-    type: string
-    title: string
-    status: number
-    detail: string
-    correlationId: string
-    errors?: ValidationErrorDto[]
-  }
+    type: string;
+    title: string;
+    status: number;
+    detail: string;
+    correlationId: string;
+    errors?: ValidationErrorDto[];
+  };
 }
 ```
 
@@ -291,17 +288,17 @@ import {
   ApiQuery,
   ApiBearerAuth,
   ApiCookieAuth,
-} from '@nestjs/swagger'
+} from '@nestjs/swagger';
 
 @ApiTags('documents')
 @ApiCookieAuth('session')
 @Controller('documents')
 export class DocumentsController {
-
   @Post()
   @ApiOperation({
     summary: 'Upload a document',
-    description: 'Upload a legal document (PDF, DOCX, TIFF, PNG) for analysis. ' +
+    description:
+      'Upload a legal document (PDF, DOCX, TIFF, PNG) for analysis. ' +
       'Returns a documentId immediately; processing happens asynchronously. ' +
       'Maximum file size: 50MB.',
     operationId: 'uploadDocument',
@@ -416,38 +413,38 @@ export class DocumentsController {
 
 ```typescript
 // scripts/generate-openapi.ts
-import { NestFactory } from '@nestjs/core'
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
-import { AppModule } from '../src/app.module'
-import * as fs from 'fs'
-import * as path from 'path'
+import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from '../src/app.module';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function generateSpec() {
-  const app = await NestFactory.create(AppModule, { logger: false })
+  const app = await NestFactory.create(AppModule, { logger: false });
 
   const config = new DocumentBuilder()
     .setTitle('Contract Analysis Platform API')
     .setVersion('1.0')
     .addCookieAuth('session')
-    .build()
+    .build();
 
-  const document = SwaggerModule.createDocument(app, config)
+  const document = SwaggerModule.createDocument(app, config);
 
   // Write JSON spec
-  const jsonPath = path.join(__dirname, '../openapi.json')
-  fs.writeFileSync(jsonPath, JSON.stringify(document, null, 2))
-  console.log(`OpenAPI spec written to ${jsonPath}`)
+  const jsonPath = path.join(__dirname, '../openapi.json');
+  fs.writeFileSync(jsonPath, JSON.stringify(document, null, 2));
+  console.log(`OpenAPI spec written to ${jsonPath}`);
 
   // Write YAML spec
-  const yaml = await import('js-yaml')
-  const yamlPath = path.join(__dirname, '../openapi.yaml')
-  fs.writeFileSync(yamlPath, yaml.dump(document))
-  console.log(`OpenAPI spec written to ${yamlPath}`)
+  const yaml = await import('js-yaml');
+  const yamlPath = path.join(__dirname, '../openapi.yaml');
+  fs.writeFileSync(yamlPath, yaml.dump(document));
+  console.log(`OpenAPI spec written to ${yamlPath}`);
 
-  await app.close()
+  await app.close();
 }
 
-generateSpec().catch(console.error)
+generateSpec().catch(console.error);
 ```
 
 ```json
@@ -510,18 +507,18 @@ sdk/
 
 ```typescript
 // src/lib/api-client.ts
-import { ContractIntelClient } from '../../sdk'
+import { ContractIntelClient } from '../../sdk';
 
 export const apiClient = new ContractIntelClient({
   BASE: '/api/v1',
   WITH_CREDENTIALS: true, // Send session cookie
-})
+});
 
 // Usage in React Query
 const { data: documents } = useQuery({
   queryKey: ['documents', engagementId],
   queryFn: () => apiClient.documents.listDocuments({ engagementId }),
-})
+});
 ```
 
 ### Alternative: openapi-typescript (type-only)
@@ -541,7 +538,7 @@ npx openapi-typescript openapi.json --output src/types/api.d.ts
 
 ```typescript
 // src/main.ts
-import { ValidationPipe } from '@nestjs/common'
+import { ValidationPipe } from '@nestjs/common';
 
 app.useGlobalPipes(
   new ValidationPipe({
@@ -558,12 +555,12 @@ app.useGlobalPipes(
       const validationErrors = errors.map((error) => ({
         field: error.property,
         message: Object.values(error.constraints || {}).join(', '),
-      }))
-      
-      throw new ValidationException(validationErrors)
+      }));
+
+      throw new ValidationException(validationErrors);
     },
-  })
-)
+  }),
+);
 ```
 
 ---
@@ -573,16 +570,19 @@ app.useGlobalPipes(
 ```typescript
 // Only expose in non-production environments
 if (config.get('NODE_ENV') !== 'production') {
-  SwaggerModule.setup('api/docs', app, document)
+  SwaggerModule.setup('api/docs', app, document);
 }
 
 // Or protect with basic auth in staging
 if (config.get('NODE_ENV') === 'staging') {
-  app.use('/api/docs', basicAuth({
-    users: { admin: config.get('SWAGGER_PASSWORD') },
-    challenge: true,
-  }))
-  SwaggerModule.setup('api/docs', app, document)
+  app.use(
+    '/api/docs',
+    basicAuth({
+      users: { admin: config.get('SWAGGER_PASSWORD') },
+      challenge: true,
+    }),
+  );
+  SwaggerModule.setup('api/docs', app, document);
 }
 ```
 
@@ -618,25 +618,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Generate OpenAPI spec
         run: npm run docs:generate
-      
+
       - name: Lint OpenAPI spec
         run: npx @redocly/cli lint openapi.json
-      
+
       - name: Upload spec as artifact
         uses: actions/upload-artifact@v3
         with:
           name: openapi-spec
           path: openapi.json
-      
+
       - name: Generate TypeScript SDK
         run: npm run sdk:generate
-      
+
       - name: Upload SDK as artifact
         uses: actions/upload-artifact@v3
         with:

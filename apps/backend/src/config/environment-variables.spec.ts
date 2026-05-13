@@ -109,21 +109,15 @@ describe('validateEnvironment', () => {
 
   describe('PORT validation', () => {
     it('should reject non-numeric PORT', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, PORT: 'not-a-number' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, PORT: 'not-a-number' })).toThrow();
     });
 
     it('should reject PORT less than 1', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, PORT: '0' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, PORT: '0' })).toThrow();
     });
 
     it('should reject PORT greater than 65535', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, PORT: '70000' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, PORT: '70000' })).toThrow();
     });
 
     it('should accept valid PORT range', () => {
@@ -168,9 +162,7 @@ describe('validateEnvironment', () => {
     });
 
     it('should reject invalid NODE_ENV', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, NODE_ENV: 'staging' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, NODE_ENV: 'staging' })).toThrow();
     });
   });
 
@@ -225,81 +217,59 @@ describe('validateEnvironment', () => {
     });
 
     it('should allow missing Auth0 vars in development', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, NODE_ENV: 'development' }),
-      ).not.toThrow();
+      expect(() => validateEnvironment({ ...validConfig, NODE_ENV: 'development' })).not.toThrow();
     });
 
     it('should allow missing Auth0 vars in test', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, NODE_ENV: 'test' }),
-      ).not.toThrow();
+      expect(() => validateEnvironment({ ...validConfig, NODE_ENV: 'test' })).not.toThrow();
     });
   });
 
   describe('enum field validation', () => {
     it('should reject invalid STORAGE_DRIVER', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, STORAGE_DRIVER: 's3' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, STORAGE_DRIVER: 's3' })).toThrow();
     });
 
     it('should accept all valid STORAGE_DRIVER values', () => {
       ['local', 'gcs'].forEach((driver) => {
-        expect(() =>
-          validateEnvironment({ ...validConfig, STORAGE_DRIVER: driver }),
-        ).not.toThrow();
+        expect(() => validateEnvironment({ ...validConfig, STORAGE_DRIVER: driver })).not.toThrow();
       });
     });
 
     it('should reject invalid OCR_DRIVER', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, OCR_DRIVER: 'aws-textract' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, OCR_DRIVER: 'aws-textract' })).toThrow();
     });
 
     it('should accept all valid OCR_DRIVER values', () => {
       ['mock', 'google-document-ai'].forEach((driver) => {
-        expect(() =>
-          validateEnvironment({ ...validConfig, OCR_DRIVER: driver }),
-        ).not.toThrow();
+        expect(() => validateEnvironment({ ...validConfig, OCR_DRIVER: driver })).not.toThrow();
       });
     });
 
     it('should reject invalid QUEUE_DRIVER', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, QUEUE_DRIVER: 'rabbitmq' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, QUEUE_DRIVER: 'rabbitmq' })).toThrow();
     });
 
     it('should accept all valid QUEUE_DRIVER values', () => {
       ['memory', 'pg-boss', 'bullmq'].forEach((driver) => {
-        expect(() =>
-          validateEnvironment({ ...validConfig, QUEUE_DRIVER: driver }),
-        ).not.toThrow();
+        expect(() => validateEnvironment({ ...validConfig, QUEUE_DRIVER: driver })).not.toThrow();
       });
     });
 
     it('should reject invalid LOG_LEVEL', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, LOG_LEVEL: 'verbose' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, LOG_LEVEL: 'verbose' })).toThrow();
     });
 
     it('should accept all valid LOG_LEVEL values', () => {
       ['trace', 'debug', 'info', 'warn', 'error', 'fatal'].forEach((level) => {
-        expect(() =>
-          validateEnvironment({ ...validConfig, LOG_LEVEL: level }),
-        ).not.toThrow();
+        expect(() => validateEnvironment({ ...validConfig, LOG_LEVEL: level })).not.toThrow();
       });
     });
   });
 
   describe('URL validation', () => {
     it('should reject invalid FRONTEND_URL', () => {
-      expect(() =>
-        validateEnvironment({ ...validConfig, FRONTEND_URL: 'not a url' }),
-      ).toThrow();
+      expect(() => validateEnvironment({ ...validConfig, FRONTEND_URL: 'not a url' })).toThrow();
     });
 
     it('should accept localhost URLs without TLD', () => {

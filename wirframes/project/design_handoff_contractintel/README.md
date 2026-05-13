@@ -1,12 +1,15 @@
 # Handoff: ContractIntel — Lloyds Theme
 
 ## Overview
+
 ContractIntel is an AI-powered contract analysis and risk management tool, themed for Lloyds Bank. It allows legal/procurement teams to upload contracts, receive AI-generated risk scores and flag analysis, track renewals, and compare contracts against internal playbook positions.
 
 ## About the Design Files
+
 The files in this bundle (`ContractIntel Lloyds.html` and its supporting `.jsx`/`.js` files) are **design references built as interactive HTML prototypes** — they show intended look, feel, and behaviour but are not production code. Your task is to **recreate these designs in your existing application environment** (React, Next.js, etc.) using its established patterns, component library, and routing conventions.
 
 ## Fidelity
+
 **High-fidelity.** These are pixel-level mocks with final colours, typography, spacing, component states, and interactions fully specified. Implement pixel-accurately using your production stack.
 
 ---
@@ -14,6 +17,7 @@ The files in this bundle (`ContractIntel Lloyds.html` and its supporting `.jsx`/
 ## Design Tokens
 
 ### Colour Palette
+
 ```
 // Backgrounds
 bg:          #F4F8F6   (page background)
@@ -46,16 +50,19 @@ green:       #1A7A46  |  greenBg:  #EDF8F2  |  greenBorder:  #A8DFC0
 ```
 
 ### Risk Score Thresholds
+
 - `score >= 7` → **High** (red)
 - `score >= 4` → **Medium** (orange)
-- `score < 4`  → **Low** (green)
+- `score < 4` → **Low** (green)
 
 ### Typography
+
 - **Primary font:** `Lato` (weights 400, 700, 900) — Google Fonts
 - **Monospace font:** `IBM Plex Mono` (weights 400, 600, 700) — used for scores, dates, codes
 - Base font size: 13px
 
 ### Spacing / Radii
+
 - Card border-radius: `6px`; pill/badge: `3–4px`
 - Standard card padding: `14–18px`
 - Page horizontal padding: `28px`
@@ -63,6 +70,7 @@ green:       #1A7A46  |  greenBg:  #EDF8F2  |  greenBorder:  #A8DFC0
 - Scrollbar width: `5px`
 
 ### Shadows
+
 - Modal: `0 20px 60px rgba(0,0,0,0.15)`
 - No drop shadows on cards — borders only
 
@@ -72,22 +80,23 @@ green:       #1A7A46  |  greenBg:  #EDF8F2  |  greenBorder:  #A8DFC0
 
 The app is a single-page React app with the following top-level screens, navigated via a sticky top nav bar:
 
-| Screen key    | Label       | Notes |
-|---------------|-------------|-------|
-| `contracts`   | Contracts   | Default landing screen |
-| `detail`      | (no nav tab) | Pushed when a contract row is clicked |
-| `portfolio`   | Portfolio   | |
-| `playbook`    | Playbook    | |
-| `renewals`    | Renewals    | |
-| `settings`    | Settings    | |
-| `upload`      | (no nav tab) | Triggered by "+ Upload" button |
-| `processing`  | (no nav tab) | Shown after upload submission |
+| Screen key   | Label        | Notes                                 |
+| ------------ | ------------ | ------------------------------------- |
+| `contracts`  | Contracts    | Default landing screen                |
+| `detail`     | (no nav tab) | Pushed when a contract row is clicked |
+| `portfolio`  | Portfolio    |                                       |
+| `playbook`   | Playbook     |                                       |
+| `renewals`   | Renewals     |                                       |
+| `settings`   | Settings     |                                       |
+| `upload`     | (no nav tab) | Triggered by "+ Upload" button        |
+| `processing` | (no nav tab) | Shown after upload submission         |
 
 ---
 
 ## Components
 
 ### TopNav
+
 Sticky nav bar, height `52px`, background `#006A4D`, `border-bottom: 2px solid #005238`.
 
 - **Left:** Horse mark SVG logo (32×32) + "ContractIntel" (15px, weight 700) + "by Lloyds" (9px, uppercase, 55% white opacity)
@@ -95,57 +104,68 @@ Sticky nav bar, height `52px`, background `#006A4D`, `border-bottom: 2px solid #
 - **Right:** Username (12px, 65% white) + avatar circle (30px, 20% white bg, 1.5px white border, initials 11px weight 700)
 
 ### PageShell
+
 Full-height column layout:
+
 - **Header bar:** `background: #FFFFFF`, `border-bottom: 1px solid #D5E6DC`, `padding: 18px 28px 14px`. Title (20px weight 700, letter-spacing -0.02em) + optional subtitle (12px, `textSoft`) + optional right-side action buttons.
 - **Body:** `flex: 1`, `overflow: auto`, `background: #F4F8F6`
 
 ### WBtn (Button)
+
 `border-radius: 4px`, `font-family: Lato`, `font-weight: 600`, `letter-spacing: 0.01em`
 
-| Variant   | Background | Color     | Border |
-|-----------|------------|-----------|--------|
-| primary   | `#006A4D`  | `#fff`    | none |
-| secondary | `#FFFFFF`  | `#2B4A38` | `1px solid #BBCFC6` |
-| ghost     | transparent | `#537060` | none |
-| danger    | `#FDF0EE`  | `#C0392B` | `1px solid #F5C6C0` |
-| success   | `#EDF8F2`  | `#1A7A46` | `1px solid #A8DFC0` |
+| Variant   | Background  | Color     | Border              |
+| --------- | ----------- | --------- | ------------------- |
+| primary   | `#006A4D`   | `#fff`    | none                |
+| secondary | `#FFFFFF`   | `#2B4A38` | `1px solid #BBCFC6` |
+| ghost     | transparent | `#537060` | none                |
+| danger    | `#FDF0EE`   | `#C0392B` | `1px solid #F5C6C0` |
+| success   | `#EDF8F2`   | `#1A7A46` | `1px solid #A8DFC0` |
 
 - Default padding: `7px 14px`, font-size 13px
 - Small (`small` prop): `4px 11px`, font-size 11px
 - Disabled: `opacity: 0.4`, `cursor: not-allowed`
 
 ### WRiskBadge
+
 Coloured pill showing numeric risk score. Dot + number in IBM Plex Mono.
+
 - Small: `padding: 2px 7px`, font-size 11px, dot 6px
 - Large: `padding: 4px 10px`, font-size 13px, dot 8px
 - Colours based on risk threshold (see Design Tokens)
 
 ### WTypePill
+
 Contract type label pill. `border-radius: 3px`, `padding: 2px 8px`, `font-size: 11px`, `font-weight: 600`, `text-transform: capitalize`.
 
-| Type        | Color    | Background |
-|-------------|----------|------------|
-| vendor      | #5A3F9B  | #F2EFF9 |
-| license     | #0C6B99  | #EBF5FA |
-| partnership | #0A7A6E  | #EAF7F5 |
-| customer    | #9B1865  | #FAF0F6 |
-| lease       | #7A5200  | #FAF6EC |
-| nda         | #3A5040  | #EDF2EF |
+| Type        | Color   | Background |
+| ----------- | ------- | ---------- |
+| vendor      | #5A3F9B | #F2EFF9    |
+| license     | #0C6B99 | #EBF5FA    |
+| partnership | #0A7A6E | #EAF7F5    |
+| customer    | #9B1865 | #FAF0F6    |
+| lease       | #7A5200 | #FAF6EC    |
+| nda         | #3A5040 | #EDF2EF    |
 
 ### WFlags
+
 Inline flag summary: coloured dot + count for each severity that is > 0.
 Red dot `#C0392B`, orange `#C87500`, green `#1A7A46`. Font: IBM Plex Mono 12px weight 700. Shows `—` if only green or none.
 
 ### RiskBar
+
 Mini horizontal progress bar (60px wide, 5px tall, `border-radius: 2px`) showing risk score as a filled bar coloured by severity, followed by score text in IBM Plex Mono weight 700.
 
 ### WTabs
+
 Tab bar strip, `background: #FFFFFF`, `border-bottom: 1px solid #D5E6DC`.
+
 - Tab: `padding: 10px 16px`, font-size 12px, no border/background.
 - Active: `font-weight: 700`, `color: #006A4D`, `border-bottom: 2px solid #006A4D`, `margin-bottom: -1px`.
 - Inactive: `color: #537060`
 
 ### WModal
+
 Overlay (`background: rgba(0,0,0,0.45)`, click-outside to close). Panel: `background: #fff`, `border-radius: 6px`, `box-shadow: 0 20px 60px rgba(0,0,0,0.15)`. Header: `background: #EDF4EF`, `border-bottom: 1px solid #D5E6DC`, `padding: 14px 18px`. Close button `✕`.
 
 ---
@@ -157,6 +177,7 @@ Overlay (`background: rgba(0,0,0,0.45)`, click-outside to close). Panel: `backgr
 A sortable, filterable table of all contracts.
 
 **Filter strip** (`background: #FFFFFF`, `border-bottom`, `padding: 10px 28px`):
+
 - Search input (flex: 1, min-width 200px)
 - Risk filter select: All / High (7+) / Medium (4–7) / Low (<4)
 - Type filter select: All / Vendor / License / Partnership / Customer / Lease / NDA
@@ -188,26 +209,33 @@ Two-column layout. Left: tabs + content. Right: 280px fixed sidebar.
 **Left panel tabs:** Overview · Risk Flags (N) · Document · History
 
 #### Overview tab
+
 Max-width 580px. Three sections (Parties, Key Dates, Financial Terms), each with key-value rows (`padding: 8px 0`, border-bottom). Label column: 170px, `font-size: 12px`, `color: textSoft`. Value: 12px, `font-weight: 500`.
 
 Notes section below: existing notes shown as author + date header, note text, "Mark resolved" button. Input + "Add" button to append new notes.
 
 #### Risk Flags tab
+
 Max-width 680px. Summary bar at top (counts by severity). Each flag is an accordion row:
+
 - Collapsed: coloured dot + title + section ref (`§X.X`) + chevron. Click to expand.
 - Expanded: description paragraph, recommendation box (`background: #F4F8F6`, `border-left`-style via accent colour), Resolve + Dismiss buttons.
 - Resolved flags: `opacity: 0.5`; dismissed flags: hidden.
 
 #### Document tab
+
 Two-column grid: document viewer (flex: 1) + 280px clause inspector panel.
+
 - Viewer: styled like a real PDF page (`font-family: Georgia`, `font-size: 12px`, `line-height: 1.8`). Risk highlights shown with coloured `background` on flagged text (`#fde68a` for orange, `#fca5a5` for red).
 - Clause inspector: selected clause name, quoted text, flag label, recommendation text, "Copy Clause" button.
 - Zoom controls and page nav (decorative/static in prototype).
 
 #### History tab
+
 Chronological activity feed. Each entry: coloured dot + action title + timestamp (IBM Plex Mono) + author + detail text. `border-bottom` separating entries.
 
 **Right sidebar (280px):**
+
 - Risk score card: large score number (32px IBM Plex Mono weight 900), risk level label, flag count breakdown (red/orange/green). Coloured background based on risk level.
 - Quick meta key-value rows (font-size 11px): Type (WTypePill), Counterparty, Effective, Expires, Notice, Auto-Renewal, Value, Schedule.
 
@@ -218,6 +246,7 @@ Chronological activity feed. Each entry: coloured dot + action title + timestamp
 **KPI row:** 5 cards in a CSS grid. Each: label (10px uppercase), large number (26px IBM Plex Mono weight 800), sub-label (11px muted). Cards coloured by semantic colour where applicable.
 
 **Main grid (2 columns: 1fr + 280px):**
+
 - Left: "Contracts by Risk Score" table — rank #, contract, type, risk bar, flags, expiry. Clickable rows.
 - Right column (stacked):
   - Liability Exposure panel: three rows (Capped / Other / Unlimited) each with label, count, and a mini 4px progress bar.
@@ -245,10 +274,12 @@ A standards table for 10 clause categories. Grouped by category (Risk, Commercia
 ### 5. Renewals (`renewals`)
 
 Left: full-width table of all renewals sorted by urgency (`daysRemaining` ascending).
+
 - Left border of each row coloured by urgency: red (<0 or <30d), orange (<60d), green (otherwise).
 - Days column shows "Xd overdue", "TODAY", or "Xd".
 
 Right: 280px detail panel shown when a row is selected.
+
 - Header coloured by risk level, renewal status label, contract name.
 - Key-value rows: Renewal Date, Days, Notice Period, Risk Score.
 - "View Contract" (primary) + "Acknowledge" (secondary) buttons.
@@ -260,9 +291,11 @@ Right: 280px detail panel shown when a row is selected.
 Three tabs: Team · Billing · Audit Log
 
 **Team tab:**
+
 - Table: Member (name + email), Role (editable `<select>`), Last Active, Status (● Active / ⏳ Pending), Actions (Remove button, except for the admin row).
 
 **Billing tab:**
+
 - Single card: plan name ("Professional"), price/limit, usage progress bar (72% shown), usage count.
 
 **Audit Log tab:** placeholder content for v1.
@@ -272,6 +305,7 @@ Three tabs: Team · Billing · Audit Log
 ### 7. Upload (`upload`)
 
 Centred narrow form (max-width 560px):
+
 - Drag-and-drop zone: dashed border (2px dashed `#BBCFC6`), hover/drag state switches to `accent` border + `accentBg` background. Click triggers hidden `<input type="file">`.
 - File list below drop zone: each file shows filename, size, remove button.
 - Consent checkbox (required): text about AI processing.
@@ -282,6 +316,7 @@ Centred narrow form (max-width 560px):
 ### 8. Processing (`processing`)
 
 Centred confirmation screen:
+
 - Animated spinning SVG ring (`border-radius` circle with stroke-dasharray, CSS `@keyframes spin 2s linear`).
 - "Analysis in progress" heading + explanatory copy.
 - Queued files list with animated pulse dot per file.
@@ -299,10 +334,10 @@ type Contract = {
   id: number;
   name: string;
   type: 'vendor' | 'license' | 'partnership' | 'customer' | 'lease' | 'nda';
-  riskScore: number;        // 0–10
+  riskScore: number; // 0–10
   flags: { red: number; orange: number; green: number };
   parties: [string, string];
-  uploadDate: string;       // YYYY-MM-DD
+  uploadDate: string; // YYYY-MM-DD
   status: 'complete' | 'processing';
   effectiveDate: string | null;
   terminationDate: string | null;
@@ -314,7 +349,7 @@ type Contract = {
   priceEscalation: string | null;
   paymentTerms: string | null;
   riskFlags: RiskFlag[];
-  progress?: number;        // 0–100, only when status === 'processing'
+  progress?: number; // 0–100, only when status === 'processing'
 };
 
 type RiskFlag = {
@@ -332,8 +367,8 @@ type Renewal = {
   id: number;
   contractId: number;
   name: string;
-  renewalDate: string;      // YYYY-MM-DD
-  daysRemaining: number;    // negative = overdue
+  renewalDate: string; // YYYY-MM-DD
+  daysRemaining: number; // negative = overdue
   noticePeriod: string;
   status: 'overdue' | 'urgent' | 'ontrack';
   riskScore: number;
@@ -346,7 +381,7 @@ type TeamMember = {
   role: 'Admin' | 'Reviewer' | 'Viewer';
   lastLogin: string;
   status: 'active' | 'pending';
-  avatar: string;           // 2-letter initials
+  avatar: string; // 2-letter initials
 };
 ```
 
@@ -354,42 +389,42 @@ type TeamMember = {
 
 ## Interactions Summary
 
-| Trigger | Behaviour |
-|---------|-----------|
-| Click contract row (status=complete) | Navigate to detail screen |
-| Click nav link | Switch screen, clear selected contract |
-| Click "+ Upload" | Navigate to upload screen |
-| Submit upload form | Navigate to processing screen |
-| Expand risk flag | Accordion open/close |
-| Resolve flag | Flag opacity 0.5, label "✓ Resolved" |
-| Dismiss flag | Flag removed from list |
-| Mark note resolved | "✓ Resolved" label appears |
-| Playbook edit position | Inline textarea; save writes to state |
-| Renewals row click | Toggle detail panel |
-| Tweaks panel | Accent/nav colour + font size controls |
+| Trigger                              | Behaviour                              |
+| ------------------------------------ | -------------------------------------- |
+| Click contract row (status=complete) | Navigate to detail screen              |
+| Click nav link                       | Switch screen, clear selected contract |
+| Click "+ Upload"                     | Navigate to upload screen              |
+| Submit upload form                   | Navigate to processing screen          |
+| Expand risk flag                     | Accordion open/close                   |
+| Resolve flag                         | Flag opacity 0.5, label "✓ Resolved"   |
+| Dismiss flag                         | Flag removed from list                 |
+| Mark note resolved                   | "✓ Resolved" label appears             |
+| Playbook edit position               | Inline textarea; save writes to state  |
+| Renewals row click                   | Toggle detail panel                    |
+| Tweaks panel                         | Accent/nav colour + font size controls |
 
 ---
 
 ## Animations
 
-| Element | Animation |
-|---------|-----------|
-| Processing spinner | `@keyframes spin` 2s linear infinite on SVG circle |
-| Processing queued pulse | `@keyframes pulse` 1.4s infinite, staggered per file |
-| Contracts processing badge | `@keyframes pulse` 1.2s infinite |
-| Nav/button hover states | `transition: all 0.15s` |
-| Flag expand/collapse | Instant (no animation in prototype) |
+| Element                    | Animation                                            |
+| -------------------------- | ---------------------------------------------------- |
+| Processing spinner         | `@keyframes spin` 2s linear infinite on SVG circle   |
+| Processing queued pulse    | `@keyframes pulse` 1.4s infinite, staggered per file |
+| Contracts processing badge | `@keyframes pulse` 1.2s infinite                     |
+| Nav/button hover states    | `transition: all 0.15s`                              |
+| Flag expand/collapse       | Instant (no animation in prototype)                  |
 
 ---
 
 ## Files in This Bundle
 
-| File | Purpose |
-|------|---------|
-| `ContractIntel Lloyds.html` | Entry point — loads all scripts |
-| `components-v4-lloyds.jsx` | Design tokens + shared components (TopNav, WBtn, WModal, WTabs, RiskBar, WRiskBadge, WTypePill, WFlags, PageShell) |
-| `screens-v4-contracts.jsx` | ContractsScreen + ContractDetailScreen4 |
-| `screens-v4-other.jsx` | Portfolio, Playbook, Renewals, Settings, Upload, Processing screens |
-| `app-v4-lloyds.jsx` | Root app component + state routing |
-| `data.js` | Sample data (9 contracts, 5 team members, 6 renewals) |
-| `tweaks-panel.jsx` | Design-time tweaks panel (not needed in production) |
+| File                        | Purpose                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `ContractIntel Lloyds.html` | Entry point — loads all scripts                                                                                    |
+| `components-v4-lloyds.jsx`  | Design tokens + shared components (TopNav, WBtn, WModal, WTabs, RiskBar, WRiskBadge, WTypePill, WFlags, PageShell) |
+| `screens-v4-contracts.jsx`  | ContractsScreen + ContractDetailScreen4                                                                            |
+| `screens-v4-other.jsx`      | Portfolio, Playbook, Renewals, Settings, Upload, Processing screens                                                |
+| `app-v4-lloyds.jsx`         | Root app component + state routing                                                                                 |
+| `data.js`                   | Sample data (9 contracts, 5 team members, 6 renewals)                                                              |
+| `tweaks-panel.jsx`          | Design-time tweaks panel (not needed in production)                                                                |

@@ -17,11 +17,13 @@ export class Result<T> {
     return new Result(false, undefined, error);
   }
 
-  static combine<U>(results: Result<any>[]): Result<U> {
+  static combine(results: Result<unknown>[]): Result<void> {
     for (const result of results) {
-      if (!result.isSuccess) return result;
+      if (!result.isSuccess) {
+        return Result.fail<void>(result.error ?? new Error('Unknown error'));
+      }
     }
-    return Result.ok<U>(undefined as any);
+    return Result.ok<void>(undefined);
   }
 
   getValueOrThrow(): T {

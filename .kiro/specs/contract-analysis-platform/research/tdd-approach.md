@@ -15,25 +15,27 @@
 ## Test Layers
 
 ### Layer 1: Domain Unit Tests
+
 Pure unit tests — zero framework dependencies, zero DB, milliseconds.
 
 ```typescript
 describe('Document aggregate', () => {
   it('should reject files exceeding 50MB', () => {
-    const result = DocumentFactory.create({ fileSizeBytes: 52_428_801 })
-    expect(result.isFailure).toBe(true)
-    expect(result.error).toBeInstanceOf(FileSizeLimitExceededException)
-  })
+    const result = DocumentFactory.create({ fileSizeBytes: 52_428_801 });
+    expect(result.isFailure).toBe(true);
+    expect(result.error).toBeInstanceOf(FileSizeLimitExceededException);
+  });
 
   it('should emit DocumentUploadedEvent on creation', () => {
-    const result = DocumentFactory.create({ fileName: 'agreement.pdf' })
-    expect(result.isSuccess).toBe(true)
-    expect(result.value.pullEvents()).toContainEqual(expect.any(DocumentUploadedEvent))
-  })
-})
+    const result = DocumentFactory.create({ fileName: 'agreement.pdf' });
+    expect(result.isSuccess).toBe(true);
+    expect(result.value.pullEvents()).toContainEqual(expect.any(DocumentUploadedEvent));
+  });
+});
 ```
 
 ### Layer 2: Application Unit Tests (mocked ports)
+
 ```typescript
 describe('UploadDocumentHandler', () => {
   it('should save document and publish DocumentUploadedEvent', async () => {
@@ -53,6 +55,7 @@ describe('UploadDocumentHandler', () => {
 ```
 
 ### Layer 3: Integration Tests
+
 ```typescript
 describe('POST /api/v1/documents', () => {
   it('should return 201 with documentId', async () => {
@@ -60,23 +63,23 @@ describe('POST /api/v1/documents', () => {
       .post('/api/v1/documents')
       .set('Authorization', `Bearer ${testToken}`)
       .attach('file', testPdfPath)
-      .expect(201)
+      .expect(201);
 
-    expect(response.body.success).toBe(true)
-    expect(response.body.data.documentId).toBeDefined()
-  })
-})
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.documentId).toBeDefined();
+  });
+});
 ```
 
 ## Tooling
 
-| Tool | Purpose |
-|---|---|
-| Jest | Test runner |
-| Supertest | HTTP integration tests |
-| `@faker-js/faker` | Realistic test data |
-| `vitest-mock-extended` | Type-safe interface mocking |
-| Test factories | One per aggregate, sensible defaults |
+| Tool                   | Purpose                              |
+| ---------------------- | ------------------------------------ |
+| Jest                   | Test runner                          |
+| Supertest              | HTTP integration tests               |
+| `@faker-js/faker`      | Realistic test data                  |
+| `vitest-mock-extended` | Type-safe interface mocking          |
+| Test factories         | One per aggregate, sensible defaults |
 
 ## Test Factories
 
@@ -89,7 +92,7 @@ export const buildDocument = (overrides?: Partial<CreateDocumentProps>): Documen
     mimeType: 'application/pdf',
     uploadedBy: 'user-123',
     ...overrides,
-  }).value
+  }).value;
 ```
 
 ## Test Database

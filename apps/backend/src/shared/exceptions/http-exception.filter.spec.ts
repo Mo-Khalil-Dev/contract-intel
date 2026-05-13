@@ -2,7 +2,6 @@ import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpExceptionFilter } from './http-exception.filter';
 import {
   DomainException,
-  ApplicationException,
   InfrastructureException,
   NotFoundException,
   ValidationException,
@@ -60,10 +59,7 @@ describe('HttpExceptionFilter', () => {
     });
 
     it('should catch InfrastructureException and return 500 status', () => {
-      const error = new InfrastructureException(
-        'DATABASE_ERROR',
-        'Connection failed',
-      );
+      const error = new InfrastructureException('DATABASE_ERROR', 'Connection failed');
 
       filter.catch(error, mockArgumentsHost);
 
@@ -200,6 +196,7 @@ describe('HttpExceptionFilter', () => {
 
         const response = mockResponse.json.mock.calls[0][0];
         expect(typeof response.error.title).toBe('string');
+        expect(response.error.title).toBe(expectedTitle);
       });
     });
   });

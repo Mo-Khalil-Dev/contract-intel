@@ -100,6 +100,7 @@ Cookie: session=<signed_payload>
 ```
 
 **Cookie payload (signed with APP_SECRET, not encrypted):**
+
 ```json
 {
   "tokenRecordId": "uuid-of-token-record",
@@ -246,26 +247,26 @@ GET  /api/v1/auth/me             → return current user from cookie claims
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest()
+    const request = context.switchToHttp().getRequest();
 
     // Skip for @Public() endpoints
     if (this.reflector.get(IS_PUBLIC_KEY, context.getHandler())) {
-      return true
+      return true;
     }
 
     // Parse and verify session cookie
-    const session = this.sessionCookieService.parse(request)
-    if (!session) throw new UnauthorizedException()
+    const session = this.sessionCookieService.parse(request);
+    if (!session) throw new UnauthorizedException();
 
     // Fetch token record from DB
-    const tokenRecord = await this.tokenRepo.findById(session.tokenRecordId)
-    if (!tokenRecord) throw new UnauthorizedException()
+    const tokenRecord = await this.tokenRepo.findById(session.tokenRecordId);
+    if (!tokenRecord) throw new UnauthorizedException();
 
     // Decrypt tokens
-    const tokens = await this.tokenEncryption.decrypt(tokenRecord)
+    const tokens = await this.tokenEncryption.decrypt(tokenRecord);
 
     // Check expiry, refresh if needed
-    const validTokens = await this.ensureValidTokens(tokens, tokenRecord, request)
+    const validTokens = await this.ensureValidTokens(tokens, tokenRecord, request);
 
     // Attach user to request
     request.user = {
@@ -274,9 +275,9 @@ export class SessionAuthGuard implements CanActivate {
       name: session.name,
       roles: session.roles,
       accessToken: validTokens.accessToken,
-    }
+    };
 
-    return true
+    return true;
   }
 }
 ```
@@ -299,7 +300,7 @@ export class SessionAuthGuard implements CanActivate {
 
 ```
 Application Type: Regular Web Application
-Allowed Callback URLs: 
+Allowed Callback URLs:
   https://app.contractintel.io/api/v1/auth/callback
   http://localhost:3000/api/v1/auth/callback
 
@@ -342,20 +343,20 @@ TOKEN_KEY_NAMES=ContractIntel-Token-Key-1,ContractIntel-Token-Key-2,ContractInte
 // No Auth0 SDK needed in the frontend — the backend handles everything
 
 const login = () => {
-  window.location.href = '/api/v1/auth/login'
-}
+  window.location.href = '/api/v1/auth/login';
+};
 
 const logout = async () => {
-  await fetch('/api/v1/auth/logout', { method: 'POST' })
-  window.location.href = '/'
-}
+  await fetch('/api/v1/auth/logout', { method: 'POST' });
+  window.location.href = '/';
+};
 
 // Check if user is logged in
 const { data: user } = useQuery({
   queryKey: ['currentUser'],
   queryFn: () => apiClient.get('/api/v1/auth/me'),
   retry: false,
-})
+});
 ```
 
 The cookie is sent automatically with every request — no token management in React at all.

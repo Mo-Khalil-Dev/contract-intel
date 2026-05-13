@@ -2,7 +2,10 @@ import { AggregateRoot } from '../aggregate-root';
 import { DomainEvent } from '../domain-event';
 
 class TestDomainEvent extends DomainEvent {
-  constructor(aggregateId: string, public readonly data: string) {
+  constructor(
+    aggregateId: string,
+    public readonly data: string,
+  ) {
     super(aggregateId);
   }
 

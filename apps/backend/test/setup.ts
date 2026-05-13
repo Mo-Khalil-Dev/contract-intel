@@ -6,8 +6,7 @@ dotenv.config({
 });
 
 if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
-  process.env.SESSION_SECRET =
-    'test-session-secret-min-32-characters-long-x';
+  process.env.SESSION_SECRET = 'test-session-secret-min-32-characters-long-x';
 }
 
 if (!process.env.NODE_ENV) {

@@ -3,7 +3,7 @@
 **Epic**: Core Screens  
 **Priority**: P1  
 **Story Points**: 13  
-**Status**: Ready for Implementation  
+**Status**: Ready for Implementation
 
 ---
 
@@ -16,12 +16,14 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 ## Acceptance Criteria
 
 ### Layout & Structure
+
 - [ ] Page uses PageShell component (no custom title bar needed — org banner replaces header)
 - [ ] Full-height scrollable container with background color #FAFAF9
 - [ ] Max-width 1120px centered layout with horizontal padding 32px
 - [ ] All sections have proper vertical spacing (margins documented below)
 
 ### Org Banner (Top)
+
 - [ ] Background: #FFFFFF
 - [ ] Border-bottom: 1px solid #E2E8F0
 - [ ] Padding: 14px 32px
@@ -37,6 +39,7 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - [ ] Font: DM Sans, font-size 12px throughout
 
 ### Greeting Section
+
 - [ ] Padding: 36px 32px 24px (within 1120px container)
 - [ ] Two-column flex layout: left (greeting + context) | right (buttons)
 - [ ] **Left Column**:
@@ -44,7 +47,7 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
   - Context paragraph (font-size 15px, color #64748B):
     - Text: "You have **{criticalFlagCount} critical flags** across your portfolio and **{urgentRenewals} urgent renewals** in the next 60 days."
     - Critical flags text (within `<strong>`): color #EF4444
-    - Urgent renewals text (within `<strong>`): 
+    - Urgent renewals text (within `<strong>`):
       - Color #F59E0B if count > 0 and daysRemaining < 60
       - Color #0F172A otherwise
 - [ ] **Right Column** (flex: 0 0 auto):
@@ -54,18 +57,21 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
   - Gap between buttons: 10px
 
 ### KPI Cards Section
+
 - [ ] Grid: `gridTemplateColumns: repeat(4, 1fr)`
 - [ ] Gap: 12px
 - [ ] Margin-bottom: 32px
 - [ ] **4 Cards** with data:
 
 #### Card 1: Active Contracts
+
 - Label: "Active Contracts"
 - Value: {activeContractCount}
 - Sub-text: "{inProgressCount} in review"
 - Color: #0F172A (text color for value)
 
 #### Card 2: Average Risk Score
+
 - Label: "Average Risk Score"
 - Value: {avgRiskScore} (rounded to 1 decimal)
 - Sub-text: Risk classification based on value
@@ -75,20 +81,23 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - Value color: matches sub-text color
 
 #### Card 3: Critical Flags Open
+
 - Label: "Critical Flags Open"
 - Value: {redFlagCount}
 - Sub-text: "Across all contracts"
 - Color: #EF4444 (red)
 
 #### Card 4: Renewals < 60 Days
+
 - Label: "Renewals < 60 days"
 - Value: {urgentRenewalCount}
-- Sub-text: 
+- Sub-text:
   - If count > 0: "Next: {nextRenewalDate}" (format: YYYY-MM-DD)
   - If count = 0: "—"
 - Color: #F59E0B (orange) if count > 0, else #0F172A
 
 **Card Styling** (StatCard component):
+
 - Background: #FFFFFF
 - Border: 1px solid #E2E8F0
 - Border-radius: 10px
@@ -98,18 +107,20 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - Sub-text styling: font-size 11px, color #64748B, margin-top 4px
 
 ### "Where to Start" Section
+
 - [ ] Grid: `gridTemplateColumns: 1.4fr 1fr` (primary CTA larger than secondary)
 - [ ] Gap: 16px
 - [ ] Margin-bottom: 36px
 
 #### Left Card: Upload CTA
+
 - Background: #0F172A (dark)
 - Border-radius: 12px
 - Padding: 24px 28px
 - Cursor: pointer
 - Position: relative, overflow: hidden
 - Text color: #FFFFFF
-- **Decorative background element**: 
+- **Decorative background element**:
   - Position: absolute, top -40px, right -40px
   - Size: 180×180px circle
   - Background: #2563EB with opacity 0.18
@@ -126,9 +137,11 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - **Interaction**: `onClick={() => onNav('upload')}`
 
 #### Right Column: Resume + Sample
+
 - Display: flex, flex-direction: column, gap 10px
 
 ##### Resume Card (if lastOpenedContract exists)
+
 - Background: #FFFFFF
 - Border: 1px solid #E2E8F0
 - Border-radius: 10px
@@ -147,6 +160,7 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - **Interaction**: `onClick={() => onNav('results', { contractId: lastOpenedContractId })}`
 
 ##### Sample Card (secondary CTA)
+
 - Same styling as resume card
 - Content:
   - Label: "Explore" (or "View example")
@@ -156,11 +170,13 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - **Interaction**: `onClick={() => onNav('results', { contractId: 1 })}` (sample contract)
 
 ### How It Works Section
+
 - [ ] Margin-bottom: 36px
 - [ ] **Title**: "How it works" (font-size 18px, weight 700, color #0F172A, margin-bottom 20px)
 - [ ] **4-step process grid**: `gridTemplateColumns: repeat(4, 1fr)`, gap 20px
 
 #### Each Step Card
+
 - Display: flex, flex-direction: column, gap 12px
 - **Step number**: {n} (e.g., "01") — font-size 32px, weight 800, color #2563EB, font-family DM Mono
 - **Step label**: {label} — font-size 14px, weight 700, color #0F172A
@@ -168,17 +184,20 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - **Who**: {who} — font-size 12px, color #94A3B8, font-style italic
 
 **Step data**:
+
 1. n: "01", label: "Upload", desc: "Drop in any vendor, licence or partnership contract — PDF or DOCX.", who: "Anyone in Legal Ops"
 2. n: "02", label: "AI review", desc: "ContractIntel scans every clause against the Northwind playbook.", who: "Automated · ~60 seconds"
 3. n: "03", label: "Reviewer sign-off", desc: "A reviewer confirms risk flags and adds notes for the business owner.", who: "Reviewer / Senior Counsel"
 4. n: "04", label: "Approve & file", desc: "Approved contracts are filed to the register; renewals tracked automatically.", who: "Head of Legal"
 
 ### Recent Contracts Section
+
 - [ ] **Title**: "Recently uploaded" or "Recent contracts" (font-size 16px, weight 700, color #0F172A, margin-bottom 12px)
 - [ ] Margin-bottom: 32px
 - [ ] **Table** showing 4 most recent complete contracts (sorted by uploadDate DESC)
 
 **Table Structure**:
+
 - Columns: Contract name, Type, Risk score, Uploaded date
 - Rows: up to 4
 - Header row:
@@ -194,7 +213,6 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
   - Hover: background #E8F4EF (clickable)
   - Cursor: pointer
   - Border-bottom: 1px solid #E2E8F0
-  
   - **Contract name column**: weight 600, max-width 240px, truncated with ellipsis
   - **Type column**: TypePill component
   - **Risk column**: RiskBadge component (size sm)
@@ -203,11 +221,13 @@ As a **legal operations manager**, I want to see a personalized dashboard with k
 - **Interaction**: Click row → `onNav('results', { contractId: contract.id })`
 
 ### Urgent Renewals Section
+
 - [ ] **Title**: "Urgent renewals" (font-size 16px, weight 700, color #0F172A, margin-bottom 12px)
 - [ ] Margin-bottom: 40px
 - [ ] **Table** showing 3 renewals with smallest daysRemaining (sorted ascending)
 
 **Table Structure**:
+
 - Columns: Contract name, Renewal date, Days remaining, Status
 - Rows: up to 3
 - Same header styling as recent contracts table
@@ -245,11 +265,13 @@ interface HomeScreenProps {
 ```
 
 ### Required Data (from context/store):
+
 - `contracts: Contract[]` - list of all contracts
 - `renewals: Renewal[]` - list of all renewals
 - `currentUser: { name: string }` - logged-in user info
 
 ### Computed Values:
+
 - `completeContracts = contracts.filter(c => c.status === 'complete')`
 - `activeContractCount = completeContracts.length`
 - `inProgressCount = contracts.filter(c => c.status !== 'complete').length`
@@ -265,6 +287,7 @@ interface HomeScreenProps {
 ## Design Specifications
 
 ### Colors Used
+
 - Background: #FAFAF9
 - Surface: #FFFFFF
 - Text (primary): #0F172A
@@ -277,23 +300,27 @@ interface HomeScreenProps {
 - Accent (blue): #2563EB
 
 ### Typography
+
 - Font family: DM Sans (all text except dates/scores)
 - Monospace: DM Mono (for dates, scores, numbers)
 - Base sizes: 11px (labels), 12px (body), 13px (descriptions), 14px (UI), 15px (context), 18px (section titles), 22px (card titles), 32px (greeting)
 
 ### Spacing
+
 - Container padding: 32px horizontal
 - Section margin-bottom: 20-40px (documented per section)
 - Card padding: 14px 18px (StatCard), 24px 28px (CTA cards), 14px 16px (table rows)
 - Grid gaps: 12px (KPI cards), 16px (where-to-start), 20px (how-it-works)
 
 ### Border Radius
+
 - Cards: 10px
 - Buttons: 8px
 - CTA card: 12px
 - Badges/pills: 6px
 
 ### Shadows
+
 - No drop shadows on main content
 - Modal-only shadow (if modals appear on this screen)
 
@@ -301,21 +328,22 @@ interface HomeScreenProps {
 
 ## Interactions
 
-| Trigger | Behavior |
-|---------|----------|
-| Click "View all contracts" | Navigate to portfolio screen |
-| Click "+ Upload contract" button | Navigate to upload screen |
-| Click upload CTA card | Navigate to upload screen |
-| Click recent contract row | Navigate to results screen with contractId |
-| Click resume card | Navigate to results screen with lastOpenedContractId |
-| Click sample card | Navigate to results screen with sample contractId (1) |
-| Click urgent renewal row | Navigate to renewals screen with renewal selected |
+| Trigger                          | Behavior                                              |
+| -------------------------------- | ----------------------------------------------------- |
+| Click "View all contracts"       | Navigate to portfolio screen                          |
+| Click "+ Upload contract" button | Navigate to upload screen                             |
+| Click upload CTA card            | Navigate to upload screen                             |
+| Click recent contract row        | Navigate to results screen with contractId            |
+| Click resume card                | Navigate to results screen with lastOpenedContractId  |
+| Click sample card                | Navigate to results screen with sample contractId (1) |
+| Click urgent renewal row         | Navigate to renewals screen with renewal selected     |
 
 ---
 
 ## Edge Cases & States
 
 ### No Contracts Yet
+
 - [ ] If `completeContracts.length = 0`:
   - Average risk score shows "—"
   - "Active contracts" shows "0"
@@ -324,14 +352,17 @@ interface HomeScreenProps {
   - Resume card hidden
 
 ### No Renewals Yet
+
 - [ ] If `urgentRenewals.length = 0`:
   - "Renewals < 60 days" shows "0"
   - Urgent renewals section hidden or shows placeholder: "No urgent renewals"
 
 ### All Renewals >60 Days
+
 - [ ] Urgent renewals section hidden or shows placeholder
 
 ### User Name Missing
+
 - [ ] Greeting defaults to "Good morning" (without name) or shows placeholder
 
 ---
@@ -350,12 +381,14 @@ interface HomeScreenProps {
 ## Testing Requirements (12-Layer Architecture)
 
 ### Layer 1: Static Analysis & Type Checking
+
 - [ ] **ESLint**: No errors, no warnings
 - [ ] **TypeScript**: Strict mode enabled, no `any` types
 - [ ] **Prettier**: Code formatted consistently
 - [ ] **Commands**: `npm run lint`, `npm run type-check`
 
 ### Layer 2: Component Unit Tests (React Testing Library)
+
 - [ ] **Data calculations tested**: KPI calculations (active count, avg risk, flag count, renewal count)
 - [ ] **Sorting tested**: Recent contracts by date DESC, renewals by daysRemaining ASC
 - [ ] **Color logic tested**: Risk score color selection matches thresholds
@@ -365,6 +398,7 @@ interface HomeScreenProps {
 - [ ] **Commands**: `npm test`, `npm test -- --watch`
 
 **Example Test Cases**:
+
 ```typescript
 describe('HomeScreen', () => {
   it('should calculate active contract count correctly', () => { ... });
@@ -380,11 +414,13 @@ describe('HomeScreen', () => {
 ```
 
 ### Layer 3: Hook Testing (if custom hooks)
+
 - [ ] **useHomeData hook**: Test data fetching and calculations
 - [ ] **useGreeting hook**: Test time-based greeting logic
 - [ ] **Commands**: `npm test`
 
 **Example Test Cases**:
+
 ```typescript
 describe('useHomeData', () => {
   it('should fetch contracts and renewals on mount', () => { ... });
@@ -394,12 +430,14 @@ describe('useHomeData', () => {
 ```
 
 ### Layer 4: Integration Testing (MSW for API mocking)
+
 - [ ] **API calls mocked**: Mock /api/v1/contracts and /api/v1/renewals
 - [ ] **Full page flow tested**: Load data → display KPIs → navigate
 - [ ] **Error handling tested**: Network errors, empty responses
 - [ ] **Commands**: `npm run test:integration`
 
 **Example Test Cases**:
+
 ```typescript
 describe('HomeScreen Integration', () => {
   it('should load contracts and display KPIs', async () => { ... });
@@ -409,16 +447,19 @@ describe('HomeScreen Integration', () => {
 ```
 
 ### Layer 5: Snapshot Testing
+
 - [ ] **Page layout**: Snapshot test for overall page structure
 - [ ] **KPI cards**: Snapshot test for StatCard components
 - [ ] **Commands**: `npm test`, `npm test -- --updateSnapshot`
 
 ### Layer 6: Navigation & Routing Tests
+
 - [ ] **Navigation tested**: All onNav calls navigate to correct screens
 - [ ] **URL parameters tested**: contractId passed correctly
 - [ ] **Commands**: `npm test`
 
 **Example Test Cases**:
+
 ```typescript
 describe('HomeScreen Navigation', () => {
   it('should navigate to upload screen when clicking upload button', () => { ... });
@@ -428,6 +469,7 @@ describe('HomeScreen Navigation', () => {
 ```
 
 ### Layer 7: Accessibility Testing
+
 - [ ] **axe-core automated scan**: 0 critical violations
 - [ ] **Keyboard navigation**: Tab through all interactive elements
 - [ ] **Screen reader**: Test with VoiceOver (macOS/iOS) or NVDA (Windows)
@@ -437,6 +479,7 @@ describe('HomeScreen Navigation', () => {
 - [ ] **Commands**: `npm run test:a11y`
 
 **Example Test Cases**:
+
 ```typescript
 describe('HomeScreen Accessibility', () => {
   it('should have no accessibility violations', async () => {
@@ -444,7 +487,7 @@ describe('HomeScreen Accessibility', () => {
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
-  
+
   it('should have proper heading hierarchy', () => { ... });
   it('should have descriptive button labels', () => { ... });
   it('should be keyboard navigable', () => { ... });
@@ -452,11 +495,13 @@ describe('HomeScreen Accessibility', () => {
 ```
 
 ### Layer 8: Performance Testing
+
 - [ ] **Render performance**: Page renders in <500ms with 100 contracts
 - [ ] **Re-render optimization**: No unnecessary re-renders on data updates
 - [ ] **Commands**: `npm run test:perf`
 
 **Example Test Cases**:
+
 ```typescript
 describe('HomeScreen Performance', () => {
   it('should render 100 contracts in under 500ms', () => { ... });
@@ -465,11 +510,13 @@ describe('HomeScreen Performance', () => {
 ```
 
 ### Layer 10: Visual Regression Testing (Storybook + Chromatic)
+
 - [ ] **Storybook stories**: All page states documented
 - [ ] **Visual regression**: Chromatic or Percy integration
 - [ ] **Commands**: `npm run storybook`, `npm run build-storybook`
 
 **Required Stories**:
+
 - Default story (with sample data)
 - Empty state (no contracts)
 - Empty state (no renewals)
@@ -477,11 +524,13 @@ describe('HomeScreen Performance', () => {
 - Low risk portfolio
 
 ### Layer 11: E2E Testing (Cypress/Playwright) - Critical Flow
+
 - [ ] **User journey tested**: Load home → click upload → navigate to upload screen
 - [ ] **User journey tested**: Load home → click contract → navigate to results screen
 - [ ] **Commands**: `npm run test:e2e`
 
 **Example Test Cases**:
+
 ```typescript
 describe('HomeScreen E2E', () => {
   it('should navigate to upload screen when clicking upload button', () => {
@@ -489,7 +538,7 @@ describe('HomeScreen E2E', () => {
     cy.contains('Upload contract').click();
     cy.url().should('include', '/upload');
   });
-  
+
   it('should navigate to results screen when clicking contract', () => {
     cy.visit('/');
     cy.get('[data-cy=contract-row]').first().click();
@@ -499,6 +548,7 @@ describe('HomeScreen E2E', () => {
 ```
 
 ### Real Device Testing
+
 - [ ] **iPhone**: Portrait + landscape
 - [ ] **Android phone**: Portrait + landscape
 - [ ] **iPad**: Portrait + landscape
@@ -509,30 +559,32 @@ describe('HomeScreen E2E', () => {
 
 ## Testing Strategy Summary
 
-| Test Layer | When to Run | Coverage Target | Speed |
-|------------|-------------|-----------------|-------|
-| Layer 1: Static | On every save | 100% | ⚡ <1s |
-| Layer 2: Unit | On every commit | ≥80% | ⚡ <5s |
-| Layer 3: Hooks | On every commit | ≥80% | ⚡ <5s |
-| Layer 4: Integration | On every commit | Critical flows | ⏱️ <60s |
-| Layer 5: Snapshot | On every commit | Page layout | ⚡ <1s |
-| Layer 6: Navigation | On every commit | All nav flows | ⚡ <5s |
-| Layer 7: A11y | On every commit | 100% | ⚡ <1s |
-| Layer 8: Performance | Nightly | Critical pages | ⏱️ <60s |
-| Layer 10: Visual | On PR merge | All page states | ⏱️ 2-5s |
-| Layer 11: E2E | Before deploy | 2-3 critical flows | ⏱️ 5-10m |
+| Test Layer           | When to Run     | Coverage Target    | Speed    |
+| -------------------- | --------------- | ------------------ | -------- |
+| Layer 1: Static      | On every save   | 100%               | ⚡ <1s   |
+| Layer 2: Unit        | On every commit | ≥80%               | ⚡ <5s   |
+| Layer 3: Hooks       | On every commit | ≥80%               | ⚡ <5s   |
+| Layer 4: Integration | On every commit | Critical flows     | ⏱️ <60s  |
+| Layer 5: Snapshot    | On every commit | Page layout        | ⚡ <1s   |
+| Layer 6: Navigation  | On every commit | All nav flows      | ⚡ <5s   |
+| Layer 7: A11y        | On every commit | 100%               | ⚡ <1s   |
+| Layer 8: Performance | Nightly         | Critical pages     | ⏱️ <60s  |
+| Layer 10: Visual     | On PR merge     | All page states    | ⏱️ 2-5s  |
+| Layer 11: E2E        | Before deploy   | 2-3 critical flows | ⏱️ 5-10m |
 
 ---
 
 ## Testing Requirements
 
 ### Unit Tests
+
 - [ ] Correct KPI calculations (active count, avg risk, flag count, renewal count)
 - [ ] Correct sorting (recent contracts by date DESC, renewals by daysRemaining ASC)
 - [ ] Risk score color selection matches thresholds
 - [ ] onNav callbacks fire with correct screen and contractId params
 
 ### Visual Tests
+
 - [ ] Org banner renders with correct styling
 - [ ] Greeting text matches logged-in user
 - [ ] 4 KPI cards display with correct colors
@@ -543,6 +595,7 @@ describe('HomeScreen E2E', () => {
 - [ ] Renewal left border color changes by daysRemaining thresholds
 
 ### Integration Tests
+
 - [ ] Clicking buttons navigates to correct screens
 - [ ] Passing contractId via `onNav` is received by Results screen
 - [ ] Data recalculates when contracts/renewals change

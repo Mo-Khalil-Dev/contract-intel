@@ -3,7 +3,7 @@
 **Epic**: [Epic Name]  
 **Priority**: P0/P1/P2/P3  
 **Story Points**: [Points]  
-**Status**: Ready for Implementation / In Progress / Done  
+**Status**: Ready for Implementation / In Progress / Done
 
 ---
 
@@ -16,6 +16,7 @@ As a **[role]**, I want [feature] so that [benefit].
 ## Acceptance Criteria
 
 ### Component Structure (MANDATORY)
+
 - [ ] **[ComponentName].tsx**: JSX only, max 15 lines, no logic
 - [ ] **use[ComponentName].ts**: All UI logic (hooks, state, handlers)
 - [ ] **[ComponentName].module.css**: All styles
@@ -24,6 +25,7 @@ As a **[role]**, I want [feature] so that [benefit].
 - [ ] **index.ts**: Barrel export (optional)
 
 ### Base Implementation
+
 - [ ] [Core functionality requirement 1]
 - [ ] [Core functionality requirement 2]
 - [ ] [Core functionality requirement 3]
@@ -31,6 +33,7 @@ As a **[role]**, I want [feature] so that [benefit].
 ### Mobile-First Responsive Design (320px → 1024px+)
 
 #### Mobile Design (320px-640px)
+
 - [ ] Touch target: **48px minimum height** (WCAG 2.5.5)
 - [ ] Padding: [specify mobile padding]
 - [ ] Font size: [specify mobile font size]
@@ -39,6 +42,7 @@ As a **[role]**, I want [feature] so that [benefit].
 - [ ] Tested on real Android phone
 
 #### Tablet Design (640px-1024px)
+
 - [ ] Touch target: **44px minimum height**
 - [ ] Padding: [specify tablet padding]
 - [ ] Font size: [specify tablet font size]
@@ -46,6 +50,7 @@ As a **[role]**, I want [feature] so that [benefit].
 - [ ] Tested on real iPad
 
 #### Desktop Design (1024px+)
+
 - [ ] Touch target: **40px minimum height**
 - [ ] Padding: [specify desktop padding]
 - [ ] Font size: [specify desktop font size]
@@ -54,6 +59,7 @@ As a **[role]**, I want [feature] so that [benefit].
 - [ ] Tested on desktop monitor with mouse
 
 ### Accessibility Requirements (WCAG 2.1 AA)
+
 - [ ] **Focus indicators**: 3px outline, visible on focus
 - [ ] **ARIA labels**: Required for icon-only buttons and inputs
 - [ ] **Keyboard navigation**: Tab, Enter, Space, Escape
@@ -68,6 +74,7 @@ As a **[role]**, I want [feature] so that [benefit].
 ## 12-Layer Testing Requirements
 
 ### Layer 1: Static Analysis & Type Checking
+
 - [ ] ESLint passes with no errors
 - [ ] TypeScript strict mode passes
 - [ ] All props have TypeScript interfaces
@@ -75,6 +82,7 @@ As a **[role]**, I want [feature] so that [benefit].
 - [ ] Prettier formatting applied
 
 **Commands**:
+
 ```bash
 npm run lint
 npm run type-check
@@ -83,6 +91,7 @@ npm run type-check
 ---
 
 ### Layer 2: Component Unit Tests (React Testing Library)
+
 - [ ] Test all variants (if applicable)
 - [ ] Test all sizes (if applicable)
 - [ ] Test all states (default, hover, focus, active, disabled, loading, error)
@@ -92,6 +101,7 @@ npm run type-check
 - [ ] Coverage: ≥80% for component logic
 
 **Example Test Structure**:
+
 ```typescript
 describe('[ComponentName] Component', () => {
   it('should render with default props', () => { ... });
@@ -103,6 +113,7 @@ describe('[ComponentName] Component', () => {
 ```
 
 **Commands**:
+
 ```bash
 npm test -- [ComponentName].test.tsx
 npm test -- --coverage
@@ -111,12 +122,14 @@ npm test -- --coverage
 ---
 
 ### Layer 3: Hook Testing (if custom hooks exist)
+
 - [ ] Test hook state updates
 - [ ] Test hook side effects
 - [ ] Test hook error handling
 - [ ] Test hook cleanup
 
 **Example**:
+
 ```typescript
 describe('use[ComponentName] Hook', () => {
   it('should fetch data on mount', async () => { ... });
@@ -127,6 +140,7 @@ describe('use[ComponentName] Hook', () => {
 ---
 
 ### Layer 4: Integration Testing (MSW + React Testing Library)
+
 - [ ] Test component with mocked API calls
 - [ ] Test component with routing
 - [ ] Test component with state management (Redux/Context)
@@ -134,6 +148,7 @@ describe('use[ComponentName] Hook', () => {
 - [ ] Test error scenarios (404, 500, network failure)
 
 **Example**:
+
 ```typescript
 describe('[ComponentName] Integration', () => {
   it('should load data and display it', async () => { ... });
@@ -142,6 +157,7 @@ describe('[ComponentName] Integration', () => {
 ```
 
 **Commands**:
+
 ```bash
 npm run test:integration
 ```
@@ -149,11 +165,13 @@ npm run test:integration
 ---
 
 ### Layer 5: Snapshot Testing
+
 - [ ] Create snapshots for all variants
 - [ ] Create snapshots for all states
 - [ ] Review snapshot diffs before updating
 
 **Example**:
+
 ```typescript
 it('should match snapshot for primary variant', () => {
   const { container } = render(<Component variant="primary" />);
@@ -164,6 +182,7 @@ it('should match snapshot for primary variant', () => {
 ---
 
 ### Layer 6: Navigation & Routing Tests (if applicable)
+
 - [ ] Test route navigation
 - [ ] Test URL parameter handling
 - [ ] Test protected routes (auth required)
@@ -172,6 +191,7 @@ it('should match snapshot for primary variant', () => {
 ---
 
 ### Layer 7: Accessibility Testing
+
 - [ ] Run axe DevTools: 0 critical violations
 - [ ] Run Lighthouse a11y: ≥95
 - [ ] Test keyboard navigation (Tab through all elements)
@@ -181,6 +201,7 @@ it('should match snapshot for primary variant', () => {
 - [ ] Verify all form inputs have labels
 
 **Example**:
+
 ```typescript
 import { axe, toHaveNoViolations } from 'jest-axe';
 expect.extend(toHaveNoViolations);
@@ -193,6 +214,7 @@ it('should have no accessibility violations', async () => {
 ```
 
 **Commands**:
+
 ```bash
 npm run test:a11y
 ```
@@ -200,11 +222,13 @@ npm run test:a11y
 ---
 
 ### Layer 8: Performance Testing (if applicable)
+
 - [ ] Render time < 200ms for lists with 100 items
 - [ ] No unnecessary re-renders
 - [ ] Bundle size impact documented
 
 **Example**:
+
 ```typescript
 it('should render 100 items in under 200ms', () => {
   const onRenderCallback = jest.fn();
@@ -221,6 +245,7 @@ it('should render 100 items in under 200ms', () => {
 ---
 
 ### Layer 9: Storybook Stories
+
 - [ ] Story for each variant
 - [ ] Story for each size
 - [ ] Story for each state
@@ -229,6 +254,7 @@ it('should render 100 items in under 200ms', () => {
 - [ ] Auto-generated docs (tags: ['autodocs'])
 
 **Example**:
+
 ```typescript
 export const Primary: Story = {
   args: { variant: 'primary', children: 'Button' },
@@ -245,6 +271,7 @@ export const AllVariants: Story = {
 ```
 
 **Commands**:
+
 ```bash
 npm run storybook
 ```
@@ -252,11 +279,13 @@ npm run storybook
 ---
 
 ### Layer 10: Visual Regression Testing (Chromatic)
+
 - [ ] Chromatic build passes
 - [ ] Visual diffs reviewed and approved
 - [ ] No unintended visual changes
 
 **Commands**:
+
 ```bash
 npm run chromatic
 ```
@@ -264,11 +293,13 @@ npm run chromatic
 ---
 
 ### Layer 11: E2E Testing (Cypress) - Only for Critical Flows
+
 - [ ] E2E test for critical user journey (if applicable)
 - [ ] Test covers happy path
 - [ ] Test covers error scenarios
 
 **Example**:
+
 ```typescript
 describe('[Feature] E2E', () => {
   it('should complete [workflow]', () => {
@@ -280,6 +311,7 @@ describe('[Feature] E2E', () => {
 ```
 
 **Commands**:
+
 ```bash
 npm run test:e2e
 ```
@@ -287,6 +319,7 @@ npm run test:e2e
 ---
 
 ### Layer 12: Production Monitoring (Post-Launch)
+
 - [ ] Sentry error tracking configured
 - [ ] LogRocket session replay configured (if applicable)
 - [ ] PostHog analytics events tracked (if applicable)
@@ -296,6 +329,7 @@ npm run test:e2e
 ## Testing Summary Checklist
 
 **Before Code Review**:
+
 - [ ] Layer 1: ESLint + TypeScript passes
 - [ ] Layer 2: Component unit tests pass (≥80% coverage)
 - [ ] Layer 3: Hook tests pass (if applicable)
@@ -304,6 +338,7 @@ npm run test:e2e
 - [ ] Layer 9: Storybook stories created for all variants
 
 **Before Merge**:
+
 - [ ] Layer 4: Integration tests pass
 - [ ] Layer 7: Lighthouse a11y ≥95
 - [ ] Layer 7: Keyboard navigation tested manually
@@ -311,6 +346,7 @@ npm run test:e2e
 - [ ] All tests pass in CI pipeline
 
 **Post-Merge** (if applicable):
+
 - [ ] Layer 10: Chromatic visual regression approved
 - [ ] Layer 11: E2E tests pass (if critical flow)
 
@@ -319,22 +355,27 @@ npm run test:e2e
 ## Design Specifications
 
 ### Colors Used
+
 - [List all colors from design tokens]
 
 ### Typography
+
 - Font family: [specify]
 - Font sizes: [specify]
 - Font weights: [specify]
 
 ### Spacing
+
 - Padding: [specify]
 - Margins: [specify]
 - Gaps: [specify]
 
 ### Border Radius
+
 - [specify]
 
 ### Shadows
+
 - [specify]
 
 ---
@@ -348,7 +389,7 @@ interface [ComponentName]Props {
    * @default [default value]
    */
   [propName]: [type];
-  
+
   // ... more props
 }
 ```
@@ -372,9 +413,11 @@ frontend/src/components/[core|features]/[ComponentName]/
 ## Implementation Tasks
 
 ### Task 1: Component Structure (Mobile-First)
+
 **Goal**: Build mobile-first component with proper structure
 
 **Deliverables**:
+
 - [ ] Create [ComponentName].tsx (JSX only, max 15 lines)
 - [ ] Create use[ComponentName].ts (all logic)
 - [ ] Create [ComponentName].module.css (mobile-first styles)
@@ -388,9 +431,11 @@ frontend/src/components/[core|features]/[ComponentName]/
 ---
 
 ### Task 2: Variants & States
+
 **Goal**: Implement all variants and states
 
 **Deliverables**:
+
 - [ ] Implement all variants
 - [ ] Implement all sizes (responsive)
 - [ ] Implement all states (default, hover, focus, active, disabled, loading, error)
@@ -402,9 +447,11 @@ frontend/src/components/[core|features]/[ComponentName]/
 ---
 
 ### Task 3: Accessibility
+
 **Goal**: Make component fully accessible (WCAG 2.1 AA)
 
 **Deliverables**:
+
 - [ ] Add focus indicators (3px outline, visible)
 - [ ] Add ARIA labels (where needed)
 - [ ] Implement keyboard navigation
@@ -417,9 +464,11 @@ frontend/src/components/[core|features]/[ComponentName]/
 ---
 
 ### Task 4: Testing (12-Layer Architecture)
+
 **Goal**: Comprehensive testing across all layers
 
 **Deliverables**:
+
 - [ ] Layer 1: ESLint + TypeScript passes
 - [ ] Layer 2: Unit tests (all variants, sizes, states)
 - [ ] Layer 3: Hook tests (if applicable)
@@ -437,9 +486,11 @@ frontend/src/components/[core|features]/[ComponentName]/
 ## Edge Cases & States
 
 ### [Edge Case 1]
+
 - [ ] [Behavior]
 
 ### [Edge Case 2]
+
 - [ ] [Behavior]
 
 ---
@@ -461,17 +512,20 @@ frontend/src/components/[core|features]/[ComponentName]/
 ## Acceptance Checklist
 
 **Component Structure**:
+
 - [ ] Component structure follows mandatory pattern (5-6 files)
 - [ ] JSX file max 15 lines
 - [ ] All logic in hook file
 - [ ] All styles in CSS file
 
 **Functionality**:
+
 - [ ] All variants implemented
 - [ ] All sizes implemented (responsive)
 - [ ] All states implemented
 
 **Responsive Design**:
+
 - [ ] Mobile-first (320px → 1024px+)
 - [ ] Touch targets ≥48px on mobile
 - [ ] Tested on real iPhone
@@ -481,6 +535,7 @@ frontend/src/components/[core|features]/[ComponentName]/
 - [ ] Tested at 100%, 150%, 200% zoom
 
 **Accessibility**:
+
 - [ ] Focus indicators visible (3px outline)
 - [ ] ARIA labels on icon-only buttons/inputs
 - [ ] Keyboard navigation works (Tab, Enter, Space, Escape)
@@ -491,6 +546,7 @@ frontend/src/components/[core|features]/[ComponentName]/
 - [ ] Lighthouse a11y: ≥95
 
 **Testing (12-Layer Architecture)**:
+
 - [ ] Layer 1: ESLint + TypeScript passes
 - [ ] Layer 2: Unit tests pass (≥80% coverage)
 - [ ] Layer 3: Hook tests pass (if applicable)
@@ -502,6 +558,7 @@ frontend/src/components/[core|features]/[ComponentName]/
 - [ ] Layer 11: E2E tests pass (if critical flow)
 
 **Code Quality**:
+
 - [ ] Code review approved
 - [ ] No hardcoded values (all from design tokens)
 - [ ] No console.log statements
@@ -509,6 +566,7 @@ frontend/src/components/[core|features]/[ComponentName]/
 - [ ] Documentation updated
 
 **Ready for Merge**:
+
 - [ ] All acceptance criteria met
 - [ ] All tests pass in CI pipeline
 - [ ] Ready for merge to main
