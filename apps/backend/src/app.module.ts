@@ -1,17 +1,13 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
-import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { AppConfigModule } from './config/app-config.module';
 import { ResponseInterceptor } from './shared/infrastructure/interceptors/response.interceptor';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
-    }),
+    AppConfigModule,
     LoggerModule.forRoot({
       pinoHttp: {
         transport:
@@ -21,7 +17,6 @@ import { ResponseInterceptor } from './shared/infrastructure/interceptors/respon
       },
     }),
     CqrsModule,
-    AppConfigModule,
   ],
   providers: [
     {

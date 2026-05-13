@@ -37,10 +37,6 @@ Thumbs.db
 *.swo
 *~
 
-# Prisma
-apps/backend/prisma/*.db
-apps/backend/prisma/*.db-journal
-
 # Temp
 tmp/
 temp/

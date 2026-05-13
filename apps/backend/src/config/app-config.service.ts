@@ -1,101 +1,100 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  EnvironmentVariables,
+  LogLevel,
+  NodeEnv,
+  OcrDriver,
+  QueueDriver,
+  StorageDriver,
+} from './environment-variables';
 
 @Injectable()
 export class AppConfigService {
-  constructor(private configService: ConfigService) {
-    this.validateConfig();
-  }
+  constructor(private configService: ConfigService<EnvironmentVariables, true>) {}
 
   // Server
-  get nodeEnv(): string {
-    return this.configService.get('NODE_ENV', 'development');
+  get nodeEnv(): NodeEnv {
+    return this.configService.get('NODE_ENV', { infer: true });
+  }
+
+  get isDevelopment(): boolean {
+    return this.nodeEnv === NodeEnv.Development;
+  }
+
+  get isProduction(): boolean {
+    return this.nodeEnv === NodeEnv.Production;
+  }
+
+  get isTest(): boolean {
+    return this.nodeEnv === NodeEnv.Test;
   }
 
   get port(): number {
-    return this.configService.get('PORT', 3000);
+    return this.configService.get('PORT', { infer: true });
   }
 
   get apiPrefix(): string {
-    return this.configService.get('API_PREFIX', 'api/v1');
+    return this.configService.get('API_PREFIX', { infer: true });
   }
 
   get sessionSecret(): string {
-    const secret = this.configService.get('SESSION_SECRET');
-    if (!secret || secret.length < 32) {
-      throw new Error('SESSION_SECRET must be at least 32 characters');
-    }
-    return secret;
+    return this.configService.get('SESSION_SECRET', { infer: true });
   }
 
   // Auth0
-  get auth0Domain(): string {
-    return this.configService.get('AUTH0_DOMAIN', '');
+  get auth0Domain(): string | undefined {
+    return this.configService.get('AUTH0_DOMAIN', { infer: true });
   }
 
-  get auth0ClientId(): string {
-    return this.configService.get('AUTH0_CLIENT_ID', '');
+  get auth0ClientId(): string | undefined {
+    return this.configService.get('AUTH0_CLIENT_ID', { infer: true });
   }
 
-  get auth0ClientSecret(): string {
-    return this.configService.get('AUTH0_CLIENT_SECRET', '');
+  get auth0ClientSecret(): string | undefined {
+    return this.configService.get('AUTH0_CLIENT_SECRET', { infer: true });
   }
 
-  get auth0CallbackUrl(): string {
-    return this.configService.get('AUTH0_CALLBACK_URL', '');
+  get auth0CallbackUrl(): string | undefined {
+    return this.configService.get('AUTH0_CALLBACK_URL', { infer: true });
   }
 
   // Frontend
   get frontendUrl(): string {
-    return this.configService.get('FRONTEND_URL', 'http://localhost:5173');
+    return this.configService.get('FRONTEND_URL', { infer: true });
   }
 
   // Storage
-  get storageDriver(): string {
-    return this.configService.get('STORAGE_DRIVER', 'local');
+  get storageDriver(): StorageDriver {
+    return this.configService.get('STORAGE_DRIVER', { infer: true });
   }
 
   get localStoragePath(): string {
-    return this.configService.get('LOCAL_STORAGE_PATH', './uploads');
+    return this.configService.get('LOCAL_STORAGE_PATH', { infer: true });
   }
 
   // OCR
-  get ocrDriver(): string {
-    return this.configService.get('OCR_DRIVER', 'mock');
+  get ocrDriver(): OcrDriver {
+    return this.configService.get('OCR_DRIVER', { infer: true });
   }
 
   // AI
-  get claudeApiKey(): string {
-    return this.configService.get('CLAUDE_API_KEY', '');
+  get claudeApiKey(): string | undefined {
+    return this.configService.get('CLAUDE_API_KEY', { infer: true });
   }
 
   // Queue
-  get queueDriver(): string {
-    return this.configService.get('QUEUE_DRIVER', 'memory');
+  get queueDriver(): QueueDriver {
+    return this.configService.get('QUEUE_DRIVER', { infer: true });
   }
 
   // Logging
-  get logLevel(): string {
-    return this.configService.get('LOG_LEVEL', 'debug');
+  get logLevel(): LogLevel {
+    return this.configService.get('LOG_LEVEL', { infer: true });
   }
 
   // CORS
   get corsOrigin(): string {
-    return this.configService.get('CORS_ORIGIN', 'http://localhost:5173');
-  }
-
-  private validateConfig(): void {
-    if (this.nodeEnv === 'production') {
-      const requiredVars = [
-        'AUTH0_DOMAIN',
-        'AUTH0_CLIENT_ID',
-        'AUTH0_CLIENT_SECRET',
-      ];
-      for (const envVar of requiredVars) {
-        if (!this.configService.get(envVar)) {
-          throw new Error(`Missing required environment variable: ${envVar}`);
-        }
-      }
-    }
+    return this.configService.get('CORS_ORIGIN', { infer: true });
   }
 }

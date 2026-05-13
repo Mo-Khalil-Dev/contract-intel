@@ -2,12 +2,12 @@
 
 ## Progress Summary
 
-**Phase 1: Scaffolding & Cross-Cutting Concerns** — 3/7 tasks completed
+**Phase 1: Scaffolding & Cross-Cutting Concerns** — 4/7 tasks completed
 - ✅ Task 1.1: Project Structure Setup (Commit: aec01ef)
 - ✅ Task 1.2: Shared Kernel Tests (Commit: 6d4383f)
 - ✅ Task 1.3: Exception Hierarchy Tests (Commit: 896cbe8)
 - ❌ Task 1.4: Prisma Schema & Database Setup — REMOVED (data models introduced incrementally per feature)
-- ⏳ Task 1.5: Configuration Service Tests
+- ✅ Task 1.5: Configuration Service (with class-validator)
 - ⏳ Task 1.6: Logging Infrastructure
 - ⏳ Task 1.7: API Response Envelope Tests
 - ⏳ Task 1.8: Testing Infrastructure
@@ -231,23 +231,38 @@ shared/exceptions/
 
 ---
 
-### Task 1.5: Configuration Service
+### Task 1.5: Configuration Service ✅ COMPLETED
 **Goal**: Centralized configuration with validation
 
 **Deliverables**:
-- [ ] `AppConfigService` with all config properties
-- [ ] Environment-specific .env files (.env, .env.local, .env.test)
-- [ ] Startup validation using class-validator
-- [ ] Configuration module (global)
+- [x] `AppConfigService` with all config properties (typed getters)
+- [x] Environment files (`.env.example` template, `.env.test` for tests)
+- [x] Startup validation using class-validator
+- [x] Configuration module (global)
+- [x] Unit tests for service and validation
 
 **Files**:
 ```
 config/
-├── app-config.service.ts
-└── app-config.module.ts
+├── app-config.module.ts            (global, wires validation into ConfigModule)
+├── app-config.service.ts           (typed getters via ConfigService<EnvironmentVariables, true>)
+├── app-config.service.spec.ts      (service tests)
+├── environment-variables.ts        (validation schema + enums)
+└── environment-variables.spec.ts   (validation rules tests)
 ```
 
-**Requirements**: All features depend on configuration
+**Validation rules enforced**:
+- `NODE_ENV` ∈ {development, test, production}
+- `PORT` integer in [1, 65535]
+- `SESSION_SECRET` minimum 32 characters
+- `STORAGE_DRIVER` ∈ {local, gcs}
+- `OCR_DRIVER` ∈ {mock, google-document-ai}
+- `QUEUE_DRIVER` ∈ {memory, pg-boss, bullmq}
+- `LOG_LEVEL` ∈ {trace, debug, info, warn, error, fatal}
+- All URL fields validated as URLs
+- Production environment requires: AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, AUTH0_CALLBACK_URL, CLAUDE_API_KEY
+
+**Requirements**: All features depend on configuration ✅
 
 ---
 
