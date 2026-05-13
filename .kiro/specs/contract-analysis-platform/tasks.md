@@ -691,7 +691,7 @@ apps/frontend/src/components/core/icons.test.tsx
 
 ## Phase 3: User Story — Authentication (Requirement 0)
 
-### Task 3.1: Authentication Domain Model
+### Task 3.1: Authentication Domain Model ✅ COMPLETED
 
 **Goal**: Define User and Session aggregates with domain events
 
@@ -735,12 +735,14 @@ Aggregate: Session
 
 **Deliverables**:
 
-- [ ] User aggregate with factory
-- [ ] Session aggregate with factory
-- [ ] Value objects: UserId, Email, UserRole, Auth0SubjectId, SessionId, EncryptedAccessToken, EncryptedRefreshToken, EncryptionSalt, KeyName, SessionExpiry
-- [ ] Domain events: UserCreatedEvent, UserLoggedInEvent, UserLoggedOutEvent, SessionCreatedEvent, SessionRefreshedEvent, SessionInvalidatedEvent
-- [ ] Repository interfaces: IUserRepository, ISessionRepository
-- [ ] Unit tests for aggregates and value objects
+- [x] User aggregate with `User.create()` / `User.rehydrate()` factories, plus `recordLogin`, `recordLogout`, `changeRole`
+- [x] Session aggregate with `Session.create()` / `Session.rehydrate()` factories, plus `refresh`, `invalidate`, `isExpired`, `belongsTo`
+- [x] Value objects (10): UserId, SessionId, Email, UserRole, Auth0SubjectId, EncryptedAccessToken, EncryptedRefreshToken, EncryptionSalt, KeyName, SessionExpiry
+- [x] Domain events (6): UserCreatedEvent, UserLoggedInEvent, UserLoggedOutEvent, SessionCreatedEvent, SessionRefreshedEvent, SessionInvalidatedEvent
+- [x] Repository interfaces (2) with `Symbol` DI tokens: IUserRepository, ISessionRepository
+- [x] Unit tests for aggregates and value objects — 89 new tests, all passing
+
+**Test count**: 235 → 324 (+89 tests, +12 suites)
 
 **Files**:
 
