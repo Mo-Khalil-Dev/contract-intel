@@ -14,6 +14,26 @@
 - ✅ Task 1.8: Testing Infrastructure (Jest + Supertest + factories + coverage thresholds, Commit: 55726cf)
 - 🛠️ Tooling: lint + prettier + dependency alignment across full codebase (Commit: 772e1bc)
 
+**Phase 2: Design System** — 5/5 tasks completed ✅
+
+- ✅ Task 2.1: Design Tokens (Commit: 81c7fc8)
+- ✅ Task 2.2: Shadcn UI Bootstrap (Commit: 0b9f9f3)
+- ✅ Task 2.3: Domain Components (Commit: 09807c4)
+- ✅ Task 2.4: Layout Components (Commit: [hash])
+- ✅ Task 2.5: Centralised Icons (Commit: [hash])
+
+**Phase 3: Authentication** — 0/4 tasks completed, ✅ specification complete
+
+- 📋 Task 3.1: Authentication Domain Model (Commits: 01e1d35, 97dbd90, d0c5dfd)
+- 📋 Task 3.2: Authentication Application Layer
+- 📋 Task 3.3: Authentication Infrastructure Layer
+- 📋 Task 3.4: Authentication UI
+
+**Specification Updates**:
+- Commit 01e1d35: Separate access/refresh token storage
+- Commit 97dbd90: Add login initiation flow
+- Commit d0c5dfd: Automatic redirect with returnUrl preservation
+
 **Completed Work**:
 
 - Monorepo scaffold (backend + frontend) — apps/backend (NestJS 11) and apps/frontend (React 18 + Vite)
@@ -30,13 +50,13 @@
 
 ## Phase Plan (Post-Phase 1)
 
-| Phase   | Theme                                                    | Tasks   |
-| ------- | -------------------------------------------------------- | ------- |
-| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks |
-| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks |
-| Phase 4 | Home Screen (Reference Data API + Dashboard UI)          | 3 tasks |
-| Phase 5 | Upload Screen (Document Ingestion domain + UI)           | 4 tasks |
-| Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks |
+| Phase   | Theme                                                    | Tasks   | Status                    |
+| ------- | -------------------------------------------------------- | ------- | ------------------------- |
+| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ Complete               |
+| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ Spec complete, ready   |
+| Phase 4 | Home Screen (Reference Data API + Dashboard UI)          | 3 tasks | 📋 Planned                |
+| Phase 5 | Upload Screen (Document Ingestion domain + UI)           | 4 tasks | 📋 Planned                |
+| Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned                |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
 
@@ -700,6 +720,20 @@ apps/frontend/src/components/core/icons.test.tsx
 
 ## Phase 3: User Story — Authentication (Requirement 0)
 
+**Status**: 🎯 Ready for implementation  
+**Estimated effort**: 8-12 days
+
+**Overview**: Implement Auth0 Universal Login with Authorization Code Flow, server-side token encryption, and seamless automatic redirect flow. Users accessing protected routes without authentication are automatically redirected to Auth0, then returned to their original destination after login.
+
+**Key Architecture Decisions**:
+- ✅ Tokens stored server-side only (never in browser)
+- ✅ Access and refresh tokens encrypted separately (AES-256-CBC)
+- ✅ httpOnly session cookie with signed reference
+- ✅ Automatic redirect on 401 with returnUrl preservation
+- ✅ No intermediate login page (seamless UX)
+
+---
+
 ### Task 3.1: Authentication Domain Model ✅ COMPLETED
 
 **Goal**: Define User and Session aggregates with domain events
@@ -1123,6 +1157,55 @@ frontend/src/
 - [ ] Integration test: full auth flow
 
 **Requirements**: 0.1-0.12
+
+---
+
+### Phase 3 Summary
+
+**Status**: ✅ Specification complete, ready for implementation
+
+**What's Been Specified**:
+
+1. **Task 3.1 - Domain Model** (1-2 days)
+   - User and Session aggregates with separate encrypted token fields
+   - 12 value objects including EncryptedAccessToken, EncryptedRefreshToken
+   - 6 domain events for user and session lifecycle
+   - Repository interfaces (ports)
+
+2. **Task 3.2 - Application Layer** (2-3 days)
+   - 3 commands: Login, Logout, RefreshSession
+   - 2 queries: GetCurrentUser, ValidateSession
+   - 2 event handlers for audit logging
+
+3. **Task 3.3 - Infrastructure Layer** (3-4 days)
+   - Prisma repositories (adapters)
+   - Auth0Service for token exchange and validation
+   - SessionEncryptionService (AES-256-CBC + PBKDF2)
+   - SessionAuthGuard (global, automatic token refresh)
+   - AuthController with 4 endpoints (login, callback, logout, me)
+   - **Key feature**: returnUrl preservation through Auth0 flow
+
+4. **Task 3.4 - UI Layer** (2-3 days)
+   - Axios 401 interceptor for automatic redirect
+   - useAuth hook with React Query
+   - authService (3-tier architecture)
+   - ProtectedRoute, LogoutButton, SessionRefresh components
+   - **No LoginPage needed** - automatic redirect to Auth0
+
+**Key Architecture Decisions**:
+- ✅ Tokens never touch browser (server-side only)
+- ✅ Access and refresh tokens encrypted separately
+- ✅ Automatic redirect on 401 with returnUrl preservation
+- ✅ Seamless UX (no intermediate login page)
+- ✅ Backend handles all Auth0 communication
+
+**Authentication Flow**:
+```
+Protected route → 401 → Axios interceptor → /api/v1/auth/login?returnUrl=...
+→ Auth0 Universal Login → /api/v1/auth/callback → Original route
+```
+
+**Total Estimated Effort**: 8-12 days
 
 ---
 
