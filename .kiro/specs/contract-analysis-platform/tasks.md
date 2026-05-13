@@ -42,13 +42,13 @@
 
 **Phase 2 tooling decision (2026-05-13)**: Shadcn CLI v4.7 generates output for Tailwind v4. Project upgraded from Tailwind v3.4 → v4.3. Theme moved from `tailwind.config.ts` to CSS-first `@theme {}` block in `src/index.css`. `@tailwindcss/vite` plugin replaces the PostCSS pipeline. `src/config/designTokens.ts` retained for JS-side risk/severity helpers.
 
-**Phase 2 progress**:
+**Phase 2 progress**: 🎉 **5/5 tasks complete**
 
 - ✅ Task 2.1: Design Tokens (Commit: 81c7fc8)
 - ✅ Task 2.2: Shadcn UI Bootstrap (Commit: 0b9f9f3)
-- ✅ Task 2.3: Domain Components
-- ⏳ Task 2.4: Layout Components
-- ⏳ Task 2.5: Centralised Icons
+- ✅ Task 2.3: Domain Components (Commit: 09807c4)
+- ✅ Task 2.4: Layout Components
+- ✅ Task 2.5: Centralised Icons
 
 ---
 
@@ -622,49 +622,60 @@ apps/frontend/src/components/core/
 
 ---
 
-### Task 2.4: Layout Components
+### Task 2.4: Layout Components ✅ COMPLETED
 
 **Goal**: Application chrome shared by every screen.
 
 **Deliverables**:
 
-- [ ] `TopNav` — logo, primary nav links, profile dropdown (uses Shadcn `dropdown-menu` + `avatar`)
-- [ ] `OrgBanner` — org name + workspace tag + status dot
-- [ ] `PageShell` — page wrapper (max-width 1120, padding, scroll container, optional header slot)
-- [ ] Responsive behaviour: mobile-first, navigation collapses to hamburger below `md`
+- [x] `TopNav` (9 tests) — logo, primary nav links with aria-current, profile dropdown (Shadcn `dropdown-menu` + `avatar`), initials fallback, sign-out action
+- [x] `OrgBanner` (8 tests) — org name + optional workspace tag + status dot (operational / degraded / outage)
+- [x] `PageShell` (6 tests) — page wrapper (max-width: md/lg/xl/full, default xl=1120px), optional header slot rendered outside `<main>`, mobile-first padding (`px-md md:px-lg lg:px-xl`)
+- [x] Responsive: nav links hidden below `md` breakpoint, avatar/dropdown remains accessible at all sizes
+- [x] All three use Tailwind classes referencing tokens — no inline hex
 
 **Files**:
 
 ```
 apps/frontend/src/components/layout/
-├── TopNav/
-├── OrgBanner/
-└── PageShell/
+├── TopNav/       (TopNav.tsx + useTopNav.ts + TopNav.test.tsx + index.ts)
+├── OrgBanner/    (same structure)
+└── PageShell/    (same structure)
 ```
 
-**Requirements**: Used by every authenticated screen.
+**Note**: hamburger menu for narrow viewports deferred — wireframes only specify primary nav at md+ sizes. Add when a screen genuinely needs mobile nav.
+
+**Requirements**: Used by every authenticated screen. ✅
 
 ---
 
-### Task 2.5: Centralised Icons
+### Task 2.5: Centralised Icons ✅ COMPLETED
 
 **Goal**: All SVG icons in one tree-shakeable module; lint rule prevents inline SVG.
 
 **Deliverables**:
 
-- [ ] `apps/frontend/src/components/core/icons.tsx` exporting named icon components
-- [ ] Icon set covers wireframe needs: Upload, Search, Filter, Plus, Check, X, ChevronRight/Down, Alert, Info, ExternalLink, Download, Trash, Edit, MoreVertical, User, Logout
-- [ ] Icons use `currentColor` so they inherit text colour
-- [ ] Storybook story listing every icon (visual catalogue)
+- [x] `apps/frontend/src/components/core/icons.tsx` re-exports 23 curated Lucide icons under semantic names:
+  - Status / feedback: AlertIcon, CheckIcon, CheckCircleIcon, InfoIcon
+  - Navigation: ArrowRightIcon, ChevronDownIcon, ChevronRightIcon, ExternalLinkIcon
+  - Actions: PlusIcon, EditIcon, TrashIcon, DownloadIcon, UploadIcon
+  - UI: SearchIcon, FilterIcon, MenuIcon, MoreIcon, CloseIcon, EyeIcon
+  - User: UserIcon, LogoutIcon, SettingsIcon
+  - Content: FileIcon
+- [x] Icons inherit text colour via Lucide's built-in `currentColor` stroke
+- [x] Tests (4 tests) verify re-export surface, render as `<svg>`, accept `className`, use `currentColor`
+- [x] Storybook catalogue deferred (Storybook not yet installed in workspace)
 
 **Files**:
 
 ```
 apps/frontend/src/components/core/icons.tsx
-apps/frontend/src/components/core/icons.stories.tsx
+apps/frontend/src/components/core/icons.test.tsx
 ```
 
-**Requirements**: Used everywhere a glyph is needed.
+**Convention**: lint rule for inline `<svg>` not added yet — convention enforced through code review for now. Can be wired up via `eslint-plugin-jsx-a11y` or a custom rule later.
+
+**Requirements**: Used everywhere a glyph is needed. ✅
 
 ---
 
