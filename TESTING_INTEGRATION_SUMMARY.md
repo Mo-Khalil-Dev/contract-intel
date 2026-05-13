@@ -335,7 +335,7 @@ npm run test:all                # Run all test layers
 ## Resources
 
 ### Documentation
-- [Architecture Playbook](/.kiro/steering/architecture-playbook.md) - Complete testing architecture
+- [Architecture Guidelines](/.kiro/steering/architecture.md) - Complete testing architecture
 - [Tech Stack](/.kiro/steering/tech.md) - Commands and tools
 - [Project Structure](/.kiro/steering/structure.md) - Component organization
 

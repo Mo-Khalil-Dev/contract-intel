@@ -74,7 +74,7 @@ contract-intel-v2/
 │   │       ├── design.md
 │   │       └── tasks.md
 │   └── steering/             # Project guidance docs (this file)
-│       ├── architecture-playbook.md  # Global architecture rules
+│       ├── architecture.md   # Architecture guidelines & testing
 │       ├── product.md        # Product overview
 │       ├── tech.md           # Tech stack & commands
 │       └── structure.md      # This file
@@ -359,4 +359,4 @@ src/config/
 - Design handoff plan with 27 user stories
 - Spec documents (requirements, design, tasks) in `.kiro/specs/contract-analysis-platform/`
 - Sample user story (US-008 Home Screen) in `USER_STORIES/`
-- Architecture playbook in `.kiro/steering/architecture-playbook.md`
+- Architecture guidelines in `.kiro/steering/architecture.md`
