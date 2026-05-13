@@ -772,7 +772,7 @@ modules/auth/domain/
 
 ---
 
-### Task 3.2: Authentication Application Layer
+### Task 3.2: Authentication Application Layer ✅ COMPLETED
 
 **Goal**: Commands, queries, and event handlers for auth flows
 
@@ -835,43 +835,51 @@ modules/auth/application/
 **Complete Authentication Flow**:
 
 ```
-1. User visits app → not authenticated → redirected to /login
+1. User visits app → not authenticated → automatic redirect to Auth0
 
-2. User clicks "Sign In" button → calls authService.login()
-   → window.location.href = '/api/v1/auth/login'
+   a. User navigates to protected route (e.g., /dashboard)
+   b. ProtectedRoute component checks authentication via useAuth hook
+   c. useAuth calls GET /api/v1/auth/me
+   d. Backend SessionAuthGuard finds no session cookie → throws 401
+   e. Frontend axios interceptor catches 401 → redirects to:
+      /api/v1/auth/login?returnUrl=/dashboard
 
-3. Backend GET /api/v1/auth/login endpoint:
-   → Builds Auth0 authorize URL with state (CSRF token)
+2. Backend GET /api/v1/auth/login endpoint:
+   → Stores returnUrl in state parameter (encrypted/signed)
+   → Builds Auth0 authorize URL with state (CSRF token + returnUrl)
    → Redirects browser to Auth0 Universal Login
    → https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id=...&state=...
 
-4. User authenticates on Auth0 hosted page
+3. User authenticates on Auth0 hosted page
 
-5. Auth0 redirects back to backend:
+4. Auth0 redirects back to backend:
    → GET /api/v1/auth/callback?code=xxx&state=yyy
 
-6. Backend /api/v1/auth/callback endpoint:
+5. Backend /api/v1/auth/callback endpoint:
    → Validates state (CSRF protection)
+   → Extracts returnUrl from state
    → Exchanges code for tokens (POST to Auth0 /oauth/token)
    → Encrypts access token and refresh token separately
    → Stores Session in database
    → Sets httpOnly session cookie
-   → Redirects browser to /dashboard
+   → Redirects browser to returnUrl (or /dashboard if not provided)
 
-7. Every subsequent request:
+6. Every subsequent request:
    → SessionAuthGuard reads cookie
    → Decrypts tokens from database
    → Validates access token
    → If expired: silently refreshes using refresh token
    → Attaches user to request context
 
-8. Logout:
+7. Logout:
    → POST /api/v1/auth/logout
    → Deletes Session from database
    → Revokes refresh token at Auth0
    → Clears session cookie
    → Redirects to /
 ```
+
+**Key UX Improvement**: No intermediate login page. User goes directly from protected route → Auth0 → back to original route.
 
 **Deliverables**:
 
@@ -881,8 +889,8 @@ modules/auth/application/
 - [ ] SessionEncryptionService (AES-256-CBC + PBKDF2)
 - [ ] SessionAuthGuard (global guard, decrypt token, attach user to request)
 - [ ] AuthController with endpoints:
-  - [ ] **GET /api/v1/auth/login** → Build Auth0 authorize URL and redirect
-  - [ ] **GET /api/v1/auth/callback** → Exchange code for tokens, encrypt, store, set cookie, redirect to app
+  - [ ] **GET /api/v1/auth/login?returnUrl={url}** → Build Auth0 authorize URL with state (CSRF + returnUrl), redirect to Auth0
+  - [ ] **GET /api/v1/auth/callback** → Exchange code for tokens, encrypt, store, set cookie, redirect to returnUrl from state
   - [ ] **POST /api/v1/auth/logout** → Clear cookie, revoke refresh token at Auth0
   - [ ] **GET /api/v1/auth/me** → Return current user from session cookie
 - [ ] DTOs: LoginCallbackDto, CurrentUserResponseDto
@@ -938,11 +946,27 @@ UI Hook (useAuth.ts)
   ```typescript
   export const API = {
     // ... existing endpoints
-    AUTH_LOGIN: '/api/v1/auth/login',           // Initiates Auth0 login flow
+    AUTH_LOGIN: '/api/v1/auth/login',           // Initiates Auth0 login flow (with optional returnUrl)
     AUTH_CALLBACK: '/api/v1/auth/callback',     // Auth0 redirects here (backend only)
     AUTH_LOGOUT: '/api/v1/auth/logout',         // Logout endpoint
     AUTH_ME: '/api/v1/auth/me',                 // Get current user
   };
+  ```
+
+- [ ] Add **axios response interceptor** to handle 401:
+  ```typescript
+  // src/api/client.ts
+  apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        // Preserve current URL for post-login redirect
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `${API.AUTH_LOGIN}?returnUrl=${returnUrl}`;
+      }
+      return Promise.reject(error);
+    }
+  );
   ```
 
 **Service Layer**:
@@ -951,15 +975,10 @@ UI Hook (useAuth.ts)
   - Calls httpService for auth endpoints
   - Unwraps ApiResponse<T>
   - No axios imports
+  - **Note**: Login redirect is handled by axios interceptor on 401, not called directly
 
   ```typescript
   export const authService = {
-    // Initiates login by redirecting to backend endpoint
-    // Backend will redirect to Auth0 Universal Login
-    login: (): void => {
-      window.location.href = API.AUTH_LOGIN;
-    },
-
     getCurrentUser: async (): Promise<User> => {
       return httpService.get<User>(API.AUTH_ME).then(unwrap);
     },
@@ -975,7 +994,8 @@ UI Hook (useAuth.ts)
 - [ ] **useAuth.ts**: React Query hook
   - Calls authService methods
   - No httpService or axios imports
-  - Returns { user, isLoading, login, logout, refetch }
+  - Returns { user, isLoading, isAuthenticated, logout }
+  - **Note**: Login redirect handled automatically by axios interceptor on 401
 
   ```typescript
   export function useAuth() {
@@ -984,7 +1004,7 @@ UI Hook (useAuth.ts)
     const { data: user, isLoading } = useQuery({
       queryKey: ['current-user'],
       queryFn: authService.getCurrentUser,
-      retry: false,
+      retry: false,  // Don't retry 401s (will trigger redirect)
     });
 
     const logoutMutation = useMutation({
@@ -999,7 +1019,6 @@ UI Hook (useAuth.ts)
       user,
       isLoading,
       isAuthenticated: !!user,
-      login: authService.login,  // Redirects to /api/v1/auth/login
       logout: logoutMutation.mutate,
     };
   }
@@ -1007,15 +1026,12 @@ UI Hook (useAuth.ts)
 
 **UI Components**:
 
-- [ ] **LoginPage** component (for unauthenticated users)
-  - Simple page with "Sign In" button
-  - Button calls `login()` from useAuth hook
-  - Redirects to `/api/v1/auth/login` → Auth0 Universal Login
-  - No custom login form (Auth0 handles authentication)
-- [ ] **LoginCallbackPage** component
-  - Handles Auth0 redirect (backend processes callback, sets cookie, redirects to app)
-  - Shows loading spinner while backend processes
-  - No logic needed (backend does everything)
+- [ ] **ProtectedRoute** component
+  - Wraps routes requiring authentication
+  - Uses useAuth hook
+  - Shows loading state while checking authentication
+  - If not authenticated, axios interceptor handles redirect automatically
+  - No manual redirect needed (401 triggers interceptor)
 - [ ] **LogoutButton** component
   - Button.tsx (JSX only, max 15 lines)
   - useLogoutButton.ts (calls useAuth hook)
@@ -1025,22 +1041,25 @@ UI Hook (useAuth.ts)
   - Touch target ≥44px
   - Focus indicator visible
   - ARIA label
-- [ ] **ProtectedRoute** component
-  - Wraps routes requiring authentication
-  - Uses useAuth hook
-  - Redirects to `/login` if not authenticated
-  - Shows loading state
+- [ ] **LoginCallbackPage** component (optional, for loading state)
+  - Shows loading spinner while backend processes callback
+  - Backend does all the work (exchange tokens, set cookie, redirect)
+  - This page is only shown briefly during redirect
 - [ ] **SessionRefresh** component
   - Silent token refresh before expiry (handled by backend SessionAuthGuard)
   - No UI (background process)
   - Backend automatically refreshes tokens on expired access token
+
+**Note**: No LoginPage needed! Users are automatically redirected to Auth0 when they access a protected route without authentication.
 
 **Files**:
 
 ```
 frontend/src/
 ├── api/
-│   └── endpoints.ts           # Add auth endpoints
+│   ├── client.ts              # Axios instance + 401 interceptor
+│   ├── endpoints.ts           # Add auth endpoints
+│   └── httpService.ts
 ├── services/
 │   └── authService.ts         # Auth domain logic, calls httpService
 ├── hooks/
@@ -1063,12 +1082,7 @@ frontend/src/
 │       ├── useSessionRefresh.ts
 │       └── SessionRefresh.test.tsx
 └── pages/
-    ├── LoginPage/
-    │   ├── LoginPage.tsx
-    │   ├── useLoginPage.ts
-    │   ├── LoginPage.module.css
-    │   └── LoginPage.test.tsx
-    └── LoginCallbackPage/
+    └── LoginCallbackPage/      # Optional loading page
         ├── LoginCallbackPage.tsx
         ├── useLoginCallbackPage.ts
         ├── LoginCallbackPage.module.css
