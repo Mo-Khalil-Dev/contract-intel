@@ -2,15 +2,15 @@
 
 ## Progress Summary
 
-**Phase 1: Scaffolding & Cross-Cutting Concerns** — 4/7 tasks completed
+**Phase 1: Scaffolding & Cross-Cutting Concerns** — 7/7 tasks completed ✅
 - ✅ Task 1.1: Project Structure Setup (Commit: aec01ef)
 - ✅ Task 1.2: Shared Kernel Tests (Commit: 6d4383f)
 - ✅ Task 1.3: Exception Hierarchy Tests (Commit: 896cbe8)
 - ❌ Task 1.4: Prisma Schema & Database Setup — REMOVED (data models introduced incrementally per feature)
-- ✅ Task 1.5: Configuration Service (with class-validator)
-- ⏳ Task 1.6: Logging Infrastructure
-- ⏳ Task 1.7: API Response Envelope Tests
-- ⏳ Task 1.8: Testing Infrastructure
+- ✅ Task 1.5: Configuration Service (with class-validator, Commit: 52ef904)
+- ✅ Task 1.6: Logging Infrastructure (pino + request id propagation)
+- ✅ Task 1.7: API Response Envelope (ApiResponse<T> + PaginationMeta)
+- ✅ Task 1.8: Testing Infrastructure (Jest + Supertest + factories + coverage thresholds)
 
 **Completed Work**:
 - 33 files created (19 backend, 14 frontend)
@@ -266,51 +266,82 @@ config/
 
 ---
 
-### Task 1.6: Logging Infrastructure
+### Task 1.6: Logging Infrastructure ✅ COMPLETED
 **Goal**: Structured logging with request ID propagation
 
 **Deliverables**:
-- [ ] pino + nestjs-pino integration
-- [ ] Request ID generation and propagation
-- [ ] pino-pretty for local development
-- [ ] JSON logging for production
-- [ ] LoggerModule configuration
-
-**Requirements**: Observability for all features
-
----
-
-### Task 1.7: API Response Envelope
-**Goal**: Uniform response structure across all endpoints
-
-**Deliverables**:
-- [ ] `ApiResponse<T>` interface (success, data, meta)
-- [ ] `ResponseInterceptor` to wrap all success responses
-- [ ] Error response format (RFC 7807)
-- [ ] Pagination metadata structure
+- [x] pino + nestjs-pino integration via dedicated `LoggerModule`
+- [x] Request ID generation (uuid) and propagation via `x-request-id` header
+- [x] pino-pretty for local development (colorized, single-line off, time translated)
+- [x] JSON logging for production (default pino output)
+- [x] `LoggerModule` configured with `forRootAsync` to read `logLevel` from `AppConfigService`
+- [x] Redaction of sensitive fields (Authorization, Cookie, password, token, sessionSecret)
 
 **Files**:
 ```
-shared/infrastructure/
-├── response.interceptor.ts
-└── api-response.interface.ts
+shared/infrastructure/logging/
+├── logger.module.ts
+└── logger.module.spec.ts
 ```
 
-**Requirements**: Consistent API design
+**Requirements**: Observability for all features ✅
 
 ---
 
-### Task 1.8: Testing Infrastructure
+### Task 1.7: API Response Envelope ✅ COMPLETED
+**Goal**: Uniform response structure across all endpoints
+
+**Deliverables**:
+- [x] `ApiResponse<T>` interface (success, data, meta)
+- [x] `PaginationMeta` interface (total, page, pageSize, totalPages)
+- [x] `PaginatedPayload<T>` type for controllers returning paginated data
+- [x] `isPaginatedPayload` type guard
+- [x] `buildPaginationMeta` helper (with input validation)
+- [x] `ResponseInterceptor` wraps non-paginated and paginated responses
+- [x] Error response format (RFC 7807) — already handled by HttpExceptionFilter
+- [x] Unit tests for interface helpers and interceptor
+
+**Files**:
+```
+shared/infrastructure/api/
+├── api-response.interface.ts
+└── api-response.interface.spec.ts
+shared/infrastructure/interceptors/
+├── response.interceptor.ts
+└── response.interceptor.spec.ts
+```
+
+**Requirements**: Consistent API design ✅
+
+---
+
+### Task 1.8: Testing Infrastructure ✅ COMPLETED
 **Goal**: Jest + Supertest setup with test utilities
 
 **Deliverables**:
-- [ ] Jest configuration for unit tests
-- [ ] Supertest configuration for integration tests
-- [ ] Test database setup (SQLite in-memory)
-- [ ] Test factories for domain models
-- [ ] Coverage thresholds (domain ≥90%, application ≥80%)
+- [x] Jest configuration for unit tests (in package.json)
+- [x] Supertest installed + dedicated e2e config (`test/jest-e2e.json`)
+- [x] `test:e2e` script added
+- [x] Test setup file loads `.env.test` (`test/setup.ts`)
+- [x] Test factory base class (`shared/test/test-factory.ts`)
+- [x] Sample E2E test demonstrating Supertest pattern
+- [x] Coverage thresholds enforced:
+  - Global: branches/functions/lines/statements ≥ 80%
+  - `shared/domain/**`: ≥ 90%
+- ➖ SQLite in-memory test database — N/A (Prisma removed in Task 1.4 decision)
 
-**Requirements**: TDD approach for all features
+**Files**:
+```
+test/
+├── setup.ts                  (loads .env.test, defaults SESSION_SECRET)
+├── jest-e2e.json             (e2e Jest config with module aliases)
+└── app.e2e-spec.ts           (sample e2e test: success envelope, paginated, error)
+src/shared/test/
+├── test-factory.ts           (TestFactory<T> base class with build/buildMany/buildList)
+└── test-factory.spec.ts      (factory base tests)
+```
+
+**Requirements**: TDD approach for all features ✅
 
 ---
 
