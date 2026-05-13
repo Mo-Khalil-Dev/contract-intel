@@ -1,4 +1,4 @@
-import { BaseEntity } from '../base-entity';
+import { BaseEntity } from './base-entity';
 
 class TestEntity extends BaseEntity<string> {
   constructor(id: string) {

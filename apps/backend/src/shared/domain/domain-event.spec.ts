@@ -1,4 +1,4 @@
-import { DomainEvent } from '../domain-event';
+import { DomainEvent } from './domain-event';
 
 class UserCreatedEvent extends DomainEvent {
   constructor(
@@ -33,7 +33,7 @@ describe('DomainEvent', () => {
       const aggregateId = 'user-123';
       const event = new UserCreatedEvent(aggregateId, 'test@example.com');
 
-      expect(event.aggregateId).toBe(aggregateId);
+      expect(event.getAggregateId()).toBe(aggregateId);
       expect(event.occurredOn).toBeInstanceOf(Date);
     });
 

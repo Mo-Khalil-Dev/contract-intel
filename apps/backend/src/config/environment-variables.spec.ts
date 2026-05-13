@@ -13,6 +13,9 @@ describe('validateEnvironment', () => {
     PORT: '3000',
     API_PREFIX: 'api/v1',
     SESSION_SECRET: 'a-valid-session-secret-of-32-chars-long',
+    DATABASE_URL: 'file:./test.db',
+    ENCRYPTION_KEY: 'a-valid-encryption-key-of-32-chars-long-x',
+    ENCRYPTION_KEY_NAME: 'primary',
     FRONTEND_URL: 'http://localhost:5173',
     STORAGE_DRIVER: 'local',
     LOCAL_STORAGE_PATH: './uploads',
@@ -48,6 +51,7 @@ describe('validateEnvironment', () => {
     it('should apply defaults for optional fields', () => {
       const minimalConfig = {
         SESSION_SECRET: 'a-valid-session-secret-of-32-chars-long',
+        ENCRYPTION_KEY: 'a-valid-encryption-key-of-32-chars-long-x',
       };
 
       const result = validateEnvironment(minimalConfig);
@@ -55,6 +59,8 @@ describe('validateEnvironment', () => {
       expect(result.NODE_ENV).toBe(NodeEnv.Development);
       expect(result.PORT).toBe(3000);
       expect(result.API_PREFIX).toBe('api/v1');
+      expect(result.DATABASE_URL).toBe('file:./dev.db');
+      expect(result.ENCRYPTION_KEY_NAME).toBe('primary');
       expect(result.STORAGE_DRIVER).toBe(StorageDriver.Local);
       expect(result.OCR_DRIVER).toBe(OcrDriver.Mock);
       expect(result.QUEUE_DRIVER).toBe(QueueDriver.Memory);
@@ -104,6 +110,48 @@ describe('validateEnvironment', () => {
       });
 
       expect(result.SESSION_SECRET).toBe(longSecret);
+    });
+  });
+
+  describe('ENCRYPTION_KEY validation', () => {
+    it('should reject ENCRYPTION_KEY shorter than 32 characters', () => {
+      expect(() =>
+        validateEnvironment({
+          ...validConfig,
+          ENCRYPTION_KEY: 'short',
+        }),
+      ).toThrow(/ENCRYPTION_KEY/);
+    });
+
+    it('should reject missing ENCRYPTION_KEY', () => {
+      const { ENCRYPTION_KEY: _unused, ...configWithout } = validConfig;
+
+      expect(() => validateEnvironment(configWithout)).toThrow();
+    });
+
+    it('should default ENCRYPTION_KEY_NAME to "primary"', () => {
+      const { ENCRYPTION_KEY_NAME: _unused, ...rest } = validConfig;
+      const result = validateEnvironment(rest);
+
+      expect(result.ENCRYPTION_KEY_NAME).toBe('primary');
+    });
+  });
+
+  describe('DATABASE_URL', () => {
+    it('should default to file:./dev.db when not provided', () => {
+      const { DATABASE_URL: _unused, ...rest } = validConfig;
+      const result = validateEnvironment(rest);
+
+      expect(result.DATABASE_URL).toBe('file:./dev.db');
+    });
+
+    it('should accept a postgres URL', () => {
+      const result = validateEnvironment({
+        ...validConfig,
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/contracts',
+      });
+
+      expect(result.DATABASE_URL).toBe('postgresql://user:pass@localhost:5432/contracts');
     });
   });
 

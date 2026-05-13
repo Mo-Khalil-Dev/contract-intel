@@ -59,6 +59,18 @@ export class EnvironmentVariables {
   @MinLength(32, { message: 'SESSION_SECRET must be at least 32 characters' })
   SESSION_SECRET!: string;
 
+  // Database (Prisma)
+  @IsString()
+  DATABASE_URL: string = 'file:./dev.db';
+
+  // Encryption (AES-256-CBC + PBKDF2 — used by SessionEncryptionService)
+  @IsString()
+  @MinLength(32, { message: 'ENCRYPTION_KEY must be at least 32 characters' })
+  ENCRYPTION_KEY!: string;
+
+  @IsString()
+  ENCRYPTION_KEY_NAME: string = 'primary';
+
   // Auth0
   @IsString()
   @IsOptional()

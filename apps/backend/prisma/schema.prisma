@@ -1,0 +1,54 @@
+// Prisma schema for Contract Analysis Platform.
+//
+// Per the Phase 1 Task 1.4 decision, persistence is introduced per-feature.
+// This schema currently holds only Auth models (Phase 3). Future feature
+// modules append their own models to this file.
+//
+// Local dev uses SQLite (single file) for ease. Production target is
+// PostgreSQL (Cloud SQL) — switch the datasource provider when the
+// production env is wired up.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Auth domain (Phase 3)
+// -----------------------------------------------------------------------------
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  auth0SubjectId String    @unique
+  displayName    String
+  role           String    @default("REVIEWER") // see UserRole VO in domain layer
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  sessions Session[]
+
+  @@index([email])
+  @@index([auth0SubjectId])
+}
+
+model Session {
+  id                    String   @id @default(cuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  encryptedAccessToken  String
+  encryptedRefreshToken String
+  encryptionSalt        String   // PBKDF2 salt (per-session)
+  keyName               String   // rotating key identifier
+  expiresAt             DateTime
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+}

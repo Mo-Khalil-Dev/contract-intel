@@ -12,6 +12,9 @@ describe('AppConfigService', () => {
     PORT: 3000,
     API_PREFIX: 'api/v1',
     SESSION_SECRET: 'a-valid-session-secret-of-32-chars-long',
+    DATABASE_URL: 'file:./dev.db',
+    ENCRYPTION_KEY: 'a-valid-encryption-key-of-32-chars-long-x',
+    ENCRYPTION_KEY_NAME: 'primary',
     AUTH0_DOMAIN: 'example.auth0.com',
     AUTH0_CLIENT_ID: 'client-id',
     AUTH0_CLIENT_SECRET: 'client-secret',
@@ -82,6 +85,24 @@ describe('AppConfigService', () => {
       expect(service.isDevelopment).toBe(false);
       expect(service.isProduction).toBe(false);
       expect(service.isTest).toBe(true);
+    });
+  });
+
+  describe('Database / Encryption configuration', () => {
+    it('should return DATABASE_URL', async () => {
+      await setupService(buildConfig({ DATABASE_URL: 'postgres://localhost/test' }));
+      expect(service.databaseUrl).toBe('postgres://localhost/test');
+    });
+
+    it('should return ENCRYPTION_KEY', async () => {
+      const key = 'another-encryption-key-32-chars-long-x';
+      await setupService(buildConfig({ ENCRYPTION_KEY: key }));
+      expect(service.encryptionKey).toBe(key);
+    });
+
+    it('should return ENCRYPTION_KEY_NAME', async () => {
+      await setupService(buildConfig({ ENCRYPTION_KEY_NAME: 'rotated-key-2026' }));
+      expect(service.encryptionKeyName).toBe('rotated-key-2026');
     });
   });
 

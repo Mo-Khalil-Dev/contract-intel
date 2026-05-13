@@ -42,6 +42,20 @@ export class AppConfigService {
     return this.configService.get('SESSION_SECRET', { infer: true });
   }
 
+  // Database
+  get databaseUrl(): string {
+    return this.configService.get('DATABASE_URL', { infer: true });
+  }
+
+  // Encryption
+  get encryptionKey(): string {
+    return this.configService.get('ENCRYPTION_KEY', { infer: true });
+  }
+
+  get encryptionKeyName(): string {
+    return this.configService.get('ENCRYPTION_KEY_NAME', { infer: true });
+  }
+
   // Auth0
   get auth0Domain(): string | undefined {
     return this.configService.get('AUTH0_DOMAIN', { infer: true });

@@ -10,11 +10,11 @@ export class Result<T> {
   }
 
   static ok<U>(value: U): Result<U> {
-    return new Result(true, value);
+    return new Result<U>(true, value);
   }
 
   static fail<U>(error: Error): Result<U> {
-    return new Result(false, undefined, error);
+    return new Result<U>(false, undefined, error);
   }
 
   static combine(results: Result<unknown>[]): Result<void> {
@@ -30,6 +30,6 @@ export class Result<T> {
     if (this.isSuccess && this.value !== undefined) {
       return this.value;
     }
-    throw this.error || new Error('Unknown error');
+    throw this.error ?? new Error('Unknown error');
   }
 }

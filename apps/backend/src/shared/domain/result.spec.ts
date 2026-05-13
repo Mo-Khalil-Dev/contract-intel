@@ -1,4 +1,4 @@
-import { Result } from '../result';
+import { Result } from './result';
 
 describe('Result<T>', () => {
   describe('ok()', () => {

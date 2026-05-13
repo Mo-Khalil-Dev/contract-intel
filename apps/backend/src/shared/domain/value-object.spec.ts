@@ -1,4 +1,4 @@
-import { ValueObject } from '../value-object';
+import { ValueObject } from './value-object';
 
 interface EmailProps {
   value: string;
@@ -40,7 +40,7 @@ describe('ValueObject<T>', () => {
       const email = Email.create('test@example.com');
 
       expect(() => {
-        (email.props as any).value = 'changed@example.com';
+        (email as unknown as { props: Record<string, string> }).props.value = 'changed@example.com';
       }).toThrow();
     });
   });
@@ -126,7 +126,7 @@ describe('ValueObject<T>', () => {
       const email = Email.create('test@example.com');
 
       expect(() => {
-        (email as any).props.value = 'hacked@example.com';
+        (email as unknown as { props: Record<string, string> }).props.value = 'hacked@example.com';
       }).toThrow();
     });
 
@@ -134,7 +134,7 @@ describe('ValueObject<T>', () => {
       const email = Email.create('test@example.com');
 
       expect(() => {
-        (email.props as any).newProp = 'value';
+        (email as unknown as { props: Record<string, string> }).props.newProp = 'value';
       }).toThrow();
     });
   });

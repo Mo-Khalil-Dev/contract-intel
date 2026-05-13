@@ -44,3 +44,7 @@ temp/
 
 # Build artifacts
 *.tsbuildinfo
+
+# Local SQLite databases (Prisma dev)
+*.db
+*.db-journal

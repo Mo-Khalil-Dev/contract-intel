@@ -1,5 +1,5 @@
-import { AggregateRoot } from '../aggregate-root';
-import { DomainEvent } from '../domain-event';
+import { AggregateRoot } from './aggregate-root';
+import { DomainEvent } from './domain-event';
 
 class TestDomainEvent extends DomainEvent {
   constructor(
