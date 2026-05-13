@@ -717,7 +717,10 @@ Aggregate: User
 Aggregate: Session
 ├── Value Objects:
 │   ├── SessionId (UUID)
-│   ├── EncryptedToken
+│   ├── EncryptedAccessToken (AES-256-CBC encrypted)
+│   ├── EncryptedRefreshToken (AES-256-CBC encrypted)
+│   ├── EncryptionSalt (PBKDF2 salt)
+│   ├── KeyName (rotating key identifier)
 │   └── SessionExpiry
 ├── Domain Events:
 │   ├── SessionCreatedEvent
@@ -725,7 +728,8 @@ Aggregate: Session
 │   └── SessionInvalidatedEvent
 └── Invariants:
     ├── Session must have valid expiry (future date)
-    ├── Tokens must be encrypted before storage
+    ├── Access token and refresh token must be encrypted separately before storage
+    ├── Each session must have its own salt for encryption
     └── Session belongs to exactly one User
 ```
 
@@ -733,7 +737,7 @@ Aggregate: Session
 
 - [ ] User aggregate with factory
 - [ ] Session aggregate with factory
-- [ ] Value objects: UserId, Email, UserRole, Auth0SubjectId, SessionId, EncryptedToken, SessionExpiry
+- [ ] Value objects: UserId, Email, UserRole, Auth0SubjectId, SessionId, EncryptedAccessToken, EncryptedRefreshToken, EncryptionSalt, KeyName, SessionExpiry
 - [ ] Domain events: UserCreatedEvent, UserLoggedInEvent, UserLoggedOutEvent, SessionCreatedEvent, SessionRefreshedEvent, SessionInvalidatedEvent
 - [ ] Repository interfaces: IUserRepository, ISessionRepository
 - [ ] Unit tests for aggregates and value objects
@@ -749,7 +753,10 @@ modules/auth/domain/
 ├── user-role.vo.ts
 ├── auth0-subject-id.vo.ts
 ├── session-id.vo.ts
-├── encrypted-token.vo.ts
+├── encrypted-access-token.vo.ts
+├── encrypted-refresh-token.vo.ts
+├── encryption-salt.vo.ts
+├── key-name.vo.ts
 ├── session-expiry.vo.ts
 ├── user.events.ts
 ├── session.events.ts
