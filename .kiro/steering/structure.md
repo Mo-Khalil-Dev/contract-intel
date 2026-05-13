@@ -139,23 +139,81 @@ src/modules/{feature}/
 
 ## Component Organization (Frontend)
 
-Each component is self-contained with all related files:
+**MANDATORY: Component-Folder Pattern**
+
+Each component lives in its own folder containing ALL related files:
 
 ```
 src/components/{ComponentName}/
 ├── ComponentName.tsx           # JSX only (max 15 lines)
 ├── useComponentName.ts         # All logic (hooks, state, handlers)
 ├── ComponentName.module.css    # Component-specific styles
-├── ComponentName.test.tsx      # Unit tests
-└── ComponentName.stories.tsx   # Storybook story
+├── ComponentName.test.tsx      # Unit tests (Layer 2: Component Unit Tests)
+├── ComponentName.stories.tsx   # Storybook story (Layer 10: Visual Regression)
+└── index.ts                    # Barrel export (optional)
 ```
 
 **Rules**:
 - JSX file: rendering only, no business logic
 - Hook file: all state, effects, handlers, computed values
 - CSS file: component-specific styles (Tailwind for utilities)
-- Test file: co-located with component
-- Story file: all variants, states, sizes for Storybook
+- Test file: co-located with component (Layer 2 unit tests + Layer 7 a11y tests)
+- Story file: all variants, states, sizes for Storybook (visual regression baseline)
+- Everything related to the component stays in its folder
+
+**Testing Requirements per Component**:
+- **Layer 1 (Static)**: TypeScript strict mode, ESLint checks
+- **Layer 2 (Unit)**: Test all variants, sizes, states, props
+- **Layer 5 (Snapshot)**: Snapshot tests for visual components
+- **Layer 7 (A11y)**: jest-axe for accessibility violations
+- **Layer 10 (Visual)**: Storybook stories for all combinations
+
+**Example Structure**:
+```
+src/components/
+├── core/                       # Design system components
+│   ├── Button/
+│   │   ├── Button.tsx
+│   │   ├── useButton.ts
+│   │   ├── Button.module.css
+│   │   ├── Button.test.tsx
+│   │   ├── Button.stories.tsx
+│   │   └── index.ts
+│   ├── Badge/
+│   │   ├── Badge.tsx
+│   │   ├── useBadge.ts
+│   │   ├── Badge.module.css
+│   │   ├── Badge.test.tsx
+│   │   ├── Badge.stories.tsx
+│   │   └── index.ts
+│   └── icons.tsx               # Centralized SVG icons
+│
+└── features/                   # Feature-specific components
+    ├── ContractCard/
+    │   ├── ContractCard.tsx
+    │   ├── useContractCard.ts
+    │   ├── ContractCard.module.css
+    │   ├── ContractCard.test.tsx
+    │   ├── ContractCard.stories.tsx
+    │   └── index.ts
+    └── FlagItem/
+        ├── FlagItem.tsx
+        ├── useFlagItem.ts
+        ├── FlagItem.module.css
+        ├── FlagItem.test.tsx
+        ├── FlagItem.stories.tsx
+        └── index.ts
+```
+
+**Import Pattern**:
+```typescript
+// ✅ DO: Import from component folder
+import { Button } from '@/components/core/Button';
+import { ContractCard } from '@/components/features/ContractCard';
+
+// ❌ DON'T: Import from parent folder
+import { Button } from '@/components/core';
+```
 
 ## API Layer Organization (Frontend)
 

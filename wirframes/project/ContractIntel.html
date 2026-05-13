@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ContractIntel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body, #root { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; }
+    body { background: #f0f4f8; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Mock data -->
+  <script src="data.js"></script>
+
+  <!-- Shared components -->
+  <script type="text/babel" src="components.jsx"></script>
+
+  <!-- Tweaks panel -->
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <!-- Screens -->
+  <script type="text/babel" src="screens-dashboard.jsx"></script>
+  <script type="text/babel" src="screens-other.jsx"></script>
+
+  <!-- Main app -->
+  <script type="text/babel" src="app.jsx"></script>
+
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg">
+      <rect width="120" height="84" fill="#0d1e35"/>
+      <rect x="8" y="8" width="28" height="68" rx="3" fill="#1a2f4a"/>
+      <rect x="42" y="8" width="70" height="20" rx="3" fill="#1a2f4a"/>
+      <rect x="42" y="32" width="70" height="12" rx="2" fill="#243d5c"/>
+      <rect x="42" y="48" width="70" height="12" rx="2" fill="#243d5c"/>
+      <rect x="42" y="64" width="70" height="12" rx="2" fill="#243d5c"/>
+      <rect x="14" y="14" width="16" height="3" rx="1" fill="#1d6fff"/>
+      <rect x="14" y="20" width="12" height="2" rx="1" fill="#4a6480"/>
+      <rect x="14" y="30" width="16" height="2" rx="1" fill="#4a6480"/>
+      <rect x="14" y="36" width="14" height="2" rx="1" fill="#4a6480"/>
+    </svg>
+  </template>
+</body>
+</html>

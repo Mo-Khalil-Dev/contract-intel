@@ -347,6 +347,183 @@ interface HomeScreenProps {
 
 ---
 
+## Testing Requirements (12-Layer Architecture)
+
+### Layer 1: Static Analysis & Type Checking
+- [ ] **ESLint**: No errors, no warnings
+- [ ] **TypeScript**: Strict mode enabled, no `any` types
+- [ ] **Prettier**: Code formatted consistently
+- [ ] **Commands**: `npm run lint`, `npm run type-check`
+
+### Layer 2: Component Unit Tests (React Testing Library)
+- [ ] **Data calculations tested**: KPI calculations (active count, avg risk, flag count, renewal count)
+- [ ] **Sorting tested**: Recent contracts by date DESC, renewals by daysRemaining ASC
+- [ ] **Color logic tested**: Risk score color selection matches thresholds
+- [ ] **Navigation tested**: onNav callbacks fire with correct screen and contractId params
+- [ ] **Conditional rendering tested**: Empty states, no contracts, no renewals
+- [ ] **Coverage**: ≥80% for page logic
+- [ ] **Commands**: `npm test`, `npm test -- --watch`
+
+**Example Test Cases**:
+```typescript
+describe('HomeScreen', () => {
+  it('should calculate active contract count correctly', () => { ... });
+  it('should calculate average risk score correctly', () => { ... });
+  it('should calculate critical flag count correctly', () => { ... });
+  it('should sort recent contracts by date DESC', () => { ... });
+  it('should sort urgent renewals by daysRemaining ASC', () => { ... });
+  it('should apply correct color for high risk score', () => { ... });
+  it('should call onNav with correct params when clicking contract', () => { ... });
+  it('should show empty state when no contracts exist', () => { ... });
+  it('should show empty state when no renewals exist', () => { ... });
+});
+```
+
+### Layer 3: Hook Testing (if custom hooks)
+- [ ] **useHomeData hook**: Test data fetching and calculations
+- [ ] **useGreeting hook**: Test time-based greeting logic
+- [ ] **Commands**: `npm test`
+
+**Example Test Cases**:
+```typescript
+describe('useHomeData', () => {
+  it('should fetch contracts and renewals on mount', () => { ... });
+  it('should calculate KPIs correctly', () => { ... });
+  it('should handle empty data gracefully', () => { ... });
+});
+```
+
+### Layer 4: Integration Testing (MSW for API mocking)
+- [ ] **API calls mocked**: Mock /api/v1/contracts and /api/v1/renewals
+- [ ] **Full page flow tested**: Load data → display KPIs → navigate
+- [ ] **Error handling tested**: Network errors, empty responses
+- [ ] **Commands**: `npm run test:integration`
+
+**Example Test Cases**:
+```typescript
+describe('HomeScreen Integration', () => {
+  it('should load contracts and display KPIs', async () => { ... });
+  it('should show error message on API failure', async () => { ... });
+  it('should navigate to results screen when clicking contract', async () => { ... });
+});
+```
+
+### Layer 5: Snapshot Testing
+- [ ] **Page layout**: Snapshot test for overall page structure
+- [ ] **KPI cards**: Snapshot test for StatCard components
+- [ ] **Commands**: `npm test`, `npm test -- --updateSnapshot`
+
+### Layer 6: Navigation & Routing Tests
+- [ ] **Navigation tested**: All onNav calls navigate to correct screens
+- [ ] **URL parameters tested**: contractId passed correctly
+- [ ] **Commands**: `npm test`
+
+**Example Test Cases**:
+```typescript
+describe('HomeScreen Navigation', () => {
+  it('should navigate to upload screen when clicking upload button', () => { ... });
+  it('should navigate to results screen with contractId', () => { ... });
+  it('should navigate to portfolio screen when clicking view all', () => { ... });
+});
+```
+
+### Layer 7: Accessibility Testing
+- [ ] **axe-core automated scan**: 0 critical violations
+- [ ] **Keyboard navigation**: Tab through all interactive elements
+- [ ] **Screen reader**: Test with VoiceOver (macOS/iOS) or NVDA (Windows)
+- [ ] **Color contrast**: Verify all text meets 4.5:1 ratio
+- [ ] **Focus indicators**: Visible on all buttons and links
+- [ ] **Lighthouse a11y score**: ≥95
+- [ ] **Commands**: `npm run test:a11y`
+
+**Example Test Cases**:
+```typescript
+describe('HomeScreen Accessibility', () => {
+  it('should have no accessibility violations', async () => {
+    const { container } = render(<HomeScreen onNav={jest.fn()} />);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+  
+  it('should have proper heading hierarchy', () => { ... });
+  it('should have descriptive button labels', () => { ... });
+  it('should be keyboard navigable', () => { ... });
+});
+```
+
+### Layer 8: Performance Testing
+- [ ] **Render performance**: Page renders in <500ms with 100 contracts
+- [ ] **Re-render optimization**: No unnecessary re-renders on data updates
+- [ ] **Commands**: `npm run test:perf`
+
+**Example Test Cases**:
+```typescript
+describe('HomeScreen Performance', () => {
+  it('should render 100 contracts in under 500ms', () => { ... });
+  it('should not re-render when unrelated data changes', () => { ... });
+});
+```
+
+### Layer 10: Visual Regression Testing (Storybook + Chromatic)
+- [ ] **Storybook stories**: All page states documented
+- [ ] **Visual regression**: Chromatic or Percy integration
+- [ ] **Commands**: `npm run storybook`, `npm run build-storybook`
+
+**Required Stories**:
+- Default story (with sample data)
+- Empty state (no contracts)
+- Empty state (no renewals)
+- High risk portfolio
+- Low risk portfolio
+
+### Layer 11: E2E Testing (Cypress/Playwright) - Critical Flow
+- [ ] **User journey tested**: Load home → click upload → navigate to upload screen
+- [ ] **User journey tested**: Load home → click contract → navigate to results screen
+- [ ] **Commands**: `npm run test:e2e`
+
+**Example Test Cases**:
+```typescript
+describe('HomeScreen E2E', () => {
+  it('should navigate to upload screen when clicking upload button', () => {
+    cy.visit('/');
+    cy.contains('Upload contract').click();
+    cy.url().should('include', '/upload');
+  });
+  
+  it('should navigate to results screen when clicking contract', () => {
+    cy.visit('/');
+    cy.get('[data-cy=contract-row]').first().click();
+    cy.url().should('include', '/results');
+  });
+});
+```
+
+### Real Device Testing
+- [ ] **iPhone**: Portrait + landscape
+- [ ] **Android phone**: Portrait + landscape
+- [ ] **iPad**: Portrait + landscape
+- [ ] **Desktop monitor**: Mouse hover states
+- [ ] **Zoom testing**: 100%, 150%, 200%
+
+---
+
+## Testing Strategy Summary
+
+| Test Layer | When to Run | Coverage Target | Speed |
+|------------|-------------|-----------------|-------|
+| Layer 1: Static | On every save | 100% | ⚡ <1s |
+| Layer 2: Unit | On every commit | ≥80% | ⚡ <5s |
+| Layer 3: Hooks | On every commit | ≥80% | ⚡ <5s |
+| Layer 4: Integration | On every commit | Critical flows | ⏱️ <60s |
+| Layer 5: Snapshot | On every commit | Page layout | ⚡ <1s |
+| Layer 6: Navigation | On every commit | All nav flows | ⚡ <5s |
+| Layer 7: A11y | On every commit | 100% | ⚡ <1s |
+| Layer 8: Performance | Nightly | Critical pages | ⏱️ <60s |
+| Layer 10: Visual | On PR merge | All page states | ⏱️ 2-5s |
+| Layer 11: E2E | Before deploy | 2-3 critical flows | ⏱️ 5-10m |
+
+---
+
 ## Testing Requirements
 
 ### Unit Tests

@@ -106,7 +106,147 @@ npm test -- --watch
 
 # Coverage
 npm test -- --coverage
+
+# Integration tests
+npm run test:integration
+
+# API tests
+npm run test:api
+
+# E2E tests
+npm run test:e2e
+
+# E2E tests (headed mode - with browser visible)
+npm run test:e2e -- --headed
+
+# Accessibility tests
+npm run test:a11y
+
+# Performance tests
+npm run test:perf
+
+# All tests (full suite)
+npm run test:all
 ```
+
+### Testing by Layer (12-Layer Architecture)
+
+#### Layer 1: Static Analysis
+```bash
+# ESLint
+npm run lint
+
+# TypeScript type checking
+npm run type-check
+
+# Both
+npm run lint && npm run type-check
+```
+
+#### Layer 2-3: Unit Tests (Components + Hooks)
+```bash
+# Run unit tests
+npm test
+
+# Watch mode (re-run on file change)
+npm test -- --watch
+
+# Coverage report
+npm test -- --coverage
+
+# Specific test file
+npm test ComponentName.test.tsx
+```
+
+#### Layer 4: Integration Tests
+```bash
+# Backend integration tests (real database)
+cd apps/backend
+npm run test:integration
+
+# Frontend integration tests (MSW mocking)
+cd apps/frontend
+npm run test:integration
+```
+
+#### Layer 5: API Tests
+```bash
+# Backend API tests (Supertest)
+cd apps/backend
+npm run test:api
+```
+
+#### Layer 6: E2E Tests
+```bash
+# Run E2E tests (Cypress/Playwright)
+npm run test:e2e
+
+# Run E2E tests with browser visible
+npm run test:e2e -- --headed
+
+# Run specific E2E test
+npm run test:e2e -- --spec "cypress/e2e/contract-workflow.cy.ts"
+```
+
+#### Layer 7: Accessibility Tests
+```bash
+# Run accessibility tests (axe-core + Lighthouse)
+npm run test:a11y
+
+# Lighthouse CI
+npm run lighthouse
+```
+
+#### Layer 8: Performance Tests
+```bash
+# Frontend performance tests
+npm run test:perf
+
+# Backend load tests (k6)
+k6 run test/load-test.js
+```
+
+#### Layer 9: Security Tests
+```bash
+# Dependency scanning
+npm audit
+
+# Detailed vulnerability analysis
+snyk test
+
+# Secret scanning
+trufflehog filesystem . --json
+
+# SAST (SonarQube)
+sonar-scanner
+```
+
+#### Layer 10: Visual Regression Tests
+```bash
+# Run Storybook
+npm run storybook
+
+# Build Storybook
+npm run build-storybook
+
+# Visual regression (Chromatic)
+npx chromatic --project-token=$CHROMATIC_TOKEN
+```
+
+### Testing Quick Reference
+
+| Layer | Command | When | Speed |
+|-------|---------|------|-------|
+| 1. Static | `npm run lint && npm run type-check` | On save | ⚡ <1s |
+| 2. Unit | `npm test` | On commit | ⚡ <5s |
+| 3. Hooks | `npm test` | On commit | ⚡ <5s |
+| 4. Integration | `npm run test:integration` | On commit | ⏱️ <60s |
+| 5. API | `npm run test:api` | On commit | ⏱️ <60s |
+| 6. E2E | `npm run test:e2e` | Before deploy | ⏱️ 5-30m |
+| 7. A11y | `npm run test:a11y` | On commit | ⚡ <1s |
+| 8. Performance | `npm run test:perf` | Nightly | ⏱️ <60s |
+| 9. Security | `npm audit` | On commit | ⏱️ <10s |
+| 10. Visual | `npm run storybook` | On PR merge | ⏱️ 2-5s |
 
 ### Linting & Formatting
 ```bash
