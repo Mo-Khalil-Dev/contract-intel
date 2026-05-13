@@ -28,7 +28,8 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts'],
+      // Test files and in-module test helpers (in-memory repos, fakes).
+      files: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'test/**/*.ts', 'src/**/test/**/*.ts'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -38,6 +39,9 @@ module.exports = {
         '@typescript-eslint/no-unsafe-argument': 'off',
         '@typescript-eslint/unbound-method': 'off',
         '@typescript-eslint/no-unused-expressions': 'off',
+        // Fakes and in-memory repos implement async interfaces but do
+        // synchronous work — silence the require-await rule for them.
+        '@typescript-eslint/require-await': 'off',
       },
     },
   ],

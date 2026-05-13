@@ -795,13 +795,15 @@ Event Handlers:
 
 **Deliverables**:
 
-- [ ] LoginCommand + LoginHandler (Auth0 callback, create session)
-- [ ] LogoutCommand + LogoutHandler (invalidate session, revoke refresh token)
-- [ ] RefreshSessionCommand + RefreshSessionHandler (silent token refresh)
-- [ ] GetCurrentUserQuery + GetCurrentUserHandler
-- [ ] ValidateSessionQuery + ValidateSessionHandler
-- [ ] Event handlers for audit logging
-- [ ] Unit tests for all handlers (mock repositories)
+- [x] LoginCommand + LoginHandler — Auth0 code exchange → find-or-create user → encrypt tokens → create Session, emit lifecycle events
+- [x] LogoutCommand + LogoutHandler — invalidate session, decrypt refresh token, revoke at OAuth provider (best-effort, swallows failures), delete session
+- [x] RefreshSessionCommand + RefreshSessionHandler — silent token refresh, rotates access token (and refresh token if provider rotates it), throws Unauthorized on expired session
+- [x] GetCurrentUserQuery + GetCurrentUserHandler — user view DTO
+- [x] ValidateSessionQuery + ValidateSessionHandler — returns `valid` / `expired` / `not_found` (malformed session id treated as not_found)
+- [x] Event handlers (Phase 3 stubs that log; will dispatch RecordAuditEventCommand in Phase 6): UserLoggedInHandler, SessionInvalidatedHandler
+- [x] Two new ports in domain layer: IOAuthProvider, ISessionEncryption (with Symbol DI tokens)
+- [x] Test helpers (in-memory repos + fake adapters) under `src/modules/auth/test/`
+- [x] 25 new handler tests, all passing
 
 **Files**:
 
@@ -943,13 +945,14 @@ UI Hook (useAuth.ts)
 **API Layer**:
 
 - [ ] Add to **src/api/endpoints.ts**:
+
   ```typescript
   export const API = {
     // ... existing endpoints
-    AUTH_LOGIN: '/api/v1/auth/login',           // Initiates Auth0 login flow (with optional returnUrl)
-    AUTH_CALLBACK: '/api/v1/auth/callback',     // Auth0 redirects here (backend only)
-    AUTH_LOGOUT: '/api/v1/auth/logout',         // Logout endpoint
-    AUTH_ME: '/api/v1/auth/me',                 // Get current user
+    AUTH_LOGIN: '/api/v1/auth/login', // Initiates Auth0 login flow (with optional returnUrl)
+    AUTH_CALLBACK: '/api/v1/auth/callback', // Auth0 redirects here (backend only)
+    AUTH_LOGOUT: '/api/v1/auth/logout', // Logout endpoint
+    AUTH_ME: '/api/v1/auth/me', // Get current user
   };
   ```
 
@@ -965,7 +968,7 @@ UI Hook (useAuth.ts)
         window.location.href = `${API.AUTH_LOGIN}?returnUrl=${returnUrl}`;
       }
       return Promise.reject(error);
-    }
+    },
   );
   ```
 
@@ -1004,7 +1007,7 @@ UI Hook (useAuth.ts)
     const { data: user, isLoading } = useQuery({
       queryKey: ['current-user'],
       queryFn: authService.getCurrentUser,
-      retry: false,  // Don't retry 401s (will trigger redirect)
+      retry: false, // Don't retry 401s (will trigger redirect)
     });
 
     const logoutMutation = useMutation({
