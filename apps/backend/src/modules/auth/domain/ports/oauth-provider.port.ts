@@ -29,6 +29,11 @@ export interface OAuthRefreshResult {
 // Lives in the domain layer so handlers depend on the contract, not the
 // concrete SDK.
 export interface IOAuthProvider {
+  // Build the provider's authorize URL (e.g. Auth0 /authorize). Pure
+  // string formatting — kept on the port so the controller doesn't import
+  // the concrete adapter directly.
+  buildAuthorizeUrl(params: { state: string; redirectUri: string; scope?: string }): string;
+
   exchangeCodeForTokens(
     authorizationCode: string,
     redirectUri: string,

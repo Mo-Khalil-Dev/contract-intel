@@ -830,7 +830,7 @@ modules/auth/application/
 
 ---
 
-### Task 3.3: Authentication Infrastructure Layer
+### Task 3.3: Authentication Infrastructure Layer ✅ COMPLETED
 
 **Goal**: Prisma repositories, Auth0 integration, session guard
 
@@ -885,20 +885,26 @@ modules/auth/application/
 
 **Deliverables**:
 
-- [ ] PrismaUserRepository implementing IUserRepository
-- [ ] PrismaSessionRepository implementing ISessionRepository
-- [ ] Auth0Service (token exchange, validation, refresh)
-- [ ] SessionEncryptionService (AES-256-CBC + PBKDF2)
-- [ ] SessionAuthGuard (global guard, decrypt token, attach user to request)
-- [ ] AuthController with endpoints:
-  - [ ] **GET /api/v1/auth/login?returnUrl={url}** → Build Auth0 authorize URL with state (CSRF + returnUrl), redirect to Auth0
-  - [ ] **GET /api/v1/auth/callback** → Exchange code for tokens, encrypt, store, set cookie, redirect to returnUrl from state
-  - [ ] **POST /api/v1/auth/logout** → Clear cookie, revoke refresh token at Auth0
-  - [ ] **GET /api/v1/auth/me** → Return current user from session cookie
-- [ ] DTOs: LoginCallbackDto, CurrentUserResponseDto
-- [ ] AuthMapper (User aggregate ↔ Prisma ↔ DTO)
-- [ ] AuthModule wiring all components
-- [ ] Integration tests (Supertest + in-memory DB)
+- [x] `PrismaUserRepository` implementing IUserRepository (upsert by id)
+- [x] `PrismaSessionRepository` implementing ISessionRepository
+- [x] `Auth0Service` (implements IOAuthProvider) — token exchange, refresh, revoke, `/userinfo`, plus `buildAuthorizeUrl()`. Uses `fetch` directly (no SDK).
+- [x] `SessionEncryptionService` (implements ISessionEncryption) — AES-256-CBC + PBKDF2 (100k iterations, SHA-256, 16-byte salt, 16-byte IV)
+- [x] `SessionAuthGuard` (registered as `APP_GUARD`) — reads signed cookie, loads session, auto-refreshes near expiry or when expired, attaches `RequestUser` to request
+- [x] `AuthController` with 4 endpoints (note: per design discussion, callback is **POST** so the frontend `/auth/callback` page calls into the backend):
+  - [x] **GET /api/v1/auth/login?returnUrl=** → builds signed state, 302s to Auth0
+  - [x] **POST /api/v1/auth/callback** → accepts `{ code, state }`, exchanges code, encrypts tokens, creates session, sets cookie, returns `{ returnUrl }`
+  - [x] **POST /api/v1/auth/logout** → revokes refresh token at Auth0, deletes session, clears cookie
+  - [x] **GET /api/v1/auth/me** → returns current user
+- [x] DTOs: `CallbackRequestDto` (class-validator), `CallbackResponse`, `CurrentUserResponseDto`
+- [x] `UserMapper`, `SessionMapper` (aggregate ↔ Prisma row); `Session.fromDate` invariant relaxed via `SessionExpiry.rehydrate()` so already-expired sessions can be loaded
+- [x] `StateTokenService` — HMAC-SHA256 signed state with CSRF + returnUrl + TTL; rejects open-redirect attempts (external URLs, protocol-relative URLs)
+- [x] `SessionCookieService` — signed httpOnly cookie (`cisid`), Secure in production, SameSite=Strict
+- [x] `@Public()` decorator + `@CurrentUser()` parameter decorator
+- [x] `AuthModule` wires everything; registers SessionAuthGuard as `APP_GUARD`
+- [x] `cookie-parser` middleware + global `ValidationPipe` wired in `main.ts`
+- [x] Integration tests (Supertest) covering all four endpoints, the cookie roundtrip, state CSRF rejection, missing-body validation, and 401 paths
+
+**Test count**: 349 → 400 (+51 tests across 5 new suites: state-token, session-cookie, session-encryption, auth0, auth.controller integration)
 
 **Files**:
 

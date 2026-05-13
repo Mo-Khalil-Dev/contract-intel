@@ -5,9 +5,10 @@ import { AppConfigModule } from './config/app-config.module';
 import { LoggerModule } from './shared/infrastructure/logging/logger.module';
 import { PrismaModule } from './shared/infrastructure/prisma/prisma.module';
 import { ResponseInterceptor } from './shared/infrastructure/interceptors/response.interceptor';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
-  imports: [AppConfigModule, LoggerModule, PrismaModule, CqrsModule],
+  imports: [AppConfigModule, LoggerModule, PrismaModule, CqrsModule, AuthModule],
   providers: [
     {
       provide: APP_INTERCEPTOR,
