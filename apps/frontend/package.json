@@ -42,6 +42,7 @@
     "vitest": "^1.1.0",
     "@vitest/ui": "^1.1.0",
     "@testing-library/react": "^14.1.2",
-    "@testing-library/jest-dom": "^6.1.5"
+    "@testing-library/jest-dom": "^6.1.5",
+    "jsdom": "^23.0.0"
   }
 }

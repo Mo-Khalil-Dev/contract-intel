@@ -479,33 +479,41 @@ apps/frontend/src/
 
 ---
 
-### Task 2.1: Design Tokens & Tailwind Wiring
+### Task 2.1: Design Tokens & Tailwind Wiring ✅ COMPLETED
 
 **Goal**: Single source of truth for colours, type, spacing, breakpoints; wired into Tailwind so every component (Shadcn or custom) inherits them.
 
 **Deliverables**:
 
-- [ ] `apps/frontend/src/config/designTokens.ts` exporting:
+- [x] `apps/frontend/src/config/designTokens.ts` exporting:
   - Colour palette: bg, surface, ink (+ mid/soft/mute), border, blue, green, orange, red, nav
-  - Risk helpers: `riskColor(score)`, `riskBg(score)`, `riskLabel(score)`, `riskShort(score)`
-  - Severity helpers: `sevColor(level)`, `sevBg(level)`
+  - Risk helpers: `riskLevel`, `riskColor`, `riskBg`, `riskLabel`, `riskShort` (each accepts optional `max` parameter — defaults to 0-100 scale, supports custom scales like wireframe's 0-10)
+  - Severity helpers: `sevColor`, `sevBg`
   - Typography: DM Sans / DM Mono families, sizes, weights, letter-spacing
   - Spacing scale (xs … xxl)
-  - Border-radius scale
-  - Shadow scale
-  - Breakpoints (mobile 420, sm 640, md 860, lg 1100)
-- [ ] `tailwind.config.js` imports from `designTokens.ts` (already partially scaffolded in Task 1.1 — extend, do not duplicate)
-- [ ] Unit tests for risk / severity helper functions (threshold edges, boundary cases)
+  - Border-radius scale (none, sm, md, lg, xl, full)
+  - Shadow scale (sm, md, lg, xl)
+  - Breakpoints (mobile 420, sm 640, md 860, lg 1100, xl 1280)
+- [x] `tailwind.config.ts` (renamed from .js) imports from `designTokens.ts` — Tailwind 3.3+ native TS config
+- [x] Unit tests (22 tests, all passing): threshold edges, custom scales, palette completeness, hex format validation
+- [x] Vite + Vitest test infrastructure (`vite.config.ts` test block, `src/test/setup.ts`, `jsdom` for DOM env)
+- [x] Updated `src/index.css` and `App.tsx` to use new token-driven Tailwind classes (`bg-bg`, `text-ink`, `text-blue-dark`)
+
+**Design decision**: Risk thresholds use 0-100 scale by default to match `RiskScore (0–100)` in design.md. Helper functions accept an optional `max` parameter for compatibility with the wireframes' 0-10 scale.
 
 **Files**:
 
 ```
 apps/frontend/src/config/designTokens.ts
 apps/frontend/src/config/designTokens.spec.ts
-apps/frontend/tailwind.config.js
+apps/frontend/src/test/setup.ts
+apps/frontend/tailwind.config.ts          (was .js)
+apps/frontend/vite.config.ts              (added test block)
+apps/frontend/src/index.css               (updated class names)
+apps/frontend/src/App.tsx                 (updated class names)
 ```
 
-**Requirements**: Foundation for every UI component (Shadcn theming and custom components alike).
+**Requirements**: Foundation for every UI component (Shadcn theming and custom components alike). ✅
 
 ---
 
