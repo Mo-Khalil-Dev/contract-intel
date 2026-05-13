@@ -19,22 +19,12 @@ npm install
 echo "📦 Installing backend dependencies..."
 cd apps/backend
 npm install
-
-# Generate Prisma client
-echo "🔧 Generating Prisma client..."
-npm run prisma:generate
-
-# Run migrations
-echo "🗄️  Running database migrations..."
-npm run prisma:migrate
-
 cd ../..
 
 # Install frontend dependencies
 echo "📦 Installing frontend dependencies..."
 cd apps/frontend
 npm install
-
 cd ../..
 
 echo "✅ Setup complete!"

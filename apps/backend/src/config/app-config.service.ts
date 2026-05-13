@@ -28,11 +28,6 @@ export class AppConfigService {
     return secret;
   }
 
-  // Database
-  get databaseUrl(): string {
-    return this.configService.get('DATABASE_URL', 'file:./dev.db');
-  }
-
   // Auth0
   get auth0Domain(): string {
     return this.configService.get('AUTH0_DOMAIN', '');

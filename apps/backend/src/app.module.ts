@@ -2,10 +2,9 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from './shared/infrastructure/prisma/prisma.module';
+import { LoggerModule } from 'nestjs-pino';
 import { AppConfigModule } from './config/app-config.module';
 import { ResponseInterceptor } from './shared/infrastructure/interceptors/response.interceptor';
-import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -23,7 +22,6 @@ import { LoggerModule } from 'nestjs-pino';
     }),
     CqrsModule,
     AppConfigModule,
-    PrismaModule,
   ],
   providers: [
     {

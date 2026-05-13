@@ -4,10 +4,12 @@ AI-powered contract analysis and due diligence platform built with NestJS, React
 
 ## Architecture
 
-- **Backend**: NestJS + TypeScript + Prisma + SQLite (local) / PostgreSQL (production)
+- **Backend**: NestJS + TypeScript
 - **Frontend**: React + TypeScript + TailwindCSS + React Query
 - **Pattern**: Clean Architecture + DDD + CQRS + Vertical Slicing
 - **Deployment**: GCP Cloud Run (production), Railway (demo)
+
+> **Note**: Persistence layer (ORM, database) will be introduced incrementally as features need them.
 
 ## Project Structure
 
@@ -15,11 +17,10 @@ AI-powered contract analysis and due diligence platform built with NestJS, React
 contract-intel-v2/
 ├── apps/
 │   ├── backend/          # NestJS API
-│   │   ├── src/
-│   │   │   ├── modules/  # Feature modules (vertical slices)
-│   │   │   ├── shared/   # Shared kernel (domain, exceptions, infrastructure)
-│   │   │   └── config/   # Configuration
-│   │   └── prisma/       # Database schema & migrations
+│   │   └── src/
+│   │       ├── modules/  # Feature modules (vertical slices)
+│   │       ├── shared/   # Shared kernel (domain, exceptions, infrastructure)
+│   │       └── config/   # Configuration
 │   └── frontend/         # React SPA
 │       └── src/
 │           ├── pages/    # Page components
@@ -49,13 +50,6 @@ contract-intel-v2/
    ```bash
    cd apps/backend
    cp .env.example .env
-   ```
-
-3. **Generate Prisma client and run migrations**:
-   ```bash
-   cd apps/backend
-   npm run prisma:generate
-   npm run prisma:migrate
    ```
 
 ### Development
@@ -120,8 +114,6 @@ npm run format
 
 ### Backend
 - **Framework**: NestJS 10
-- **ORM**: Prisma
-- **Database**: SQLite (dev), PostgreSQL (prod)
 - **CQRS**: @nestjs/cqrs
 - **Logging**: pino + nestjs-pino
 - **Validation**: class-validator + class-transformer
@@ -152,7 +144,6 @@ npm run format
 See `apps/backend/.env.example` for all available configuration options.
 
 Key variables:
-- `DATABASE_URL`: Database connection string
 - `AUTH0_*`: Auth0 configuration
 - `STORAGE_DRIVER`: local | gcs
 - `OCR_DRIVER`: mock | google-document-ai

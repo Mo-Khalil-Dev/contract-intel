@@ -2,11 +2,11 @@
 
 ## Progress Summary
 
-**Phase 1: Scaffolding & Cross-Cutting Concerns** — 2/8 tasks completed
+**Phase 1: Scaffolding & Cross-Cutting Concerns** — 3/7 tasks completed
 - ✅ Task 1.1: Project Structure Setup (Commit: aec01ef)
 - ✅ Task 1.2: Shared Kernel Tests (Commit: 6d4383f)
-- ⏳ Task 1.3: Exception Hierarchy Tests
-- ⏳ Task 1.4: Prisma Schema & Database Setup
+- ✅ Task 1.3: Exception Hierarchy Tests (Commit: 896cbe8)
+- ❌ Task 1.4: Prisma Schema & Database Setup — REMOVED (data models introduced incrementally per feature)
 - ⏳ Task 1.5: Configuration Service Tests
 - ⏳ Task 1.6: Logging Infrastructure
 - ⏳ Task 1.7: API Response Envelope Tests
@@ -213,25 +213,21 @@ shared/exceptions/
 
 ---
 
-### Task 1.4: Prisma Schema & Database Setup
-**Goal**: Define complete database schema with all domain models
+### Task 1.4: Prisma Schema & Database Setup ❌ REMOVED
 
-**Deliverables**:
-- [ ] Prisma schema with all models: User, Session, Tenant, Document, Clause, RiskFlag, Engagement, ReviewerAssignment, Annotation, Comment, AuditEvent
-- [ ] SQLite configuration for local development
-- [ ] Initial migration script
-- [ ] PrismaService with connection lifecycle
-- [ ] PrismaModule (global)
+**Decision**: Skipped — persistence layer will be introduced incrementally as features need it.
 
-**Files**:
-```
-prisma/
-├── schema.prisma
-└── migrations/
-    └── 001_initial_schema/
-```
+**Rationale**:
+- Avoids upfront commitment to a full schema (premature design)
+- Conflicts existed across spec docs (design.md said multi-tenancy out of scope, tasks.md required Tenant model)
+- Each feature module will define its own data model when implementing its persistence adapter
+- Aligns with vertical slicing — features own their full stack including persistence
 
-**Requirements**: 10.1, 10.2, 10.3 (multi-tenant data isolation)
+**What this means going forward**:
+- No `prisma/` folder in backend
+- No ORM dependencies installed yet
+- Repository interfaces defined in domain layer (per feature)
+- Persistence adapter chosen per feature (could be Prisma, TypeORM, raw SQL, or in-memory)
 
 ---
 
