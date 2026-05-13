@@ -7,17 +7,23 @@
 - ✅ Task 1.1: Project Structure Setup (Commit: aec01ef)
 - ✅ Task 1.2: Shared Kernel Tests (Commit: 6d4383f)
 - ✅ Task 1.3: Exception Hierarchy Tests (Commit: 896cbe8)
-- ❌ Task 1.4: Prisma Schema & Database Setup — REMOVED (data models introduced incrementally per feature)
+- ❌ Task 1.4: Prisma Schema & Database Setup — REMOVED (data models introduced incrementally per feature, Commit: bf39149)
 - ✅ Task 1.5: Configuration Service (with class-validator, Commit: 52ef904)
-- ✅ Task 1.6: Logging Infrastructure (pino + request id propagation)
-- ✅ Task 1.7: API Response Envelope (ApiResponse<T> + PaginationMeta)
-- ✅ Task 1.8: Testing Infrastructure (Jest + Supertest + factories + coverage thresholds)
+- ✅ Task 1.6: Logging Infrastructure (pino + request id propagation, Commit: b67cbae)
+- ✅ Task 1.7: API Response Envelope (ApiResponse<T> + PaginationMeta, Commit: e36bbea)
+- ✅ Task 1.8: Testing Infrastructure (Jest + Supertest + factories + coverage thresholds, Commit: 55726cf)
+- 🛠️ Tooling: lint + prettier + dependency alignment across full codebase (Commit: 772e1bc)
 
 **Completed Work**:
 
-- 33 files created (19 backend, 14 frontend)
-- 1,347 lines of scaffolding code
-- 5 source files + 5 test files (102+ test assertions)
+- Monorepo scaffold (backend + frontend) — apps/backend (NestJS 11) and apps/frontend (React 18 + Vite)
+- Shared kernel: Result, BaseEntity, ValueObject, AggregateRoot, DomainEvent
+- Exception hierarchy: AppError → Domain/Application/Infrastructure + 5 common exceptions + global HttpExceptionFilter (RFC 7807)
+- Configuration: AppConfigService with class-validator startup validation, typed enums, env-specific files
+- Logging: dedicated LoggerModule, request ID propagation via x-request-id, sensitive field redaction
+- API response envelope: ApiResponse<T>, PaginationMeta, isPaginatedPayload, buildPaginationMeta + ResponseInterceptor
+- Testing infrastructure: Jest unit + Jest e2e (Supertest), TestFactory base class, coverage thresholds (global ≥80%, domain ≥90%)
+- Lint clean (0 errors / 0 warnings), Prettier formatted across whole repo
 - All following Clean Architecture + DDD + CQRS + Vertical Slicing patterns
 
 ---
@@ -212,29 +218,31 @@ shared/domain/
 
 ---
 
-### Task 1.3: Exception Hierarchy
+### Task 1.3: Exception Hierarchy ✅ COMPLETED
 
 **Goal**: Three-layer exception system with global filter
+**Status**: Completed (Commit: 896cbe8)
 
 **Deliverables**:
 
-- [ ] `AppError` base class (message, code, httpStatus)
-- [ ] `DomainException` for business rule violations (422, 409)
-- [ ] `ApplicationException` for use case failures (404, 403, 409, 503)
-- [ ] `InfrastructureException` for external failures (500)
-- [ ] Common exceptions: `NotFoundException`, `UnauthorizedException`, `ForbiddenException`, `ConflictException`, `ValidationException`
-- [ ] Global `HttpExceptionFilter` returning RFC 7807 Problem Details
-- [ ] Unit tests for exception filter
+- [x] `AppError` base class (message, code, httpStatus)
+- [x] `DomainException` for business rule violations (422)
+- [x] `ApplicationException` for use case failures (400/401/403/404/409/503)
+- [x] `InfrastructureException` for external failures (500)
+- [x] Common exceptions: `NotFoundException`, `UnauthorizedException`, `ForbiddenException`, `ConflictException`, `ValidationException`
+- [x] Global `HttpExceptionFilter` returning RFC 7807 Problem Details
+- [x] Unit tests for AppError hierarchy (40+ tests)
+- [x] Unit tests for HttpExceptionFilter (38+ tests)
 
 **Files**:
 
 ```
 shared/exceptions/
-├── app-error.ts
-└── http-exception.filter.ts
+├── app-error.ts + app-error.spec.ts
+└── http-exception.filter.ts + http-exception.filter.spec.ts
 ```
 
-**Requirements**: 8.4 (403 Forbidden), error handling across all features
+**Requirements**: 8.4 (403 Forbidden), error handling across all features ✅
 
 ---
 
