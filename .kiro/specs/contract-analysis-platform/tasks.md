@@ -832,6 +832,47 @@ modules/auth/application/
 
 **Goal**: Prisma repositories, Auth0 integration, session guard
 
+**Complete Authentication Flow**:
+
+```
+1. User visits app → not authenticated → redirected to /login
+
+2. User clicks "Sign In" button → calls authService.login()
+   → window.location.href = '/api/v1/auth/login'
+
+3. Backend GET /api/v1/auth/login endpoint:
+   → Builds Auth0 authorize URL with state (CSRF token)
+   → Redirects browser to Auth0 Universal Login
+   → https://{AUTH0_DOMAIN}/authorize?response_type=code&client_id=...&state=...
+
+4. User authenticates on Auth0 hosted page
+
+5. Auth0 redirects back to backend:
+   → GET /api/v1/auth/callback?code=xxx&state=yyy
+
+6. Backend /api/v1/auth/callback endpoint:
+   → Validates state (CSRF protection)
+   → Exchanges code for tokens (POST to Auth0 /oauth/token)
+   → Encrypts access token and refresh token separately
+   → Stores Session in database
+   → Sets httpOnly session cookie
+   → Redirects browser to /dashboard
+
+7. Every subsequent request:
+   → SessionAuthGuard reads cookie
+   → Decrypts tokens from database
+   → Validates access token
+   → If expired: silently refreshes using refresh token
+   → Attaches user to request context
+
+8. Logout:
+   → POST /api/v1/auth/logout
+   → Deletes Session from database
+   → Revokes refresh token at Auth0
+   → Clears session cookie
+   → Redirects to /
+```
+
 **Deliverables**:
 
 - [ ] PrismaUserRepository implementing IUserRepository
@@ -839,7 +880,11 @@ modules/auth/application/
 - [ ] Auth0Service (token exchange, validation, refresh)
 - [ ] SessionEncryptionService (AES-256-CBC + PBKDF2)
 - [ ] SessionAuthGuard (global guard, decrypt token, attach user to request)
-- [ ] AuthController (login callback, logout endpoints)
+- [ ] AuthController with endpoints:
+  - [ ] **GET /api/v1/auth/login** → Build Auth0 authorize URL and redirect
+  - [ ] **GET /api/v1/auth/callback** → Exchange code for tokens, encrypt, store, set cookie, redirect to app
+  - [ ] **POST /api/v1/auth/logout** → Clear cookie, revoke refresh token at Auth0
+  - [ ] **GET /api/v1/auth/me** → Return current user from session cookie
 - [ ] DTOs: LoginCallbackDto, CurrentUserResponseDto
 - [ ] AuthMapper (User aggregate ↔ Prisma ↔ DTO)
 - [ ] AuthModule wiring all components
@@ -893,10 +938,10 @@ UI Hook (useAuth.ts)
   ```typescript
   export const API = {
     // ... existing endpoints
-    LOGIN: '/api/v1/auth/login',
-    LOGOUT: '/api/v1/auth/logout',
-    CURRENT_USER: '/api/v1/auth/me',
-    REFRESH_SESSION: '/api/v1/auth/refresh',
+    AUTH_LOGIN: '/api/v1/auth/login',           // Initiates Auth0 login flow
+    AUTH_CALLBACK: '/api/v1/auth/callback',     // Auth0 redirects here (backend only)
+    AUTH_LOGOUT: '/api/v1/auth/logout',         // Logout endpoint
+    AUTH_ME: '/api/v1/auth/me',                 // Get current user
   };
   ```
 
@@ -909,12 +954,18 @@ UI Hook (useAuth.ts)
 
   ```typescript
   export const authService = {
+    // Initiates login by redirecting to backend endpoint
+    // Backend will redirect to Auth0 Universal Login
+    login: (): void => {
+      window.location.href = API.AUTH_LOGIN;
+    },
+
     getCurrentUser: async (): Promise<User> => {
-      return httpService.get<User>(API.CURRENT_USER).then(unwrap);
+      return httpService.get<User>(API.AUTH_ME).then(unwrap);
     },
 
     logout: async (): Promise<void> => {
-      return httpService.post<void>(API.LOGOUT, {}).then(unwrap);
+      return httpService.post<void>(API.AUTH_LOGOUT, {}).then(unwrap);
     },
   };
   ```
@@ -924,7 +975,7 @@ UI Hook (useAuth.ts)
 - [ ] **useAuth.ts**: React Query hook
   - Calls authService methods
   - No httpService or axios imports
-  - Returns { user, isLoading, logout, refetch }
+  - Returns { user, isLoading, login, logout, refetch }
 
   ```typescript
   export function useAuth() {
@@ -940,13 +991,15 @@ UI Hook (useAuth.ts)
       mutationFn: authService.logout,
       onSuccess: () => {
         queryClient.clear();
-        window.location.href = '/login';
+        window.location.href = '/';
       },
     });
 
     return {
       user,
       isLoading,
+      isAuthenticated: !!user,
+      login: authService.login,  // Redirects to /api/v1/auth/login
       logout: logoutMutation.mutate,
     };
   }
@@ -954,11 +1007,15 @@ UI Hook (useAuth.ts)
 
 **UI Components**:
 
+- [ ] **LoginPage** component (for unauthenticated users)
+  - Simple page with "Sign In" button
+  - Button calls `login()` from useAuth hook
+  - Redirects to `/api/v1/auth/login` → Auth0 Universal Login
+  - No custom login form (Auth0 handles authentication)
 - [ ] **LoginCallbackPage** component
-  - Handles Auth0 redirect
-  - No custom login UI (Auth0 Universal Login)
-  - Extracts code from URL
-  - Redirects to home on success
+  - Handles Auth0 redirect (backend processes callback, sets cookie, redirects to app)
+  - Shows loading spinner while backend processes
+  - No logic needed (backend does everything)
 - [ ] **LogoutButton** component
   - Button.tsx (JSX only, max 15 lines)
   - useLogoutButton.ts (calls useAuth hook)
@@ -971,12 +1028,12 @@ UI Hook (useAuth.ts)
 - [ ] **ProtectedRoute** component
   - Wraps routes requiring authentication
   - Uses useAuth hook
-  - Redirects to login if not authenticated
+  - Redirects to `/login` if not authenticated
   - Shows loading state
 - [ ] **SessionRefresh** component
-  - Silent token refresh before expiry
-  - Uses useAuth hook
+  - Silent token refresh before expiry (handled by backend SessionAuthGuard)
   - No UI (background process)
+  - Backend automatically refreshes tokens on expired access token
 
 **Files**:
 
@@ -1006,6 +1063,11 @@ frontend/src/
 │       ├── useSessionRefresh.ts
 │       └── SessionRefresh.test.tsx
 └── pages/
+    ├── LoginPage/
+    │   ├── LoginPage.tsx
+    │   ├── useLoginPage.ts
+    │   ├── LoginPage.module.css
+    │   └── LoginPage.test.tsx
     └── LoginCallbackPage/
         ├── LoginCallbackPage.tsx
         ├── useLoginCallbackPage.ts
