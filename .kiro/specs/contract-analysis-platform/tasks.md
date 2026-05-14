@@ -38,11 +38,12 @@
 - ✅ Task 4.5: Home Screen UI — Routing, Edge Cases & Accessibility Audit (Commit: a7f05ea)
 - 🧪 Experimental: HomePageV2 with fully custom components (no Shadcn) on branch `feature/home-page-custom-components` — user preferred; v2-style is template for future UI work
 
-**Phase 4.5: Product Analytics (PostHog)** — 🔧 **IN PROGRESS** (0/3 tasks, cross-cutting frontend concern)
+**Phase 4.5: Product Analytics (PostHog)** — ✅ **COMPLETE** (3/3 tasks)
 
-- ⏳ Task 4.5.1: PostHog SDK install + initialization (env vars, EU host, provider wiring)
-- ⏳ Task 4.5.2: User identification lifecycle (identify on login, reset on logout, privacy defaults)
-- ⏳ Task 4.5.3: Typed analytics service + starter events (analytics.ts with strong types, first 3–5 events)
+- ✅ Task 4.5.1: PostHog SDK install + initialization (env vars, EU host, provider wiring) (Commit: 98177b3)
+- ✅ Task 4.5.2: User identification lifecycle (identify on login, reset on logout, privacy defaults) (Commit: 2f3154b — bundled with the typed-pattern migration)
+- ✅ Task 4.5.3: Typed analytics service + starter events (analytics.ts with strong types, useHoverTracker, 8 starter events) (Commits: 8f9e19e + 2f3154b)
+- ✅ Bonus: ErrorBoundary → posthog.captureException for unhandled React errors (Commit: ff162f4)
 
 **Phase 5: Upload Screen** — 📋 **PLANNED** (0/4 tasks, UI-first like Phase 4)
 
@@ -125,8 +126,8 @@
 | Phase 2   | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 3   | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 4   | Home Screen (Backend reference data + UI + a11y)         | 5 tasks | ✅ **COMPLETE (100%)**  |
-| Phase 4.5 | Product Analytics (PostHog frontend integration)         | 3 tasks | 🔧 **IN PROGRESS (0%)** |
-| Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | 📋 Planned              |
+| Phase 4.5 | Product Analytics (PostHog frontend integration)         | 3 tasks | ✅ **COMPLETE (100%)**  |
+| Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | 📋 **NEXT (0%)**        |
 | Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned             |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
@@ -1866,13 +1867,23 @@ apps/frontend/ANALYTICS.md             # event taxonomy reference
 
 **Phase 4.5 Exit Criteria**:
 
-- [ ] Live PostHog dashboard shows pageviews + custom events with correctly-identified users
-- [ ] Phase 5 (Upload Screen) can fire `upload_started` / `upload_completed` / `upload_failed` events by just adding them to `analytics.ts` and calling `track(...)` — no SDK wiring needed
-- [ ] Privacy: DNT respected, no PII in custom event names or top-level payload keys
+- [x] Live PostHog dashboard shows pageviews + custom events with correctly-identified users
+- [x] Phase 5 (Upload Screen) can fire `upload_started` / `upload_completed` / `upload_failed` events by just adding them to `events.ts` and calling `track(...)` — no SDK wiring needed
+- [x] Privacy: DNT respected (`respect_dnt: true`), `identified_only` person profiles, no PII in custom event names or top-level payload keys
+
+**Phase 4.5 completion** (2026-05-14): 🎉 **3/3 tasks complete (100%)** plus ErrorBoundary exception wiring as a bonus.
+
+**What landed**:
+
+- `analytics/` module with single import surface: `track`, `useHoverTracker`, `identify`, `reset`, `initPostHog`, `isPostHogEnabled`
+- 8 typed events in `events.ts` covering auth lifecycle, top-nav, dashboard interactions, upload CTA hover/click, KPI hover, resume contract
+- All previously-direct `posthog.capture` / `posthog.identify` calls migrated to the typed pattern (one consolidated event taxonomy)
+- `ErrorBoundary` wired to `posthog.captureException` for runtime React errors (separate channel from analytics events)
+- Demo instrumentation on `/v2` dashboard (KPI hovers + Upload CTA click/hover) — ready to expand from there
+
+**Commits**: 412f5bc (tasks doc) → 98177b3 (SDK init) → 8f9e19e (typed service + hover hook + demo) → 2f3154b (migrate parallel calls + identify/reset) → ff162f4 (ErrorBoundary exception capture)
 
 **Dependencies**: Phase 3 (auth wired and live, since we identify on login). ✅
-
-**Effort estimate**: 0.5–1 day (mostly waiting on PostHog account creation and dashboard verification).
 
 ---
 
