@@ -1,4 +1,5 @@
 import { Button } from './Button';
+import { track, useHoverTracker } from '@/analytics';
 import styles from './DarkCallToActionCard.module.css';
 
 interface DarkCallToActionCardProps {
@@ -11,8 +12,21 @@ interface DarkCallToActionCardProps {
  * and a quiet file-format hint.
  */
 export function DarkCallToActionCard({ onUpload }: DarkCallToActionCardProps) {
+  const hover = useHoverTracker('dashboard_upload_cta_hovered', { source: 'where_to_start' });
+
+  const handleUploadClick = () => {
+    track('dashboard_upload_cta_clicked', { source: 'where_to_start' });
+    onUpload();
+  };
+
   return (
-    <div className={styles.card} onClick={onUpload} role="button" tabIndex={0}>
+    <div
+      className={styles.card}
+      onClick={handleUploadClick}
+      role="button"
+      tabIndex={0}
+      {...hover}
+    >
       <div className={styles.blob} />
       <div className={styles.inner}>
         <div className={styles.eyebrow}>Where to start</div>
@@ -26,7 +40,7 @@ export function DarkCallToActionCard({ onUpload }: DarkCallToActionCardProps) {
             size="md"
             onClick={(e) => {
               e.stopPropagation();
-              onUpload();
+              handleUploadClick();
             }}
           >
             + Upload contract

@@ -9,6 +9,7 @@ import { ResumeCard, LinkCard } from './components/SideCard';
 import { RiskBadge } from './components/RiskBadge';
 import { TopNav } from './components/TopNav';
 import { UpcomingRenewalsCard } from './components/UpcomingRenewalsCard';
+import { useHoverTracker } from '@/analytics';
 import { riskColor, T } from './tokens';
 import type { DashboardViewModel } from './types';
 import styles from './HomePageV2.module.css';
@@ -37,6 +38,13 @@ export function HomePageV2({ vm, userInitials, greetingName, onNav }: HomePageV2
   const { kpis, recentContracts, urgentRenewals, lastOpenedContract } = vm;
 
   const hasCriticalUrgent = urgentRenewals[0]?.urgency === 'critical';
+
+  // Hover trackers for each KPI — fires after 500ms dwell so casual cursor
+  // movement doesn't spam events. One hook per KPI to keep payloads typed.
+  const hoverActive = useHoverTracker('dashboard_kpi_hovered', { kpi: 'active_contracts' });
+  const hoverRisk = useHoverTracker('dashboard_kpi_hovered', { kpi: 'avg_risk_score' });
+  const hoverFlags = useHoverTracker('dashboard_kpi_hovered', { kpi: 'critical_flags' });
+  const hoverRenewals = useHoverTracker('dashboard_kpi_hovered', { kpi: 'renewals_60d' });
 
   return (
     <div className={styles.root}>
@@ -80,6 +88,7 @@ export function HomePageV2({ vm, userInitials, greetingName, onNav }: HomePageV2
             label="Active contracts"
             value={kpis.activeContractCount}
             sub={`${kpis.inProgressCount} in review`}
+            {...hoverActive}
           />
           <KpiCard
             label="Average risk score"
@@ -92,12 +101,14 @@ export function HomePageV2({ vm, userInitials, greetingName, onNav }: HomePageV2
                   : 'Low'
             }
             valueColor={riskColor(kpis.avgRiskScore)}
+            {...hoverRisk}
           />
           <KpiCard
             label="Critical flags open"
             value={kpis.criticalFlagCount}
             sub="Across all contracts"
             valueColor={T.red}
+            {...hoverFlags}
           />
           <KpiCard
             label="Renewals < 60 days"
@@ -106,6 +117,7 @@ export function HomePageV2({ vm, userInitials, greetingName, onNav }: HomePageV2
               urgentRenewals[0] ? `Next: ${formatNextRenewal(urgentRenewals[0].renewalDate)}` : '—'
             }
             valueColor={T.orange}
+            {...hoverRenewals}
           />
         </div>
 
