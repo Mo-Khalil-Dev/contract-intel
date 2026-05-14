@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, Controller, Get } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import * as request from 'supertest';
+import request from 'supertest';
 import { ResponseInterceptor } from '../src/shared/infrastructure/interceptors/response.interceptor';
 import { HttpExceptionFilter } from '../src/shared/exceptions/http-exception.filter';
 import { NotFoundException } from '../src/shared/exceptions/app-error';
@@ -28,7 +28,7 @@ class TestController {
 }
 
 describe('Application E2E (testing infrastructure)', () => {
-  let app: INestApplication;
+  let app: any;
 
   beforeAll(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({

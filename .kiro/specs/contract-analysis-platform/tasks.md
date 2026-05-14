@@ -2,7 +2,7 @@
 
 ## Progress Summary
 
-**Phase 1: Scaffolding & Cross-Cutting Concerns** — 7/7 tasks completed ✅
+**Phase 1: Scaffolding & Cross-Cutting Concerns** — ✅ **COMPLETE** (7/7 tasks)
 
 - ✅ Task 1.1: Project Structure Setup (Commit: aec01ef)
 - ✅ Task 1.2: Shared Kernel Tests (Commit: 6d4383f)
@@ -14,28 +14,37 @@
 - ✅ Task 1.8: Testing Infrastructure (Jest + Supertest + factories + coverage thresholds, Commit: 55726cf)
 - 🛠️ Tooling: lint + prettier + dependency alignment across full codebase (Commit: 772e1bc)
 
-**Phase 2: Design System** — 5/5 tasks completed ✅
+**Phase 2: Design System** — ✅ **COMPLETE** (5/5 tasks)
 
 - ✅ Task 2.1: Design Tokens (Commit: 81c7fc8)
 - ✅ Task 2.2: Shadcn UI Bootstrap (Commit: 0b9f9f3)
-- ✅ Task 2.3: Domain Components (Commit: 09807c4)
-- ✅ Task 2.4: Layout Components (Commit: [hash])
-- ✅ Task 2.5: Centralised Icons (Commit: [hash])
+- ✅ Task 2.3: Domain Components (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) (Commit: 09807c4)
+- ✅ Task 2.4: Layout Components (TopNav, OrgBanner, PageShell) (Commit: verified in codebase)
+- ✅ Task 2.5: Centralised Icons (icons.tsx with 23 Lucide icons + tests) (Commit: verified in codebase)
 
-**Phase 3: Authentication** — 4/4 tasks completed ✅
+**Phase 3: Authentication** — ✅ **COMPLETE** (4/4 tasks)
 
-- ✅ Task 3.1: Authentication Domain Model (Commits: 01e1d35, 97dbd90, d0c5dfd)
-- ✅ Task 3.2: Authentication Application Layer (Commit: 01a028b)
-- ✅ Task 3.3: Authentication Infrastructure Layer (Commit: 2f26822)
-- ✅ Task 3.4: Authentication UI (Commit: 6927e8d)
+- ✅ Task 3.1: Authentication Domain Model (User + Session aggregates, 10 VOs, 6 events) (Commits: 01e1d35, 97dbd90, d0c5dfd)
+- ✅ Task 3.2: Authentication Application Layer (Login/Logout/Refresh commands, GetCurrentUser/ValidateSession queries) (Commit: 01a028b)
+- ✅ Task 3.3: Authentication Infrastructure Layer (Prisma repos, Auth0Service, SessionEncryption, SessionAuthGuard, AuthController) (Commit: 2f26822)
+- ✅ Task 3.4: Authentication UI (useAuth hook, authService, LoginCallbackPage, ProtectedRoute, LogoutButton) (Commit: 6927e8d)
+
+**Phase 4: Home Screen** — 📋 **NEXT** (0/5 tasks)
+
+- ⏳ Task 4.1: Reference Data Module — Domain & Application Layer (hardcoded fixture, no DB)
+- ⏳ Task 4.2: Reference Data Module — Infrastructure Layer (real endpoint + real auth guard)
+- ⏳ Task 4.3: Frontend API Infrastructure (referenceDataService + useReferenceData hook + types)
+- ⏳ Task 4.4: Home Screen UI — Pixel-Sharp Layout (matches US-008 HiFi wireframe exactly)
+- ⏳ Task 4.5: Home Screen UI — Routing, Edge Cases & Accessibility Audit
 
 **Specification Updates**:
 - Commit 01e1d35: Separate access/refresh token storage
 - Commit 97dbd90: Add login initiation flow
 - Commit d0c5dfd: Automatic redirect with returnUrl preservation
 
-**Completed Work**:
+**Completed Work** (Phases 1-3):
 
+**Phase 1: Foundation**
 - Monorepo scaffold (backend + frontend) — apps/backend (NestJS 11) and apps/frontend (React 18 + Vite)
 - Shared kernel: Result, BaseEntity, ValueObject, AggregateRoot, DomainEvent
 - Exception hierarchy: AppError → Domain/Application/Infrastructure + 5 common exceptions + global HttpExceptionFilter (RFC 7807)
@@ -46,15 +55,57 @@
 - Lint clean (0 errors / 0 warnings), Prettier formatted across whole repo
 - All following Clean Architecture + DDD + CQRS + Vertical Slicing patterns
 
+**Phase 2: Design System**
+- Design tokens: Single source of truth in `designTokens.ts` with risk/severity helpers, wired into Tailwind v4
+- Shadcn UI: 12 primitives installed (button, badge, input, card, dialog, tabs, checkbox, dropdown-menu, sonner, avatar, tooltip, skeleton)
+- Domain components: RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard (35 tests)
+- Layout components: TopNav, OrgBanner, PageShell (23 tests)
+- Centralized icons: 23 Lucide icons in `icons.tsx` (4 tests)
+- Tailwind v4 migration: CSS-first theme via `@theme {}` block, `@tailwindcss/vite` plugin
+- DM Sans + DM Mono fonts replacing Geist
+- Total: 62 component tests, all passing
+
+**Phase 3: Authentication**
+- Domain model: User + Session aggregates, 10 value objects, 6 domain events (89 tests)
+- Application layer: Login/Logout/Refresh commands, GetCurrentUser/ValidateSession queries, event handlers (25 tests)
+- Infrastructure: Prisma repositories, Auth0Service (code exchange, refresh, revoke), SessionEncryptionService (AES-256-CBC + PBKDF2), SessionAuthGuard (auto-refresh), AuthController (4 endpoints), StateTokenService (HMAC-signed state with CSRF + returnUrl), SessionCookieService (signed httpOnly cookie) (51 tests)
+- Frontend UI: useAuth hook (React Query), authService (3-tier architecture), httpService with 401 interceptor, LoginCallbackPage, ProtectedRoute, LogoutButton (full test coverage)
+- End-to-end flow: Automatic redirect → Auth0 → callback → session cookie → protected routes
+- Total: 165 auth tests (89 domain + 25 application + 51 infrastructure), all passing
+
+**Overall Test Count**: 400+ tests across all phases
+
+---
+
+## Next Steps: Phase 4 — Home Screen
+
+**Status**: 📋 Ready to start  
+**Estimated effort**: 5–7 days  
+**User Story**: US-008 (Home Screen / Dashboard)  
+**Scope decision (2026-05-14)**: Phase 4 is **UI-only**. No backend work. The `useReferenceData` hook returns hardcoded fixture data that exactly matches the US-008 wireframe sample. The goal is a pixel-sharp, fully interactive home screen. Real API wiring moves to Phase 5 when the backend reference-data endpoint is built.
+
+**What's being built**:
+
+1. **Mock Data Layer** (Task 4.1) — TypeScript types for `DashboardViewModel`, a `MOCK_DASHBOARD` fixture matching the US-008 wireframe sample data, and `useReferenceData` returning it via React Query (no HTTP call)
+2. **Pixel-Sharp UI** (Task 4.2) — Every section of the home screen built to exact wireframe measurements: OrgBanner, Greeting, KPI cards, "Where to Start", "How It Works", Recent Contracts table, Urgent Renewals table
+3. **Routing, Edge Cases & Accessibility** (Task 4.3) — Wire into React Router, handle empty states, run axe audit, add Storybook stories for all states
+
+**Architecture decisions**:
+- `useReferenceData` uses React Query (`queryKey: ['reference-data']`, `refetchOnWindowFocus: false`) — same hook signature as the real implementation. Swapping mock → real API in Phase 5 requires changing only `referenceDataService.ts`, nothing else.
+- Frontend follows the **3-tier API call stack** even with mock data: `useReferenceData` → `referenceDataService` → (mock, no HTTP). This keeps the architecture honest.
+- All pixel values, colors, font sizes, spacing, and border radii come directly from US-008 wireframe spec — no approximations.
+
+**Dependencies**: All Phase 1-3 work complete ✅
+
 ---
 
 ## Phase Plan (Post-Phase 1)
 
 | Phase   | Theme                                                    | Tasks   | Status                    |
 | ------- | -------------------------------------------------------- | ------- | ------------------------- |
-| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ Complete               |
-| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ Complete               |
-| Phase 4 | Home Screen (Reference Data API + Dashboard UI)          | 3 tasks | 📋 Planned                |
+| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ **COMPLETE (100%)**    |
+| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ **COMPLETE (100%)**    |
+| Phase 4 | Home Screen (Pixel-sharp UI + mock data)                 | 3 tasks | 📋 **NEXT (0%)**          |
 | Phase 5 | Upload Screen (Document Ingestion domain + UI)           | 4 tasks | 📋 Planned                |
 | Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned                |
 
@@ -62,20 +113,13 @@
 
 **Phase 2 tooling decision (2026-05-13)**: Shadcn CLI v4.7 generates output for Tailwind v4. Project upgraded from Tailwind v3.4 → v4.3. Theme moved from `tailwind.config.ts` to CSS-first `@theme {}` block in `src/index.css`. `@tailwindcss/vite` plugin replaces the PostCSS pipeline. `src/config/designTokens.ts` retained for JS-side risk/severity helpers.
 
-**Phase 2 progress**: 🎉 **5/5 tasks complete**
+**Phase 2 completion**: 🎉 **5/5 tasks complete (100%)**
 
 - ✅ Task 2.1: Design Tokens (Commit: 81c7fc8)
 - ✅ Task 2.2: Shadcn UI Bootstrap (Commit: 0b9f9f3)
-- ✅ Task 2.3: Domain Components (Commit: 09807c4)
-- ✅ Task 2.4: Layout Components
-- ✅ Task 2.5: Centralised Icons
-
-**Phase 3 progress**: 🎉 **4/4 tasks complete**
-
-- ✅ Task 3.1: Authentication Domain Model (Commit: 32e2067)
-- ✅ Task 3.2: Authentication Application Layer (Commit: 01a028b)
-- ✅ Task 3.3: Authentication Infrastructure Layer (Commit: 2f26822)
-- ✅ Task 3.4: Authentication UI (Commit: 6927e8d)
+- ✅ Task 2.3: Domain Components (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) (Commit: 09807c4)
+- ✅ Task 2.4: Layout Components (TopNav, OrgBanner, PageShell)
+- ✅ Task 2.5: Centralised Icons (icons.tsx with 23 Lucide icons + tests)
 
 **Phase 3 architectural decision (2026-05-13)**: Auth0 redirects to a **frontend** callback page (`http://localhost:5173/auth/callback`) which then POSTs `{ code, state }` to the backend. Backend mints/verifies the OAuth state (HMAC-signed, carries CSRF token + returnUrl) and owns the session cookie. End-to-end smoke-tested against the real Auth0 dev tenant — login → exchange → cookie → /me → logout → 401 all verified.
 
@@ -86,6 +130,21 @@
 - **Components**: `ProtectedRoute` (loading state + auto-redirect), `LogoutButton` (44px touch target, ARIA labels), `LoginCallbackPage` (spinner during callback)
 - **Session cookie**: Renamed from `cisid` to `ContractIntel`, HMAC-signed, HttpOnly, SameSite=Strict
 - **Tests**: httpService, authService, and component unit tests with full coverage
+
+**Phase 3 completion**: 🎉 **4/4 tasks complete (100%)**
+
+- ✅ Task 3.1: Authentication Domain Model (User + Session aggregates, 10 VOs, 6 events) (Commit: 32e2067)
+- ✅ Task 3.2: Authentication Application Layer (Login/Logout/Refresh commands, GetCurrentUser/ValidateSession queries) (Commit: 01a028b)
+- ✅ Task 3.3: Authentication Infrastructure Layer (Prisma repos, Auth0Service, SessionEncryption, SessionAuthGuard, AuthController) (Commit: 2f26822)
+- ✅ Task 3.4: Authentication UI (useAuth hook, authService, LoginCallbackPage, ProtectedRoute, LogoutButton) (Commit: 6927e8d)
+
+**Phase 4 status**: 📋 **NEXT — Ready to start (0/3 tasks)**
+
+Phase 4 will implement the Home Screen (US-008) with:
+- Backend Reference Data API endpoint (`GET /api/v1/reference-data`)
+- Dashboard view model with KPIs, recent contracts, urgent renewals
+- Frontend 3-tier API infrastructure (client, httpService, endpoints, unwrap)
+- Home screen UI components matching wireframe design
 
 ---
 
@@ -2376,3 +2435,379 @@ apps/frontend/src/
 - **Frontend architecture is non-negotiable**: 3-tier API stack, component structure, Shadcn UI base, centralized icons
 - **Accessibility is built-in from day 1**: focus indicators, touch targets, ARIA labels, keyboard nav, color contrast
 - **Mobile-first responsive**: start with 320px, progressively enhance with min-width media queries
+
+---
+
+## Phase 4: Home Screen
+
+### Overview
+
+Phase 4 delivers the first user-facing screen: the Home Dashboard. It introduces the `reference-data` backend module (query-only, no domain mutations) and the complete `HomePage` frontend component.
+
+**Architecture**: The backend computes all KPIs, sorts, colors, and labels. The frontend is a pure view engine — it renders what the API returns.
+
+**Persistence strategy**: Phase 4 uses **in-memory seed data** on the backend. The `Contract` and `Renewal` domain models ship in Phase 5 (Upload Screen). For now, `GetDashboardViewHandler` returns a hardcoded `DashboardViewModel` with realistic sample data matching the US-008 wireframe.
+
+---
+
+### Task 4.1: Reference Data Module — Domain & Application Layer
+
+**Goal**: Define the `DashboardViewModel` shape and the `GetDashboardViewQuery` that produces it. No persistence adapter needed — the handler returns seed data.
+
+**Requirements**: US-008 (Home Screen KPIs, recent contracts, urgent renewals)
+
+**Deliverables**:
+
+- [ ] Create `src/modules/reference-data/` vertical slice skeleton
+- [ ] Define TypeScript interfaces / value objects for the view model:
+  ```
+  DashboardViewModel {
+    kpis: {
+      activeContractCount: number
+      inProgressCount: number
+      avgRiskScore: number          // rounded to 1 decimal
+      criticalFlagCount: number
+      urgentRenewalCount: number
+      nextRenewalDate: string | null // ISO date string
+    }
+    recentContracts: RecentContractItem[]   // 4 most recent, sorted uploadDate DESC
+    urgentRenewals: UrgentRenewalItem[]     // 3 most urgent, sorted daysRemaining ASC
+    lastOpenedContract: RecentContractItem | null
+  }
+
+  RecentContractItem {
+    id: string
+    name: string
+    type: 'vendor' | 'license' | 'lease' | 'nda' | 'partnership' | 'customer'
+    riskScore: number
+    riskLevel: 'low' | 'medium' | 'high' | 'critical'
+    uploadedAt: string   // ISO date string
+  }
+
+  UrgentRenewalItem {
+    id: string
+    contractName: string
+    renewalDate: string  // ISO date string
+    daysRemaining: number
+    urgency: 'overdue' | 'critical' | 'warning' | 'ok'
+  }
+  ```
+- [ ] Create `GetDashboardViewQuery` (no params — scoped to authenticated user's context)
+- [ ] Create `GetDashboardViewHandler` implementing `IQueryHandler<GetDashboardViewQuery, DashboardViewModel>`
+  - Returns hardcoded seed data matching the US-008 wireframe sample (9 contracts, 6 renewals)
+  - Seed data: 4 complete contracts (mixed types/risk scores), 3 urgent renewals (one overdue, one <30d, one <60d)
+  - Computes all KPI values from the seed array (not hardcoded numbers — derive them from the seed data so the logic is testable)
+- [ ] Unit tests for `GetDashboardViewHandler`:
+  - Returns correct KPI counts from seed data
+  - `recentContracts` sorted by `uploadedAt` DESC, max 4 items
+  - `urgentRenewals` sorted by `daysRemaining` ASC, max 3 items
+  - `avgRiskScore` rounded to 1 decimal
+  - `urgency` field computed correctly per threshold (overdue: <0, critical: <30, warning: <60, ok: ≥60)
+  - `nextRenewalDate` is the date of the renewal with smallest positive `daysRemaining`
+
+**Files**:
+```
+src/modules/reference-data/
+├── application/
+│   └── queries/
+│       ├── get-dashboard-view.query.ts
+│       ├── get-dashboard-view.handler.ts
+│       └── get-dashboard-view.handler.spec.ts
+└── domain/
+    └── dashboard-view.model.ts   (interfaces: DashboardViewModel, RecentContractItem, UrgentRenewalItem)
+```
+
+**Test count target**: 10–15 unit tests, all passing
+
+---
+
+### Task 4.2: Reference Data Module — Infrastructure Layer
+
+**Goal**: Expose `GET /api/v1/reference-data` via a NestJS controller, wire the module, add Swagger docs, and write an integration test.
+
+**Requirements**: US-008, architecture playbook (API response envelope, SessionAuthGuard, ResponseInterceptor)
+
+**Deliverables**:
+
+- [ ] Create `ReferenceDataResponseDto` mirroring `DashboardViewModel` with `@ApiProperty()` decorators
+- [ ] Create `ReferenceDataController`:
+  - `@Get()` handler at `/api/v1/reference-data`
+  - Protected by `SessionAuthGuard` (global guard already applied — no extra decorator needed)
+  - Dispatches `GetDashboardViewQuery` via `QueryBus`
+  - Returns `DashboardViewModel` — `ResponseInterceptor` wraps it in `ApiResponse<DashboardViewModel>`
+  - `@ApiOperation`, `@ApiOkResponse`, `@ApiBearerAuth` Swagger decorators
+- [ ] Create `ReferenceDataModule`:
+  - Imports `CqrsModule`
+  - Registers `GetDashboardViewHandler` in `providers`
+  - Exports nothing (controller-only module)
+- [ ] Register `ReferenceDataModule` in `AppModule`
+- [ ] Add `API.REFERENCE_DATA = '/api/v1/reference-data'` to frontend `endpoints.ts` (note: this is a frontend file — add it as a reminder comment in the controller or as a separate sub-task)
+- [ ] Controller unit test (`reference-data.controller.spec.ts`):
+  - Mocks `QueryBus.execute` returning a `DashboardViewModel`
+  - Asserts `GET /api/v1/reference-data` returns 200 with correct shape
+  - Asserts 401 when no session cookie (via `SessionAuthGuard` mock)
+- [ ] E2E / integration test (`reference-data.e2e-spec.ts` in `test/`):
+  - Boots full NestJS app with Supertest
+  - Unauthenticated request → 401
+  - Authenticated request (mock session) → 200 with `{ success: true, data: { kpis: {...}, recentContracts: [...], urgentRenewals: [...] } }`
+
+**Files**:
+```
+src/modules/reference-data/
+├── application/
+│   └── queries/
+│       └── (from Task 4.1)
+├── domain/
+│   └── (from Task 4.1)
+└── infrastructure/
+    ├── dtos/
+    │   └── reference-data.response.dto.ts
+    ├── reference-data.controller.ts
+    ├── reference-data.controller.spec.ts
+    └── reference-data.module.ts
+test/
+└── reference-data.e2e-spec.ts
+```
+
+**Test count target**: 8–12 tests (controller unit + e2e), all passing
+
+---
+
+### Task 4.3: Frontend API Infrastructure — referenceDataService & useReferenceData
+
+**Goal**: Wire the 3-tier API call stack for the reference data endpoint. The `HomePage` will call `useReferenceData()` and receive a fully-typed `DashboardViewModel`.
+
+**Requirements**: Architecture playbook (3-tier API stack, React Query, backend-driven UI)
+
+**Deliverables**:
+
+- [ ] Add `API.REFERENCE_DATA = '/api/v1/reference-data'` to `src/api/endpoints.ts`
+- [ ] Add TypeScript types to `src/types/referenceData.ts`:
+  ```typescript
+  export interface RecentContractItem {
+    id: string
+    name: string
+    type: 'vendor' | 'license' | 'lease' | 'nda' | 'partnership' | 'customer'
+    riskScore: number
+    riskLevel: 'low' | 'medium' | 'high' | 'critical'
+    uploadedAt: string
+  }
+
+  export interface UrgentRenewalItem {
+    id: string
+    contractName: string
+    renewalDate: string
+    daysRemaining: number
+    urgency: 'overdue' | 'critical' | 'warning' | 'ok'
+  }
+
+  export interface DashboardKpis {
+    activeContractCount: number
+    inProgressCount: number
+    avgRiskScore: number
+    criticalFlagCount: number
+    urgentRenewalCount: number
+    nextRenewalDate: string | null
+  }
+
+  export interface DashboardViewModel {
+    kpis: DashboardKpis
+    recentContracts: RecentContractItem[]
+    urgentRenewals: UrgentRenewalItem[]
+    lastOpenedContract: RecentContractItem | null
+  }
+  ```
+- [ ] Create `src/services/referenceDataService.ts`:
+  ```typescript
+  import { httpService } from '@/api/httpService'
+  import { API } from '@/api/endpoints'
+  import { unwrap } from '@/api/unwrap'
+  import { DashboardViewModel } from '@/types/referenceData'
+
+  export const referenceDataService = {
+    getDashboard: (): Promise<DashboardViewModel> =>
+      httpService.get<DashboardViewModel>(API.REFERENCE_DATA).then(unwrap),
+  }
+  ```
+- [ ] Create `src/hooks/useReferenceData.ts`:
+  ```typescript
+  import { useQuery } from 'react-query'
+  import { referenceDataService } from '@/services/referenceDataService'
+  import { DashboardViewModel } from '@/types/referenceData'
+
+  export function useReferenceData() {
+    return useQuery<DashboardViewModel>({
+      queryKey: ['reference-data'],
+      queryFn: referenceDataService.getDashboard,
+      refetchOnWindowFocus: false,
+      staleTime: 30_000,   // 30s — mutations will invalidate manually
+    })
+  }
+  ```
+- [ ] Unit tests for `referenceDataService` (`src/services/__tests__/referenceDataService.spec.ts`):
+  - Calls `httpService.get` with `API.REFERENCE_DATA`
+  - Calls `unwrap` on the response
+  - Returns the unwrapped `DashboardViewModel`
+  - Throws when `success: false`
+- [ ] Unit tests for `useReferenceData` (`src/hooks/__tests__/useReferenceData.spec.ts`):
+  - Uses `renderHook` + mocked `referenceDataService`
+  - Returns `{ data, isLoading, isError }` correctly
+  - `queryKey` is `['reference-data']`
+  - `refetchOnWindowFocus` is false
+
+**Files**:
+```
+apps/frontend/src/
+├── api/
+│   └── endpoints.ts                          (add REFERENCE_DATA constant)
+├── types/
+│   └── referenceData.ts                      (new)
+├── services/
+│   ├── referenceDataService.ts               (new)
+│   └── __tests__/
+│       └── referenceDataService.spec.ts      (new)
+└── hooks/
+    ├── useReferenceData.ts                   (new)
+    └── __tests__/
+        └── useReferenceData.spec.ts          (new)
+```
+
+**Test count target**: 8–12 tests, all passing
+
+---
+
+### Task 4.4: Home Screen UI — Static Layout & Sections
+
+**Goal**: Build the complete `HomePage` component with all visual sections, using prop-driven data (no API calls yet). Every section matches the US-008 wireframe spec exactly.
+
+**Requirements**: US-008 (all layout, typography, spacing, color, and interaction specs)
+
+**Component structure** (follow the mandatory component-folder pattern):
+```
+src/pages/HomePage/
+├── HomePage.tsx                  # JSX only, ≤15 lines, composes sections
+├── useHomePage.ts                # All logic: data shaping, greeting, navigation handlers
+├── HomePage.module.css           # Page-level styles (background, container)
+├── HomePage.test.tsx             # Unit + accessibility tests
+├── HomePage.stories.tsx          # Storybook stories (all states)
+└── sections/                    # Sub-components for each section
+    ├── GreetingSection/
+    │   ├── GreetingSection.tsx
+    │   ├── GreetingSection.test.tsx
+    │   └── GreetingSection.module.css
+    ├── KpiCardsSection/
+    │   ├── KpiCardsSection.tsx
+    │   └── KpiCardsSection.test.tsx
+    ├── WhereToStartSection/
+    │   ├── WhereToStartSection.tsx
+    │   └── WhereToStartSection.test.tsx
+    ├── HowItWorksSection/
+    │   ├── HowItWorksSection.tsx
+    │   └── HowItWorksSection.test.tsx
+    ├── RecentContractsSection/
+    │   ├── RecentContractsSection.tsx
+    │   └── RecentContractsSection.test.tsx
+    └── UrgentRenewalsSection/
+        ├── UrgentRenewalsSection.tsx
+        └── UrgentRenewalsSection.test.tsx
+```
+
+**Deliverables**:
+
+- [ ] **`GreetingSection`**: Time-based greeting ("Good morning/afternoon/evening, {name}."), context paragraph with critical flag count (red) and urgent renewal count (orange/dark), "View all contracts" + "+ Upload contract" buttons
+- [ ] **`KpiCardsSection`**: 4-column grid of `KPICard` components — Active Contracts, Average Risk Score (color-coded), Critical Flags Open (red), Renewals <60 Days (orange/dark). All values come from props.
+- [ ] **`WhereToStartSection`**: Dark upload CTA card (left, 1.4fr) + right column with Resume card (if `lastOpenedContract` exists) + Sample card. Uses `RiskBadge` and `TypePill` in the Resume card.
+- [ ] **`HowItWorksSection`**: 4-column grid of step cards (01–04) with step number in DM Mono, label, description, and "who" line.
+- [ ] **`RecentContractsSection`**: Table with 4 rows max. Columns: name (truncated), type (`TypePill`), risk (`RiskBadge` sm), uploaded date (DM Mono). Alternating row backgrounds. Click row → `onNav('results', { contractId })`.
+- [ ] **`UrgentRenewalsSection`**: Table with 3 rows max. Columns: name, renewal date (DM Mono), days remaining (color-coded), urgency badge. Left border colored by urgency threshold. Click row → `onNav('renewals', { renewalId })`.
+- [ ] **`HomePage`**: Composes all sections inside `PageShell`. Accepts `data: DashboardViewModel` and `onNav` as props. Uses `useHomePage` hook for greeting logic and navigation handlers.
+- [ ] **Empty states**: Each section handles missing data gracefully:
+  - No contracts → KPI cards show 0, recent contracts shows "No contracts uploaded yet", resume card hidden
+  - No urgent renewals → section shows "No urgent renewals"
+- [ ] **Accessibility**: Every interactive element has ARIA labels, focus indicators, keyboard navigation. Tables use `<table>`, `<thead>`, `<tbody>`, `<th scope="col">`. Buttons have descriptive labels.
+- [ ] **Mobile-first responsive**: KPI grid collapses to 2×2 on tablet (`md:`), 1-column on mobile. "Where to start" stacks vertically on mobile. "How it works" collapses to 2×2 on tablet, 1-column on mobile.
+- [ ] **Storybook stories** (`HomePage.stories.tsx`):
+  - `Default` — full data set matching US-008 wireframe
+  - `EmptyPortfolio` — no contracts, no renewals
+  - `HighRiskPortfolio` — all contracts critical risk
+  - `NoUrgentRenewals` — renewals all >60 days
+
+**Unit tests** (`HomePage.test.tsx` + per-section tests):
+- Greeting shows correct time-of-day salutation
+- Critical flag count renders in red
+- Urgent renewal count renders in orange when >0
+- KPI cards display correct values from props
+- Recent contracts table renders up to 4 rows
+- Urgent renewals table renders up to 3 rows
+- Renewal left border is red when `daysRemaining < 30`
+- Renewal left border is orange when `daysRemaining < 60`
+- `onNav('upload')` called when clicking upload button
+- `onNav('results', { contractId })` called when clicking contract row
+- Empty state renders when `recentContracts` is empty
+- Empty state renders when `urgentRenewals` is empty
+- axe accessibility scan: 0 violations
+
+**Test count target**: 25–35 tests, all passing
+
+---
+
+### Task 4.5: Home Screen UI — Data Wiring, Routing & Integration
+
+**Goal**: Wire `useReferenceData` into `HomePage`, integrate into the app router, add loading/error states, and write integration tests.
+
+**Requirements**: US-008, architecture playbook (React Query, React Router v6, backend-driven UI)
+
+**Deliverables**:
+
+- [ ] Create `src/pages/HomePage/HomePageContainer.tsx`:
+  - Calls `useReferenceData()`
+  - Shows `<Skeleton>` (Shadcn) loading state while `isLoading`
+  - Shows error message if `isError`
+  - Renders `<HomePage data={data} onNav={handleNav} />` when data is ready
+  - `handleNav` uses React Router `useNavigate()` to map screen names to routes:
+    - `'upload'` → `/upload`
+    - `'results'` → `/contracts/:contractId`
+    - `'renewals'` → `/renewals`
+    - `'portfolio'` → `/contracts`
+- [ ] Register route in `App.tsx` (or router config):
+  - `<Route path="/" element={<ProtectedRoute><HomePageContainer /></ProtectedRoute>} />`
+  - After login callback, redirect lands on `/`
+- [ ] Integration test (`HomePage.integration.test.tsx`) using MSW:
+  - Mock `GET /api/v1/reference-data` returning sample `DashboardViewModel`
+  - Renders `HomePageContainer` inside `MemoryRouter` + `QueryClientProvider`
+  - Asserts loading skeleton shown initially
+  - Asserts KPI values appear after data loads
+  - Asserts clicking a contract row navigates to `/contracts/:id`
+  - Asserts clicking upload button navigates to `/upload`
+  - Mock API returning 401 → asserts redirect to login
+  - Mock API returning 500 → asserts error message shown
+- [ ] Update `LoginCallbackPage` to redirect to `/` after successful login (if not already doing so)
+- [ ] Smoke test: `npm run dev` → login → home screen renders with seed data
+
+**Files**:
+```
+apps/frontend/src/
+├── pages/
+│   └── HomePage/
+│       ├── HomePageContainer.tsx             (new)
+│       └── HomePageContainer.test.tsx        (new — integration test with MSW)
+└── App.tsx                                   (update: add / route)
+```
+
+**Test count target**: 8–12 integration tests, all passing
+
+---
+
+### Phase 4 Summary
+
+| Task | Layer | Deliverable | Tests |
+|------|-------|-------------|-------|
+| 4.1 | Backend domain + application | `GetDashboardViewQuery` + handler + seed data | 10–15 |
+| 4.2 | Backend infrastructure | `GET /api/v1/reference-data` controller + module + e2e | 8–12 |
+| 4.3 | Frontend API layer | `referenceDataService` + `useReferenceData` hook + types | 8–12 |
+| 4.4 | Frontend UI (static) | All `HomePage` sections, stories, accessibility | 25–35 |
+| 4.5 | Frontend integration | `HomePageContainer`, routing, MSW integration tests | 8–12 |
+
+**Estimated total new tests**: 60–85 tests  
+**Estimated effort**: 7–10 days  
+**Phase 4 completion criteria**: `npm run dev` → login → home screen shows live seed data from backend API, all tests pass, Storybook stories cover all states.
