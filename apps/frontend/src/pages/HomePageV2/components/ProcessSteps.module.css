@@ -1,0 +1,160 @@
+.section {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  font-family: 'DM Sans', sans-serif;
+  max-width: 580px;
+}
+
+.link {
+  font-size: 13px;
+  color: #2563eb;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  text-decoration: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 860px) {
+  .inner {
+    padding: 32px 16px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step {
+  position: relative;
+  background: #fafaf9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+}
+
+.connector {
+  position: absolute;
+  right: -8px;
+  top: 32px;
+  width: 16px;
+  height: 1px;
+  background: #cbd5e1;
+  z-index: 1;
+}
+
+@media (max-width: 860px) {
+  .connector {
+    display: none;
+  }
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stepNum {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: 'DM Mono', monospace;
+}
+
+.stepNumActive {
+  background: #2563eb;
+  border: 1px solid #2563eb;
+  color: #fff;
+}
+
+.stepNumIdle {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+}
+
+.stepLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.stepDesc {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.6;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 10px;
+}
+
+.stepOwner {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  font-family: 'DM Sans', sans-serif;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ownerLabel {
+  color: #94a3b8;
+  margin-right: 6px;
+}

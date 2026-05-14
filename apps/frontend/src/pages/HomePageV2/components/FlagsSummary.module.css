@@ -1,0 +1,15 @@
+.wrap {
+  display: inline-flex;
+  gap: 7px;
+}
+
+.count {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+
+.empty {
+  color: #94a3b8;
+  font-size: 12px;
+}
