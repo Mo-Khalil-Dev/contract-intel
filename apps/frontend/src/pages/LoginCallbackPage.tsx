@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { API } from '@/api/endpoints';
+import { track } from '@/analytics';
 
 export function LoginCallbackPage() {
   const location = useLocation();
@@ -14,6 +15,7 @@ export function LoginCallbackPage() {
       const state = params.get('state');
 
       if (!code || !state) {
+        track('auth_login_failed', { reason: 'missing_code_or_state' });
         setError('Missing code or state from Auth0');
         return;
       }
@@ -31,13 +33,18 @@ export function LoginCallbackPage() {
         const data = await response.json();
 
         if (!response.ok) {
+          track('auth_login_failed', { reason: data.error || 'backend_error' });
           setError(data.error || 'Authentication failed');
           return;
         }
 
+        track('auth_login_succeeded');
         const returnUrl = data.data?.returnUrl || '/';
         window.location.href = returnUrl;
       } catch (err) {
+        track('auth_login_failed', {
+          reason: err instanceof Error ? err.message : 'network_error',
+        });
         setError(err instanceof Error ? err.message : 'Authentication failed');
       }
     };

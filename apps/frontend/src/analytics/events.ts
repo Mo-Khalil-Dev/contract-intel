@@ -19,7 +19,24 @@
 export interface AnalyticsEventPayloads {
   // ── Auth lifecycle ────────────────────────────────────────────────
   auth_login_succeeded: Record<string, never>;
+  auth_login_failed: {
+    /** Short reason string — e.g. 'missing_code', 'bad_state', 'network', or a backend error code. */
+    reason: string;
+  };
   auth_logout_clicked: Record<string, never>;
+
+  // ── Navigation ────────────────────────────────────────────────────
+  /**
+   * User clicked a top-nav link that isn't 'home' (no-op), 'upload'
+   * (has its own event), or 'results' (has its own event). The remaining
+   * top-nav destinations are listed below.
+   */
+  top_nav_link_clicked: {
+    destination: 'portfolio' | 'playbook' | 'compare' | 'renewals' | 'settings';
+  };
+
+  /** User clicked the "Resume" tile on the dashboard to reopen the last contract. */
+  resume_contract_clicked: Record<string, never>;
 
   // ── Dashboard interactions ────────────────────────────────────────
   /** Fired once per dashboard mount when data has loaded. */

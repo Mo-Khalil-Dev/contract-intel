@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { authService } from '@/services/authService';
 import { User } from '@/types/auth';
+import { identify } from '@/analytics';
 
 export interface UseAuthReturn {
   user: User | undefined;
@@ -17,6 +18,9 @@ export function useAuth(): UseAuthReturn {
     queryKey: ['current-user'],
     queryFn: authService.getCurrentUser,
     retry: false,
+    onSuccess: (u: User) => {
+      identify(u);
+    },
   });
 
   const logoutMutation = useMutation(authService.logout, {

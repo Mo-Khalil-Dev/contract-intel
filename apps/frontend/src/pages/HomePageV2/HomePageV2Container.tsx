@@ -1,6 +1,17 @@
 import { useMemo } from 'react';
 import { useReferenceData } from '@/hooks/useReferenceData';
 import { HomePageV2 } from './HomePageV2';
+import { track } from '@/analytics';
+import type { AnalyticsEventPayloads } from '@/analytics';
+
+type NavDestination = AnalyticsEventPayloads['top_nav_link_clicked']['destination'];
+const NAV_DESTINATIONS: readonly NavDestination[] = [
+  'portfolio',
+  'playbook',
+  'compare',
+  'renewals',
+  'settings',
+] as const;
 
 /**
  * Fetches the DashboardViewModel via the shared useReferenceData hook
@@ -30,6 +41,14 @@ export function HomePageV2Container() {
     // log so the user can see clicks register without 404ing the SPA.
     // eslint-disable-next-line no-console
     console.info('[HomePageV2] nav →', id);
+
+    if (id === 'upload') {
+      track('dashboard_upload_cta_clicked', { source: 'top_nav' });
+    } else if (id === 'results') {
+      track('resume_contract_clicked');
+    } else if (id !== 'home' && NAV_DESTINATIONS.includes(id as NavDestination)) {
+      track('top_nav_link_clicked', { destination: id as NavDestination });
+    }
   }
 
   if (isLoading || !vm) {
