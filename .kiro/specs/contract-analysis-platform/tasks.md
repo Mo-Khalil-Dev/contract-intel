@@ -45,12 +45,15 @@
 - ✅ Task 4.5.3: Typed analytics service + starter events (analytics.ts with strong types, useHoverTracker, 8 starter events) (Commits: 8f9e19e + 2f3154b)
 - ✅ Bonus: ErrorBoundary → posthog.captureException for unhandled React errors (Commit: ff162f4)
 
-**Phase 5: Upload Screen** — 📋 **PLANNED** (0/4 tasks, UI-first like Phase 4)
+**Phase 5: Upload Screen** — ✅ **COMPLETE** (4/4 tasks + full deployment pipeline)
 
-- ⏳ Task 5.1: Upload Screen UI — Pixel-Sharp Layout with mock service (custom components, no Shadcn)
-- ⏳ Task 5.2: Upload Screen UI — Routing, Edge Cases & Accessibility Audit
-- ⏳ Task 5.3: Document Upload Backend — Domain & Application Layer
-- ⏳ Task 5.4: Document Upload Backend — Infrastructure & Integration (swap mock to real)
+- ✅ Task 5.1: Upload Screen UI — Pixel-Sharp Layout with mock service (Commit: 380ed01)
+- ✅ Task 5.2: Upload Screen UI — Routing, Edge Cases & Accessibility Audit (Commit: 9077f15)
+- ✅ Task 5.3: Document Upload Backend — Domain & Application Layer (Commit: b6e63d8)
+- ✅ Task 5.4a: Local FS end-to-end upload + frontend service swap (Commit: 2f84eec)
+- ✅ Task 5.4 bonus: E2E test against running backend (Commit: 85dc4bb)
+- ✅ Task 5.4b: Real GcsStorageDriver + setup-gcs.sh + deployment docs (Commit: 2f0ec16)
+- ✅ Task 5.4b bonus: GCS driver unit tests with mocked SDK (Commit: 69eddbe)
 
 **Specification Updates**:
 
@@ -127,8 +130,8 @@
 | Phase 3   | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 4   | Home Screen (Backend reference data + UI + a11y)         | 5 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 4.5 | Product Analytics (PostHog frontend integration)         | 3 tasks | ✅ **COMPLETE (100%)**  |
-| Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | 📋 **NEXT (0%)**        |
-| Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned             |
+| Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | ✅ **COMPLETE (100%)**  |
+| Phase 6   | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 **NEXT (0%)**        |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
 
@@ -170,20 +173,45 @@
 
 **Phase 4 UX iteration (2026-05-14)**: After completing the Shadcn-based Home Screen, the user found visual hierarchy lacking and Shadcn primitives constraining. An experimental v2 was built on `feature/home-page-custom-components` using **fully custom components** (no Shadcn) at `apps/frontend/src/pages/HomePageV2/`, served at `/v2`. User preferred v2. **Going forward, new UI work uses the v2 pattern** (plain React + CSS modules + Lucide, no Shadcn primitives).
 
-**Phase 5 status**: 📋 **NEXT — Ready to start (0/4 tasks)**
+**Phase 5 completion** (2026-05-14): 🎉 **4/4 tasks complete (100%)** + deployment pipeline ready
 
-**Scope decision (2026-05-14)**: Phase 5 uses the **UI-first approach** (same as Phase 4). Build the Upload screen with a mock `documentService` first to nail the wireframe pixel-perfect, then build the backend Document aggregate and infrastructure, then swap mock → real in a single service-layer edit.
+The full upload feature is feature-complete and verified end-to-end against real infrastructure (local FS today; one env-var flip to GCS).
 
-**Component approach**: Use v2-style custom components (plain React + CSS modules + Lucide), **not Shadcn**. Build new components inside `apps/frontend/src/pages/UploadPage/components/` following the `HomePageV2/components/` template.
+**What landed**:
 
-**What's being built**:
+- ✅ Task 5.1: Pixel-sharp `/upload` screen with mock service (Commit: 380ed01)
+- ✅ Task 5.2: Routing + edge cases + 9 axe-clean a11y tests + 10 Storybook stories (Commit: 9077f15)
+- ✅ Task 5.3: Document aggregate + 8 VOs + 3 events + CQRS handlers + 72 unit tests (Commit: b6e63d8)
+- ✅ Task 5.4a: Local FS end-to-end — Prisma model + migration + repo + `LocalStorageDriver` + `DocumentController` + frontend swap from mock to real HTTP (Commit: 2f84eec)
+- ✅ Task 5.4 bonus: 8-case e2e test that hits a real backend + writes real bytes to a tmpdir (Commit: 85dc4bb)
+- ✅ Task 5.4b: Real `GcsStorageDriver` (V4 presigned URLs) + driver factory + `scripts/setup-gcs.sh` + `docs/deployment/{gcp-setup,railway}.md` (Commit: 2f0ec16)
+- ✅ Task 5.4b bonus: 11-case `GcsStorageDriver` unit test with mocked SDK (Commit: 69eddbe)
 
-1. **Task 5.1 — UI** with mock service: drag-and-drop dropzone, file validation (PDF only, ≤50MB), consent checkbox, progress bar, success/error states
-2. **Task 5.2 — Routing, edge cases, a11y**: `/upload` route, error/loading/empty/validation states, axe audit, Storybook
-3. **Task 5.3 — Backend domain + application**: Document aggregate, value objects, CQRS commands (InitiateUpload, CompleteUpload, FailUpload), GetUploadStatus query
-4. **Task 5.4 — Backend infrastructure + integration**: PrismaDocumentRepository, StorageService (GCS prod / local dev), DocumentController, swap mock → real service, E2E test
+**Verified end-to-end** (real Auth0 session, real browser, real Prisma write, real disk write — example documentId `b47a490b-fb31-4031-b740-82f8d568dd18`):
 
-Mock-to-real swap at Task 5.4 should touch only `documentService.ts`.
+1. POST `/api/v1/documents/upload/initiate` → backend mints `documentId`, persists Document row in `uploading` state
+2. PUT `/api/v1/documents/upload/raw/<key>` → `LocalStorageDriver.writeStream` pipes 151,330 bytes to `apps/backend/uploads/<key>.pdf`
+3. POST `/api/v1/documents/upload/complete` → `markComplete()` transitions to `complete`, sets `completedAt`
+4. Browser navigates `/processing/<documentId>` showing the success stub
+
+**Switching to GCS**: change one env var (`STORAGE_DRIVER=gcs` + paste credentials from `setup-gcs.sh` output) and restart the backend. **No frontend, controller, handler, or domain code changes** — the `IStorageService` port absorbs the difference.
+
+**Test totals on `feature/upload-screen`**:
+
+- Backend: 51 suites, **498 unit tests** + **8 e2e tests** — all green
+- Frontend: lint exit 0 across 34 Storybook stories + a11y tests + integration tests
+
+**Deferred to later phases** (intentional Phase 5 scope discipline):
+
+- Bulk upload (1 file → N files)
+- DOCX / PPTX (extraction pipeline isn't ready yet)
+- `processing` state in the state machine (re-added when OCR ships)
+- Real `Org` aggregate (currently OrgId is derived 1:1 from UserId)
+- Idempotency on `InitiateUpload` (orphan-doc cleanup deferred)
+- Hard delete (soft delete via status flag for now)
+- GCS upload-complete webhook (rely on frontend `/complete` call)
+- Rate limiting on upload endpoints
+- Content-hash dedup
 
 ---
 
