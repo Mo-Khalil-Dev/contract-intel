@@ -2,7 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import App from './App.tsx';
+import { initPostHog } from './analytics/posthog';
 import './index.css';
+
+initPostHog();
 
 const queryClient = new QueryClient();
 
