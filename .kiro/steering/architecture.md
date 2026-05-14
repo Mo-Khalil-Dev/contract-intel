@@ -251,6 +251,192 @@ import { UploadIcon } from '@/components/core/icons';
 
 ---
 
+## Frontend Error Handling (MANDATORY)
+
+Every error that crosses the API boundary is normalised into a single structured type. Components and hooks never deal with raw `AxiosError` or plain `Error` objects.
+
+### Error Layer Structure
+
+```
+src/errors/
+├── AppError.ts          # Structured error class (mirrors RFC 7807)
+├── errorMessages.ts     # Code → user-friendly message map
+├── parseApiError.ts     # Normalises any thrown value → AppError
+└── index.ts             # Barrel export
+
+src/services/
+└── feedbackService.ts   # Centralised toast/notification API (wraps sonner)
+
+src/components/core/
+└── ErrorBoundary/
+    ├── ErrorBoundary.tsx      # React class component — catches render errors
+    ├── useErrorBoundary.ts    # Derives display copy from error type
+    ├── ErrorBoundary.test.tsx
+    └── index.ts
+```
+
+### AppError
+
+`AppError` is the single error type used everywhere in the frontend. It mirrors the backend RFC 7807 Problem Details envelope.
+
+```typescript
+// src/errors/AppError.ts
+export class AppError extends Error {
+  readonly code: string;        // Machine-readable code (e.g. "CONTRACT_NOT_FOUND")
+  readonly status: number;      // HTTP status (0 = network/timeout)
+  readonly detail: string;      // User-safe message — safe to display directly
+  readonly correlationId?: string;
+  readonly fieldErrors?: Record<string, string[]>;
+
+  get isNetworkError(): boolean  // status === 0
+  get isClientError(): boolean   // 4xx
+  get isServerError(): boolean   // 5xx
+}
+```
+
+**Rules:**
+- `AppError` is the ONLY error type that leaves the API layer
+- Never catch a raw `AxiosError` in a hook or component — it will already be an `AppError` by the time it reaches you
+- `detail` is always safe to show to the user — never show `message` (which may contain internal info)
+
+### parseApiError
+
+Single normalisation point. Called inside `httpService` — never call it directly in hooks or components.
+
+```typescript
+// src/errors/parseApiError.ts
+export function parseApiError(error: unknown): AppError {
+  // Handles: AxiosError (with/without response), AppError, plain Error, unknown
+  // Maps HTTP status codes to error codes automatically
+  // Extracts correlationId from X-Request-Id header or response body
+  // Builds fieldErrors from backend validation error arrays
+}
+```
+
+### feedbackService
+
+All toasts go through `feedbackService`. Never call `toast` from `sonner` directly in a component or hook.
+
+```typescript
+// src/services/feedbackService.ts
+feedbackService.success('Contract approved')
+feedbackService.error(err)                          // AppError → shows err.detail automatically
+feedbackService.error('Failed to upload contract')  // plain string
+feedbackService.warning('Session expires in 5 min')
+feedbackService.info('Analysis running in background')
+
+// For async operations with loading state:
+const id = feedbackService.loading('Uploading...')
+feedbackService.resolveLoading(id, 'Upload complete')
+feedbackService.rejectLoading(id, err)
+```
+
+**Rules:**
+- ❌ Never call `toast.success(...)` / `toast.error(...)` directly — always use `feedbackService`
+- ✅ Pass the full `AppError` to `feedbackService.error()` — it extracts `detail` and `correlationId` automatically
+- ✅ Use `loading` / `resolveLoading` / `rejectLoading` for multi-step async operations
+
+### ErrorBoundary
+
+Wraps the entire app (and optionally individual feature sections) to catch unhandled render errors.
+
+```typescript
+// App.tsx — top-level wrap
+<ThemeProvider attribute="class" defaultTheme="light">
+  <ErrorBoundary>
+    <BrowserRouter>...</BrowserRouter>
+    <Toaster position="bottom-right" richColors closeButton />
+  </ErrorBoundary>
+</ThemeProvider>
+
+// Feature-level — custom fallback
+<ErrorBoundary fallback={(err, reset) => <ContractSectionError onRetry={reset} />}>
+  <ContractDetailSection />
+</ErrorBoundary>
+```
+
+**Rules:**
+- The top-level `<ErrorBoundary>` in `App.tsx` is mandatory — never remove it
+- `<Toaster>` must be inside `<ErrorBoundary>` but outside `<BrowserRouter>` so it survives route changes
+- `componentDidCatch` is the integration point for Sentry/LogRocket — add the SDK call there when APM is wired up
+
+### Error Flow: End to End
+
+```
+User action
+  → Hook calls service method
+  → Service calls httpService.get/post/...
+  → httpService catches AxiosError → parseApiError() → throws AppError
+  → Service re-throws AppError (or wraps in feedbackService.error)
+  → Hook's onError / catch block receives AppError
+  → feedbackService.error(err) → sonner toast shows err.detail
+  → If render throws → ErrorBoundary catches → shows recovery UI
+```
+
+### Error Handling in Hooks
+
+```typescript
+// ✅ DO: React Query mutation with feedbackService
+const approveMutation = useMutation({
+  mutationFn: () => contractService.approve(id),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['reference-data'] });
+    feedbackService.success('Contract approved');
+  },
+  onError: (err) => feedbackService.error(err),  // AppError passed directly
+});
+
+// ✅ DO: Manual async with loading toast
+const handleUpload = async (file: File) => {
+  const toastId = feedbackService.loading('Uploading contract...');
+  try {
+    await contractService.upload(file);
+    feedbackService.resolveLoading(toastId, 'Upload complete');
+  } catch (err) {
+    feedbackService.rejectLoading(toastId, err);
+  }
+};
+
+// ❌ DON'T: Raw error handling in a hook
+onError: (err: any) => toast.error(err.message)  // Never do this
+```
+
+### Error Messages Map
+
+All user-facing error strings live in `src/errors/errorMessages.ts`. Never hardcode error strings in components or hooks.
+
+```typescript
+// src/errors/errorMessages.ts
+export const ERROR_MESSAGES: Record<string, string> = {
+  NETWORK_ERROR:              'Unable to reach the server. Please check your connection.',
+  UNAUTHORIZED:               'Your session has expired. Please sign in again.',
+  FORBIDDEN:                  "You don't have permission to perform this action.",
+  NOT_FOUND:                  "The resource you're looking for doesn't exist.",
+  CONTRACT_NOT_FOUND:         'Contract not found.',
+  CONTRACT_ALREADY_APPROVED:  'This contract has already been approved.',
+  CONTRACT_ANALYSIS_FAILED:   'Contract analysis failed. Please try uploading again.',
+  DOCUMENT_TOO_LARGE:         'The file is too large. Maximum size is 50 MB.',
+  UNSUPPORTED_FILE_TYPE:      'Only PDF and DOCX files are supported.',
+  SERVER_ERROR:               'Something went wrong on our end. Please try again later.',
+  // ...
+};
+```
+
+To add a new error: add the code to `errorMessages.ts` and ensure the backend returns that code in the `error.code` field of the Problem Details body.
+
+### Checklist
+
+- [ ] `AppError` is the only error type used in hooks and components
+- [ ] `parseApiError` is called only inside `httpService` — never in hooks/services
+- [ ] All toasts go through `feedbackService` — no direct `toast.*` calls
+- [ ] `<ErrorBoundary>` wraps `App` root
+- [ ] `<Toaster>` is mounted once in `App.tsx`
+- [ ] `componentDidCatch` sends to Sentry/LogRocket (when APM is wired)
+- [ ] New error codes added to `errorMessages.ts` before use
+- [ ] `feedbackService.error(err)` receives the full `AppError`, not `err.message`
+
+---
+
 ## Authentication (Auth0)
 
 ### Flow
@@ -1577,6 +1763,10 @@ npm run test:all
 6. Accessibility built-in (focus, touch targets, ARIA, keyboard, contrast)
 7. All SVG icons in `src/components/core/icons.tsx`
 8. Backend-driven UI (read from response, never calculate)
+9. `AppError` is the ONLY error type used in hooks and components — never raw `AxiosError` or `Error`
+10. All toasts go through `feedbackService` — never call `toast.*` directly
+11. `parseApiError` is called only inside `httpService` — never in hooks or services
+12. `<ErrorBoundary>` wraps the app root; `<Toaster>` mounted once in `App.tsx`
 
 ### Testing
 
