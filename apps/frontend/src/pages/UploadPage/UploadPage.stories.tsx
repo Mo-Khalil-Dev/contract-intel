@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { UploadPage } from './UploadPage';
 
 // Mock a File without producing real bytes — Storybook just renders the

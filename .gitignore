@@ -48,3 +48,6 @@ temp/
 # Local SQLite databases (Prisma dev)
 *.db
 *.db-journal
+
+*storybook.log
+storybook-static
