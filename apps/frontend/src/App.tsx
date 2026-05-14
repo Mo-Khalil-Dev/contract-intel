@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/features/ProtectedRoute/ProtectedRoute';
 import { LoginCallbackPage } from '@/pages/LoginCallbackPage';
 import { HomePageContainer } from '@/pages/HomePage/HomePageContainer';
+import { HomePageV2Container } from '@/pages/HomePageV2';
 
 function App() {
   return (
@@ -13,6 +14,16 @@ function App() {
           element={
             <ProtectedRoute>
               <HomePageContainer />
+            </ProtectedRoute>
+          }
+        />
+        {/* Experimental dashboard built with fully-custom components.
+            Compare against `/` to evaluate the no-Shadcn approach. */}
+        <Route
+          path="/v2"
+          element={
+            <ProtectedRoute>
+              <HomePageV2Container />
             </ProtectedRoute>
           }
         />

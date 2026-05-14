@@ -1,0 +1,30 @@
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: 'DM Mono', monospace;
+  line-height: 1.1;
+}
+
+.sub {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  font-family: 'DM Sans', sans-serif;
+}

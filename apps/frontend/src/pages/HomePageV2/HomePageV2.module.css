@@ -1,0 +1,91 @@
+.root {
+  flex: 1;
+  background: #fafaf9;
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.body {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 36px 32px 24px;
+}
+
+.greetingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.h1 {
+  margin: 0 0 6px;
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.lede {
+  margin: 0;
+  font-size: 15px;
+  color: #64748b;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.callout {
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.whereToStart {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.sideStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dataRow {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+@media (max-width: 860px) {
+  .body {
+    padding: 28px 16px 16px;
+  }
+  .h1 {
+    font-size: 26px;
+  }
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .whereToStart {
+    grid-template-columns: 1fr;
+  }
+  .dataRow {
+    grid-template-columns: 1fr;
+  }
+}

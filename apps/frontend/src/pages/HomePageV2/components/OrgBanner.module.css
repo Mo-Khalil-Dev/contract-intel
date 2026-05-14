@@ -1,0 +1,52 @@
+.banner {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: #64748b;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.orgGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orgName {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dot {
+  color: #94a3b8;
+}
+
+.status {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusPulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+@media (max-width: 860px) {
+  .inner {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+}
