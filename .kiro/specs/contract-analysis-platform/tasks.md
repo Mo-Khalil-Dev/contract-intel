@@ -22,12 +22,12 @@
 - ✅ Task 2.4: Layout Components (Commit: [hash])
 - ✅ Task 2.5: Centralised Icons (Commit: [hash])
 
-**Phase 3: Authentication** — 0/4 tasks completed, ✅ specification complete
+**Phase 3: Authentication** — 4/4 tasks completed ✅
 
-- 📋 Task 3.1: Authentication Domain Model (Commits: 01e1d35, 97dbd90, d0c5dfd)
-- 📋 Task 3.2: Authentication Application Layer
-- 📋 Task 3.3: Authentication Infrastructure Layer
-- 📋 Task 3.4: Authentication UI
+- ✅ Task 3.1: Authentication Domain Model (Commits: 01e1d35, 97dbd90, d0c5dfd)
+- ✅ Task 3.2: Authentication Application Layer (Commit: 01a028b)
+- ✅ Task 3.3: Authentication Infrastructure Layer (Commit: 2f26822)
+- ✅ Task 3.4: Authentication UI (Commit: 6927e8d)
 
 **Specification Updates**:
 - Commit 01e1d35: Separate access/refresh token storage
@@ -53,7 +53,7 @@
 | Phase   | Theme                                                    | Tasks   | Status                    |
 | ------- | -------------------------------------------------------- | ------- | ------------------------- |
 | Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ Complete               |
-| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ Spec complete, ready   |
+| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ Complete               |
 | Phase 4 | Home Screen (Reference Data API + Dashboard UI)          | 3 tasks | 📋 Planned                |
 | Phase 5 | Upload Screen (Document Ingestion domain + UI)           | 4 tasks | 📋 Planned                |
 | Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned                |
@@ -70,14 +70,22 @@
 - ✅ Task 2.4: Layout Components
 - ✅ Task 2.5: Centralised Icons
 
-**Phase 3 progress**: **3/4 tasks complete** (backend done; frontend UI pending)
+**Phase 3 progress**: 🎉 **4/4 tasks complete**
 
 - ✅ Task 3.1: Authentication Domain Model (Commit: 32e2067)
 - ✅ Task 3.2: Authentication Application Layer (Commit: 01a028b)
 - ✅ Task 3.3: Authentication Infrastructure Layer (Commit: 2f26822)
-- ⏳ Task 3.4: Authentication UI
+- ✅ Task 3.4: Authentication UI (Commit: 6927e8d)
 
 **Phase 3 architectural decision (2026-05-13)**: Auth0 redirects to a **frontend** callback page (`http://localhost:5173/auth/callback`) which then POSTs `{ code, state }` to the backend. Backend mints/verifies the OAuth state (HMAC-signed, carries CSRF token + returnUrl) and owns the session cookie. End-to-end smoke-tested against the real Auth0 dev tenant — login → exchange → cookie → /me → logout → 401 all verified.
+
+**Phase 3 UI implementation (2026-05-14)**: Frontend auth layer follows 3-tier API architecture:
+- **Layer 1 (UI)**: `useAuth` React Query hook — returns `{ user, isLoading, isAuthenticated, logout }`
+- **Layer 2 (Service)**: `authService` — `getCurrentUser()`, `logout()` methods (no HTTP calls)
+- **Layer 3 (HTTP)**: `httpService` + axios with 401 interceptor → auto-redirects to login
+- **Components**: `ProtectedRoute` (loading state + auto-redirect), `LogoutButton` (44px touch target, ARIA labels), `LoginCallbackPage` (spinner during callback)
+- **Session cookie**: Renamed from `cisid` to `ContractIntel`, HMAC-signed, HttpOnly, SameSite=Strict
+- **Tests**: httpService, authService, and component unit tests with full coverage
 
 ---
 
