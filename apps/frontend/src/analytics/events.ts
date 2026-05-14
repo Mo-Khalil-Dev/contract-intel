@@ -80,6 +80,31 @@ export interface AnalyticsEventPayloads {
     urgency: 'critical' | 'high' | 'medium';
     days_remaining: number;
   };
+
+  // ── Upload lifecycle ──────────────────────────────────────────────
+  /** User clicked Analyze on the upload screen (file picked, consent checked). */
+  upload_submitted: {
+    file_size_bytes: number;
+  };
+
+  /** Backend issued a documentId and storage URL — upload now in flight. */
+  upload_started: {
+    document_id: string;
+  };
+
+  /** File fully uploaded to storage + backend marked status=complete. */
+  upload_completed: {
+    document_id: string;
+    duration_ms: number;
+  };
+
+  /** Upload failed at any stage. */
+  upload_failed: {
+    reason: 'file_too_large' | 'invalid_type' | 'network' | 'backend' | 'unknown';
+  };
+
+  /** User clicked Cancel on the upload screen (before or during upload). */
+  upload_cancelled: Record<string, never>;
 }
 
 export type AnalyticsEventName = keyof AnalyticsEventPayloads;

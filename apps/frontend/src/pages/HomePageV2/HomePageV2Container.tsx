@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useReferenceData } from '@/hooks/useReferenceData';
 import { HomePageV2 } from './HomePageV2';
 import { track } from '@/analytics';
@@ -20,6 +21,7 @@ const NAV_DESTINATIONS: readonly NavDestination[] = [
  */
 export function HomePageV2Container() {
   const { data: vm, isLoading, error } = useReferenceData();
+  const navigate = useNavigate();
 
   const greetingName = useMemo(() => {
     const raw = vm?.user.displayName?.trim() || vm?.user.email || 'there';
@@ -37,18 +39,29 @@ export function HomePageV2Container() {
   }, [vm]);
 
   function handleNav(id: string) {
+    if (id === 'upload') {
+      track('dashboard_upload_cta_clicked', { source: 'top_nav' });
+      navigate('/upload');
+      return;
+    }
+    if (id === 'home') {
+      navigate('/v2');
+      return;
+    }
+    if (id === 'results') {
+      track('resume_contract_clicked');
+      // Real /results screen lands in a later phase.
+      // eslint-disable-next-line no-console
+      console.info('[HomePageV2] nav → results (no route yet)');
+      return;
+    }
+    if (NAV_DESTINATIONS.includes(id as NavDestination)) {
+      track('top_nav_link_clicked', { destination: id as NavDestination });
+    }
     // Sibling routes (portfolio / renewals / etc.) don't exist yet —
     // log so the user can see clicks register without 404ing the SPA.
     // eslint-disable-next-line no-console
-    console.info('[HomePageV2] nav →', id);
-
-    if (id === 'upload') {
-      track('dashboard_upload_cta_clicked', { source: 'top_nav' });
-    } else if (id === 'results') {
-      track('resume_contract_clicked');
-    } else if (id !== 'home' && NAV_DESTINATIONS.includes(id as NavDestination)) {
-      track('top_nav_link_clicked', { destination: id as NavDestination });
-    }
+    console.info('[HomePageV2] nav →', id, '(no route yet)');
   }
 
   if (isLoading || !vm) {

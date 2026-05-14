@@ -6,6 +6,8 @@ import { ProtectedRoute } from '@/components/features/ProtectedRoute/ProtectedRo
 import { LoginCallbackPage } from '@/pages/LoginCallbackPage';
 import { HomePageContainer } from '@/pages/HomePage/HomePageContainer';
 import { HomePageV2Container } from '@/pages/HomePageV2';
+import { UploadPageContainer } from '@/pages/UploadPage';
+import { ProcessingPage } from '@/pages/ProcessingPage/ProcessingPage';
 
 function App() {
   return (
@@ -29,6 +31,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <HomePageV2Container />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/upload"
+              element={
+                <ProtectedRoute>
+                  <UploadPageContainer />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/processing/:documentId"
+              element={
+                <ProtectedRoute>
+                  <ProcessingPage />
                 </ProtectedRoute>
               }
             />
