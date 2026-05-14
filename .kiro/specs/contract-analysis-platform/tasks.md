@@ -2197,9 +2197,10 @@ apps/backend/src/modules/documents/
 - [ ] `PrismaDocumentRepository` implementing `IDocumentRepository`
 - [ ] `Document` Prisma model + migration
 - [ ] `StorageService` implementations:
-  - **`LocalStorageDriver`** for dev — fully working, writes to `apps/backend/uploads/`, serves PUT via a controller route
-  - **`GcsStorageDriver`** stub — interface-compliant skeleton that throws `NotImplementedError`. Decision (2026-05-14): defer real GCS wiring until actual deployment; Railway / Cloud also blocked on the stub for now
-  - Driver chosen by `AppConfigService` from `STORAGE_DRIVER` env var (`local` | `gcs`)
+  - **`LocalStorageDriver`** — fully working, writes to `apps/backend/uploads/`, serves PUT via a controller route
+  - **`GcsStorageDriver`** — fully working (decision updated 2026-05-14: full deployment, not stub). Mints V4 presigned PUT URLs via `@google-cloud/storage`. Browser uploads directly to GCS; bytes never touch the backend.
+  - Both drivers registered as providers; a factory in `DocumentsModule` reads `STORAGE_DRIVER` env var (`local` | `gcs`) and binds one to the `IStorageService` port at boot.
+  - Local-mode boot skips `GcsStorageDriver.onModuleInit` so missing GCS env vars are not a startup blocker in dev.
 - [ ] `DocumentController` with endpoints:
   - `POST /api/v1/documents/upload/initiate` (auth-guarded) → returns presigned URL + documentId
   - `POST /api/v1/documents/upload/complete` (auth-guarded) → confirms upload

@@ -87,6 +87,19 @@ export class AppConfigService {
     return this.configService.get('LOCAL_STORAGE_PATH', { infer: true });
   }
 
+  // GCS — only present when STORAGE_DRIVER=gcs.
+  get gcsProjectId(): string | undefined {
+    return this.configService.get('GCS_PROJECT_ID', { infer: true });
+  }
+
+  get gcsBucketName(): string | undefined {
+    return this.configService.get('GCS_BUCKET_NAME', { infer: true });
+  }
+
+  get gcsServiceAccountKey(): string | undefined {
+    return this.configService.get('GCS_SERVICE_ACCOUNT_KEY', { infer: true });
+  }
+
   // OCR
   get ocrDriver(): OcrDriver {
     return this.configService.get('OCR_DRIVER', { infer: true });

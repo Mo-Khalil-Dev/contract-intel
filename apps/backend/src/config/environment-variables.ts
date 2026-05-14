@@ -99,6 +99,26 @@ export class EnvironmentVariables {
   @IsString()
   LOCAL_STORAGE_PATH: string = './uploads';
 
+  // GCS — only required when STORAGE_DRIVER=gcs. Validation that they're
+  // present is enforced at boot time by AppConfigService (see warnGcsIfNeeded).
+  @IsString()
+  @IsOptional()
+  GCS_PROJECT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  GCS_BUCKET_NAME?: string;
+
+  /**
+   * Either a base64-encoded service account JSON (preferred for env-var
+   * deployment to Railway/Cloud) or a filesystem path to the JSON key.
+   * If unset, the GCS SDK falls back to Application Default Credentials
+   * (gcloud auth on dev machines).
+   */
+  @IsString()
+  @IsOptional()
+  GCS_SERVICE_ACCOUNT_KEY?: string;
+
   // OCR
   @IsEnum(OcrDriver)
   OCR_DRIVER: OcrDriver = OcrDriver.Mock;
