@@ -2196,10 +2196,10 @@ apps/backend/src/modules/documents/
 
 - [ ] `PrismaDocumentRepository` implementing `IDocumentRepository`
 - [ ] `Document` Prisma model + migration
-- [ ] `StorageService` real implementation:
-  - Local filesystem driver for dev (writes to `apps/backend/uploads/`)
-  - GCS driver for prod (presigned URLs)
-  - Driver chosen by `AppConfigService` based on env
+- [ ] `StorageService` implementations:
+  - **`LocalStorageDriver`** for dev — fully working, writes to `apps/backend/uploads/`, serves PUT via a controller route
+  - **`GcsStorageDriver`** stub — interface-compliant skeleton that throws `NotImplementedError`. Decision (2026-05-14): defer real GCS wiring until actual deployment; Railway / Cloud also blocked on the stub for now
+  - Driver chosen by `AppConfigService` from `STORAGE_DRIVER` env var (`local` | `gcs`)
 - [ ] `DocumentController` with endpoints:
   - `POST /api/v1/documents/upload/initiate` (auth-guarded) → returns presigned URL + documentId
   - `POST /api/v1/documents/upload/complete` (auth-guarded) → confirms upload
