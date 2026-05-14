@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { AppConfigService } from '../../../config/app-config.service';
 
-export const SESSION_COOKIE_NAME = 'cisid';
+export const SESSION_COOKIE_NAME = 'ContractIntel';
 
 interface CookieAttrs {
   httpOnly: true;
