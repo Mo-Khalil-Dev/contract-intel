@@ -38,7 +38,13 @@
 - ✅ Task 4.5: Home Screen UI — Routing, Edge Cases & Accessibility Audit (Commit: a7f05ea)
 - 🧪 Experimental: HomePageV2 with fully custom components (no Shadcn) on branch `feature/home-page-custom-components` — user preferred; v2-style is template for future UI work
 
-**Phase 5: Upload Screen** — 📋 **NEXT** (0/4 tasks, UI-first like Phase 4)
+**Phase 4.5: Product Analytics (PostHog)** — 🔧 **IN PROGRESS** (0/3 tasks, cross-cutting frontend concern)
+
+- ⏳ Task 4.5.1: PostHog SDK install + initialization (env vars, EU host, provider wiring)
+- ⏳ Task 4.5.2: User identification lifecycle (identify on login, reset on logout, privacy defaults)
+- ⏳ Task 4.5.3: Typed analytics service + starter events (analytics.ts with strong types, first 3–5 events)
+
+**Phase 5: Upload Screen** — 📋 **PLANNED** (0/4 tasks, UI-first like Phase 4)
 
 - ⏳ Task 5.1: Upload Screen UI — Pixel-Sharp Layout with mock service (custom components, no Shadcn)
 - ⏳ Task 5.2: Upload Screen UI — Routing, Edge Cases & Accessibility Audit
@@ -114,12 +120,13 @@
 
 ## Phase Plan (Post-Phase 1)
 
-| Phase   | Theme                                                    | Tasks   | Status                 |
-| ------- | -------------------------------------------------------- | ------- | ---------------------- |
-| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ **COMPLETE (100%)** |
-| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ **COMPLETE (100%)** |
-| Phase 4 | Home Screen (Backend reference data + UI + a11y)         | 5 tasks | ✅ **COMPLETE (100%)** |
-| Phase 5 | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | 📋 **NEXT (0%)**       |
+| Phase     | Theme                                                    | Tasks   | Status                  |
+| --------- | -------------------------------------------------------- | ------- | ----------------------- |
+| Phase 2   | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ **COMPLETE (100%)**  |
+| Phase 3   | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ **COMPLETE (100%)**  |
+| Phase 4   | Home Screen (Backend reference data + UI + a11y)         | 5 tasks | ✅ **COMPLETE (100%)**  |
+| Phase 4.5 | Product Analytics (PostHog frontend integration)         | 3 tasks | 🔧 **IN PROGRESS (0%)** |
+| Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | 📋 Planned              |
 | Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned             |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
@@ -1715,6 +1722,157 @@ frontend/src/
 - [ ] Integration test: full API flow
 
 **Requirements**: US-008 (all acceptance criteria), wireframe pixel-perfect match
+
+---
+
+## Phase 4.5: Product Analytics (PostHog)
+
+**Goal**: Wire PostHog into the frontend so we can measure feature adoption, user journeys, and drop-off points starting now (rather than retrofitting later when sample size matters).
+
+**Why now, not later**: Analytics is cheapest to instrument as features are built. Adding it before Phase 5 (Upload) means upload events get tracked from day one rather than backfilled.
+
+**Decisions (2026-05-14)**:
+
+- **Region**: PostHog EU Cloud (`https://eu.i.posthog.com`) — UK/EU data residency, matches the Auth0 `.uk` tenant.
+- **SDK**: `posthog-js` vanilla SDK + PostHog's React provider wrapper (no third-party React libs).
+- **Config**: Public Project API Key (`phc_…`) only — safe to ship to browser. Comes from `VITE_POSTHOG_KEY` in `apps/frontend/.env.local` (gitignored).
+- **Identification**: Auto-identify on login using Auth0 `userId` (stable, opaque). `email` attached as a property. `posthog.reset()` on logout.
+- **Privacy defaults**: Respect Do Not Track. No PII inside custom event payloads (only ids + non-sensitive metadata). Auto-capture stays ON for pageviews/clicks/forms — PostHog's defaults are reasonable for an internal tool at this stage.
+- **No Shadcn**: No UI components needed for this phase; pure plumbing.
+
+---
+
+### Task 4.5.1: PostHog SDK Install + Initialization
+
+**Goal**: Get PostHog loaded in the app with the correct EU host and project key, no errors in console, no events fired yet.
+
+**Deliverables**:
+
+- [ ] Install `posthog-js` (single dep, vanilla SDK is enough — we'll write a thin provider ourselves)
+- [ ] Add `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` to `apps/frontend/.env.example` (committed) with placeholder values + a comment explaining each
+- [ ] Add the real key + host to `apps/frontend/.env.local` (gitignored)
+- [ ] Create `apps/frontend/src/analytics/posthog.ts`:
+  - Exports `initPostHog()` — idempotent init wired to env vars
+  - No-ops if `VITE_POSTHOG_KEY` is missing (so dev can run without it)
+  - Calls `posthog.init(...)` with `api_host: VITE_POSTHOG_HOST`, `capture_pageview: true`, `respect_dnt: true`
+- [ ] Call `initPostHog()` in `main.tsx` before React mounts
+- [ ] Verify in browser: PostHog network request to `https://eu.i.posthog.com/e/` succeeds on page load (pageview event)
+- [ ] Verify in PostHog dashboard: live events show up under "Activity"
+
+**Files**:
+
+```
+apps/frontend/
+├── .env.example                       # Add VITE_POSTHOG_KEY + VITE_POSTHOG_HOST placeholders
+├── .env.local                         # (gitignored) real values
+└── src/
+    ├── main.tsx                       # Add initPostHog() call
+    └── analytics/
+        └── posthog.ts                 # init function
+```
+
+**Definition of Done**:
+
+- [ ] Page loads without PostHog-related console errors
+- [ ] A pageview event appears in the PostHog EU dashboard for `/` within ~30s
+- [ ] App still runs cleanly when `VITE_POSTHOG_KEY` is unset (no init, no errors)
+
+---
+
+### Task 4.5.2: User Identification Lifecycle
+
+**Goal**: Tie pageviews and events to a real user once they log in, and disassociate cleanly on logout. No PII leaks into event names.
+
+**Deliverables**:
+
+- [ ] Create `useAnalyticsIdentity` hook (or inline into `useAuth`) that:
+  - Calls `posthog.identify(user.userId, { email: user.email })` when `useAuth()` user transitions from null → defined
+  - Calls `posthog.reset()` on logout
+  - Idempotent — doesn't re-identify on every render
+- [ ] Wire it in `App.tsx` (or wherever `useAuth` is consumed at the top of the tree)
+- [ ] Update `HomePageContainer.handleSignOut` to call `posthog.reset()` before redirecting
+- [ ] Privacy review:
+  - Confirm `respect_dnt: true` works (test by enabling DNT in browser)
+  - Confirm only `userId` + `email` are attached (no name, no roles unless added intentionally)
+  - Auto-capture remains ON but verify it isn't capturing input field values (`sanitize_input: true` if needed)
+
+**Files**:
+
+```
+apps/frontend/src/
+├── analytics/
+│   ├── posthog.ts
+│   └── useAnalyticsIdentity.ts        # new — identify/reset lifecycle
+├── App.tsx                            # wire hook
+└── pages/HomePage/HomePageContainer.tsx   # posthog.reset() in handleSignOut
+```
+
+**Definition of Done**:
+
+- [ ] After login, events in PostHog show the logged-in user's `distinct_id = userId`
+- [ ] After logout, subsequent events have a fresh anonymous `distinct_id`
+- [ ] With DNT enabled in browser, no events fire (verify in network tab)
+
+---
+
+### Task 4.5.3: Typed Analytics Service + Starter Events
+
+**Goal**: Don't sprinkle `posthog.capture('foo', { ... })` calls across the codebase. Channel all custom tracking through one typed module so events are discoverable, types are enforced, and renaming an event is a single-file change.
+
+**Deliverables**:
+
+- [ ] Create `apps/frontend/src/analytics/analytics.ts`:
+  - Defines a union type of all event names (`AnalyticsEventName`)
+  - Defines a typed payload map (`AnalyticsEventPayloads`) — strong types per event
+  - Exports `track<E extends AnalyticsEventName>(event: E, payload: AnalyticsEventPayloads[E])` — typed wrapper around `posthog.capture`
+  - No-ops if PostHog isn't initialized
+- [ ] Implement starter event set:
+  - `auth_login_success` → `{}`
+  - `auth_logout` → `{}`
+  - `dashboard_viewed` → `{ kpis_critical_flag_count: number; kpis_urgent_renewal_count: number }`
+  - `dashboard_kpi_clicked` → `{ kpi: 'active' | 'risk' | 'flags' | 'renewals' }` (groundwork — not all wired yet)
+  - `dashboard_upload_cta_clicked` → `{ source: 'greeting' | 'where_to_start' }`
+- [ ] Wire the first three:
+  - `LoginCallbackPage` after successful exchange → `track('auth_login_success')`
+  - `HomePageContainer.handleSignOut` → `track('auth_logout')` before reset
+  - `HomePageV2Container` / `HomePageContainer` on mount with data → `track('dashboard_viewed', { ... })`
+- [ ] Add unit tests for `analytics.ts`:
+  - `track` calls `posthog.capture` with the right args
+  - `track` is a no-op when PostHog isn't initialized
+- [ ] Update `ACCESSIBILITY_AUDIT.md` or add `ANALYTICS.md` documenting the event taxonomy
+
+**Files**:
+
+```
+apps/frontend/src/analytics/
+├── posthog.ts
+├── useAnalyticsIdentity.ts
+├── analytics.ts                       # typed event API
+├── analytics.test.ts                  # unit tests
+└── events.ts                          # (optional split) event names + payload types
+
+apps/frontend/ANALYTICS.md             # event taxonomy reference
+```
+
+**Definition of Done**:
+
+- [ ] All 5 starter events have typed signatures
+- [ ] 3 events fire in real flows and appear in PostHog
+- [ ] Tests pass
+- [ ] `track('some_event', { wrong: 'payload' })` is a TypeScript error
+- [ ] `ANALYTICS.md` lists every event, who fires it, and the payload schema
+
+---
+
+**Phase 4.5 Exit Criteria**:
+
+- [ ] Live PostHog dashboard shows pageviews + custom events with correctly-identified users
+- [ ] Phase 5 (Upload Screen) can fire `upload_started` / `upload_completed` / `upload_failed` events by just adding them to `analytics.ts` and calling `track(...)` — no SDK wiring needed
+- [ ] Privacy: DNT respected, no PII in custom event names or top-level payload keys
+
+**Dependencies**: Phase 3 (auth wired and live, since we identify on login). ✅
+
+**Effort estimate**: 0.5–1 day (mostly waiting on PostHog account creation and dashboard verification).
 
 ---
 
