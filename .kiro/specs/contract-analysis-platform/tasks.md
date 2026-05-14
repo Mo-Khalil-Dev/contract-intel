@@ -54,6 +54,7 @@
 - ✅ Task 5.4 bonus: E2E test against running backend (Commit: 85dc4bb)
 - ✅ Task 5.4b: Real GcsStorageDriver + setup-gcs.sh + deployment docs (Commit: 2f0ec16)
 - ✅ Task 5.4b bonus: GCS driver unit tests with mocked SDK (Commit: 69eddbe)
+- ✅ Task 5.4c (architecture pivot): All uploads backend-proxied — bytes flow through our perimeter, not browser→GCS direct (Commit: 608341e)
 
 **Specification Updates**:
 
@@ -186,6 +187,7 @@ The full upload feature is feature-complete and verified end-to-end against real
 - ✅ Task 5.4 bonus: 8-case e2e test that hits a real backend + writes real bytes to a tmpdir (Commit: 85dc4bb)
 - ✅ Task 5.4b: Real `GcsStorageDriver` (V4 presigned URLs) + driver factory + `scripts/setup-gcs.sh` + `docs/deployment/{gcp-setup,railway}.md` (Commit: 2f0ec16)
 - ✅ Task 5.4b bonus: 11-case `GcsStorageDriver` unit test with mocked SDK (Commit: 69eddbe)
+- ✅ Task 5.4c (architecture pivot, 2026-05-14): all uploads backend-proxied — `IStorageService` gains `writeStream`, `GcsStorageDriver` now streams body bytes through the backend to GCS via the SDK rather than minting presigned URLs the browser uses directly. Every byte flows through our perimeter (scannable/auditable). Raw PUT route is now auth-guarded (no more `@Public` capability-by-URL). Tests updated + spec records the rationale + trade-off. (Commit: 608341e)
 
 **Verified end-to-end** (real Auth0 session, real browser, real Prisma write, real disk write — example documentId `b47a490b-fb31-4031-b740-82f8d568dd18`):
 
