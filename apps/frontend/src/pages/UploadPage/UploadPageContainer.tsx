@@ -31,6 +31,19 @@ export function UploadPageContainer() {
     }
   }, [documentId, navigate]);
 
+  // Warn the user if they try to close the tab while an upload is in
+  // flight. Modern browsers ignore custom messages but still show their
+  // standard "Leave site?" prompt as long as `returnValue` is set.
+  useEffect(() => {
+    if (!isUploading) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isUploading]);
+
   const userInitials = useMemo(() => {
     const source = user?.name?.trim() || user?.email || 'U';
     return source

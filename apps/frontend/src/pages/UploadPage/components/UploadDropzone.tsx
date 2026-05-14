@@ -94,17 +94,19 @@ export function UploadDropzone({
           <span className={styles.tag}>PDF</span>
           <span className={styles.metaText}>· up to 50 MB · 60s analysis</span>
         </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept={ACCEPT_ATTR}
-          className={styles.hiddenInput}
-          onChange={(e) => validateAndPick(e.target.files)}
-          aria-hidden="true"
-          tabIndex={-1}
-        />
       </div>
+
+      {/* The file input lives outside the dropzone (which is itself a
+          role="button") so the two interactive controls aren't nested. */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPT_ATTR}
+        className={styles.hiddenInput}
+        onChange={(e) => validateAndPick(e.target.files)}
+        aria-hidden="true"
+        tabIndex={-1}
+      />
 
       {error && (
         <div role="alert" className={styles.error}>

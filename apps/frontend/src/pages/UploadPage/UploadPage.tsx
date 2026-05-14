@@ -46,6 +46,20 @@ export function UploadPage({
   onNav,
 }: UploadPageProps) {
   const canSubmit = !!file && consent && !isUploading;
+  const hasError = !!error;
+  const submitLabel = isUploading
+    ? 'Uploading…'
+    : hasError && file
+      ? 'Try again'
+      : 'Analyze contract';
+
+  // Helper text under the submit button explaining why it's disabled,
+  // so the user knows what's missing without having to guess.
+  const disabledHint = !file
+    ? 'Pick a PDF to continue.'
+    : !consent
+      ? 'Tick the consent box to continue.'
+      : null;
 
   return (
     <div className={styles.root}>
@@ -76,13 +90,13 @@ export function UploadPage({
           )}
 
           {isUploading && (
-            <div className={styles.progressWrap}>
+            <div className={styles.progressWrap} aria-live="polite">
               <UploadProgress progress={progress} />
             </div>
           )}
 
           {error && file && (
-            <div role="alert" className={styles.error}>
+            <div role="alert" aria-live="assertive" className={styles.error}>
               {error}
             </div>
           )}
@@ -95,12 +109,23 @@ export function UploadPage({
 
           <div className={styles.actions}>
             <Button variant="secondary" onClick={onCancel} disabled={isUploading}>
-              Cancel
+              {isUploading ? 'Stop' : 'Cancel'}
             </Button>
-            <Button onClick={onSubmit} disabled={!canSubmit} full>
-              {isUploading ? 'Uploading…' : 'Analyze contract'}
+            <Button
+              onClick={onSubmit}
+              disabled={!canSubmit}
+              full
+              aria-describedby={disabledHint ? 'submit-hint' : undefined}
+            >
+              {submitLabel}
             </Button>
           </div>
+
+          {disabledHint && !isUploading && (
+            <div id="submit-hint" className={styles.hint}>
+              {disabledHint}
+            </div>
+          )}
 
           <div className={styles.footer}>
             <TrustBadges />

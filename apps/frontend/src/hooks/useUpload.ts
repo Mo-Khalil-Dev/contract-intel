@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { documentService } from '@/services/documentService';
 import { track } from '@/analytics';
@@ -85,6 +85,14 @@ export function useUpload(): UseUploadReturn {
     mutation.reset();
     setProgress(0);
   }, [mutation]);
+
+  // Abort any in-flight upload if the component unmounts (e.g. user
+  // navigates away). Prevents zombie state updates + leaks.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   return {
     upload,
