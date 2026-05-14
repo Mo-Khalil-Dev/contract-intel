@@ -29,13 +29,21 @@
 - ✅ Task 3.3: Authentication Infrastructure Layer (Prisma repos, Auth0Service, SessionEncryption, SessionAuthGuard, AuthController) (Commit: 2f26822)
 - ✅ Task 3.4: Authentication UI (useAuth hook, authService, LoginCallbackPage, ProtectedRoute, LogoutButton) (Commit: 6927e8d)
 
-**Phase 4: Home Screen** — 📋 **NEXT** (0/5 tasks)
+**Phase 4: Home Screen** — ✅ **COMPLETE** (5/5 tasks)
 
-- ⏳ Task 4.1: Reference Data Module — Domain & Application Layer (hardcoded fixture, no DB)
-- ⏳ Task 4.2: Reference Data Module — Infrastructure Layer (real endpoint + real auth guard)
-- ⏳ Task 4.3: Frontend API Infrastructure (referenceDataService + useReferenceData hook + types)
-- ⏳ Task 4.4: Home Screen UI — Pixel-Sharp Layout (matches US-008 HiFi wireframe exactly)
-- ⏳ Task 4.5: Home Screen UI — Routing, Edge Cases & Accessibility Audit
+- ✅ Task 4.1: Reference Data Module — Domain & Application Layer (Commit: 57cfc83)
+- ✅ Task 4.2: Reference Data Module — Infrastructure Layer (Commit: 01cb747)
+- ✅ Task 4.3: Frontend API Infrastructure (Commit: 70f372f)
+- ✅ Task 4.4: Home Screen UI — Pixel-Sharp Layout (Commit: a7f05ea)
+- ✅ Task 4.5: Home Screen UI — Routing, Edge Cases & Accessibility Audit (Commit: a7f05ea)
+- 🧪 Experimental: HomePageV2 with fully custom components (no Shadcn) on branch `feature/home-page-custom-components` — user preferred; v2-style is template for future UI work
+
+**Phase 5: Upload Screen** — 📋 **NEXT** (0/4 tasks, UI-first like Phase 4)
+
+- ⏳ Task 5.1: Upload Screen UI — Pixel-Sharp Layout with mock service (custom components, no Shadcn)
+- ⏳ Task 5.2: Upload Screen UI — Routing, Edge Cases & Accessibility Audit
+- ⏳ Task 5.3: Document Upload Backend — Domain & Application Layer
+- ⏳ Task 5.4: Document Upload Backend — Infrastructure & Integration (swap mock to real)
 
 **Specification Updates**:
 - Commit 01e1d35: Separate access/refresh token storage
@@ -101,13 +109,13 @@
 
 ## Phase Plan (Post-Phase 1)
 
-| Phase   | Theme                                                    | Tasks   | Status                    |
-| ------- | -------------------------------------------------------- | ------- | ------------------------- |
-| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ **COMPLETE (100%)**    |
-| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ **COMPLETE (100%)**    |
-| Phase 4 | Home Screen (Pixel-sharp UI + mock data)                 | 3 tasks | 📋 **NEXT (0%)**          |
-| Phase 5 | Upload Screen (Document Ingestion domain + UI)           | 4 tasks | 📋 Planned                |
-| Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned                |
+| Phase   | Theme                                                       | Tasks   | Status                    |
+| ------- | ----------------------------------------------------------- | ------- | ------------------------- |
+| Phase 2 | Design System (Shadcn UI base + domain components)          | 5 tasks | ✅ **COMPLETE (100%)**    |
+| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI)    | 4 tasks | ✅ **COMPLETE (100%)**    |
+| Phase 4 | Home Screen (Backend reference data + UI + a11y)            | 5 tasks | ✅ **COMPLETE (100%)**    |
+| Phase 5 | Upload Screen (UI-first: mock → real backend swap)          | 4 tasks | 📋 **NEXT (0%)**          |
+| Phase 6 | Audit Service (append-only event log + admin UI)            | 4 tasks | 📋 Planned                |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
 
@@ -138,13 +146,29 @@
 - ✅ Task 3.3: Authentication Infrastructure Layer (Prisma repos, Auth0Service, SessionEncryption, SessionAuthGuard, AuthController) (Commit: 2f26822)
 - ✅ Task 3.4: Authentication UI (useAuth hook, authService, LoginCallbackPage, ProtectedRoute, LogoutButton) (Commit: 6927e8d)
 
-**Phase 4 status**: 📋 **NEXT — Ready to start (0/3 tasks)**
+**Phase 4 completion** (2026-05-14): 🎉 **5/5 tasks complete (100%)**
 
-Phase 4 will implement the Home Screen (US-008) with:
-- Backend Reference Data API endpoint (`GET /api/v1/reference-data`)
-- Dashboard view model with KPIs, recent contracts, urgent renewals
-- Frontend 3-tier API infrastructure (client, httpService, endpoints, unwrap)
-- Home screen UI components matching wireframe design
+- ✅ Task 4.1: Reference Data Module — Domain & Application Layer (Commit: 57cfc83)
+- ✅ Task 4.2: Reference Data Module — Infrastructure Layer (Commit: 01cb747)
+- ✅ Task 4.3: Frontend API Infrastructure — `referenceDataService` + `useReferenceData` (Commit: 70f372f)
+- ✅ Task 4.4: Home Screen UI — Pixel-Sharp Layout (Commit: a7f05ea)
+- ✅ Task 4.5: Routing, Edge Cases & Accessibility Audit (Commit: a7f05ea)
+
+**Phase 4 UX iteration (2026-05-14)**: After completing the Shadcn-based Home Screen, the user found visual hierarchy lacking and Shadcn primitives constraining. An experimental v2 was built on `feature/home-page-custom-components` using **fully custom components** (no Shadcn) at `apps/frontend/src/pages/HomePageV2/`, served at `/v2`. User preferred v2. **Going forward, new UI work uses the v2 pattern** (plain React + CSS modules + Lucide, no Shadcn primitives).
+
+**Phase 5 status**: 📋 **NEXT — Ready to start (0/4 tasks)**
+
+**Scope decision (2026-05-14)**: Phase 5 uses the **UI-first approach** (same as Phase 4). Build the Upload screen with a mock `documentService` first to nail the wireframe pixel-perfect, then build the backend Document aggregate and infrastructure, then swap mock → real in a single service-layer edit.
+
+**Component approach**: Use v2-style custom components (plain React + CSS modules + Lucide), **not Shadcn**. Build new components inside `apps/frontend/src/pages/UploadPage/components/` following the `HomePageV2/components/` template.
+
+**What's being built**:
+1. **Task 5.1 — UI** with mock service: drag-and-drop dropzone, file validation (PDF/DOCX, ≤50MB), consent checkbox, progress bar, success/error states
+2. **Task 5.2 — Routing, edge cases, a11y**: `/upload` route, error/loading/empty/validation states, axe audit, Storybook
+3. **Task 5.3 — Backend domain + application**: Document aggregate, value objects, CQRS commands (InitiateUpload, CompleteUpload, FailUpload), GetUploadStatus query
+4. **Task 5.4 — Backend infrastructure + integration**: PrismaDocumentRepository, StorageService (GCS prod / local dev), DocumentController, swap mock → real service, E2E test
+
+Mock-to-real swap at Task 5.4 should touch only `documentService.ts`.
 
 ---
 
@@ -1686,9 +1710,193 @@ frontend/src/
 
 ## Phase 5: User Story — Upload Screen (Wireframe Screen 2)
 
-### Task 5.1: Document Upload Domain Model
+**Approach**: UI-first (same pattern as Phase 4). Build the screen against a mock `documentService`, then build the backend, then swap mock → real in one service-layer edit.
 
-**Goal**: Define Document aggregate with upload workflow
+**Wireframe source**: `wirframes/version_02/design_handoff_ci_redesign/screens/upload.html` + `screens-a.jsx`
+
+**Component approach**: Custom components (plain React + CSS modules + Lucide). NOT Shadcn. Follow the `HomePageV2/components/` pattern.
+
+---
+
+### Task 5.1: Upload Screen UI — Pixel-Sharp Layout (with mock service)
+
+**Goal**: Build the upload screen exactly matching the wireframe, wired to a mock `documentService` that simulates the full upload flow (initiate → upload → complete → status). No backend work yet.
+
+**Mock Service Behaviour**:
+
+```
+documentService (mock):
+├── initiateUpload(file) → { uploadUrl: 'mock://...', documentId: 'doc-<uuid>' } after 300ms
+├── uploadToStorage(url, file) → resolves with simulated 0%→100% progress over ~2s
+├── completeUpload(documentId) → resolves after 200ms
+└── getUploadStatus(id) → cycles 'pending' → 'uploading' → 'processing' → 'complete'
+
+Failure modes (toggleable via dev-mode flag for testing):
+├── 'file-too-large' → throw at initiateUpload
+├── 'invalid-type' → throw at initiateUpload
+└── 'network-error' → throw at uploadToStorage
+```
+
+**3-Tier API Call Stack** (same architecture as Phase 4):
+
+```
+UI Hook (useUpload.ts)
+  → Service (documentService.ts — mock for now)
+    → httpService (httpService.ts)
+      → Axios (client.ts)
+```
+
+In Phase 5.1, `documentService.ts` returns mocked data directly. In Phase 5.4, only this file changes.
+
+**API Layer**:
+
+- [ ] Add to **src/api/endpoints.ts**:
+  ```typescript
+  export const API = {
+    // ... existing endpoints
+    INITIATE_UPLOAD: '/api/v1/documents/upload/initiate',
+    COMPLETE_UPLOAD: '/api/v1/documents/upload/complete',
+    UPLOAD_STATUS: (id: string) => `/api/v1/documents/${id}/status`,
+  };
+  ```
+
+**Service Layer (mock)**:
+
+- [ ] **src/services/documentService.ts** — returns mock data in dev mode
+  - Same shape as the eventual real service
+  - Simulated network delays
+  - Simulated progress events
+  - Dev-toggle for forcing failure modes
+
+**Hook Layer**:
+
+- [ ] **useUpload.ts** — React Query mutation hook
+  - Orchestrates initiate → upload → complete
+  - Tracks progress (0-100%)
+  - Returns `{ upload, isUploading, progress, error, documentId }`
+
+**UI Components** (all custom, inside `pages/UploadPage/components/`):
+
+- [ ] **UploadPage** — page shell, uses `useUpload`
+- [ ] **UploadDropzone** — drag-and-drop area
+  - Dashed border, blue active state on drag-over
+  - File input (hidden, click to open)
+  - File validation feedback (size, type)
+  - Shows selected file name + formatted size
+- [ ] **FileSelectedCard** — shows the chosen file with remove button
+- [ ] **ConsentCheckbox** — custom checkbox + label, required before upload
+- [ ] **UploadButton** — primary CTA, disabled until file + consent
+- [ ] **UploadProgress** — progress bar 0–100% with status text
+- [ ] **UploadStatusToast** (or inline panel) — success/error feedback
+- [ ] **HelperText** — "PDF, DOCX · up to 50 MB · 60s analysis"
+
+**Files**:
+
+```
+apps/frontend/src/
+├── api/
+│   └── endpoints.ts                       # Add upload endpoints
+├── services/
+│   └── documentService.ts                 # Mock implementation (returns fake data)
+├── hooks/
+│   └── useUpload.ts                       # React Query mutation
+└── pages/UploadPage/
+    ├── UploadPage.tsx
+    ├── UploadPageContainer.tsx
+    ├── UploadPage.module.css
+    ├── UploadPage.stories.tsx
+    └── components/
+        ├── UploadDropzone/
+        │   ├── UploadDropzone.tsx
+        │   └── UploadDropzone.module.css
+        ├── FileSelectedCard/
+        ├── ConsentCheckbox/
+        ├── UploadButton/
+        ├── UploadProgress/
+        ├── UploadStatusToast/
+        └── HelperText/
+```
+
+**Definition of Done**:
+
+- [ ] `/upload` route renders the page
+- [ ] Drag-and-drop accepts PDF + DOCX, rejects others with clear error
+- [ ] File size validation (≤50MB) with clear error
+- [ ] Consent checkbox blocks upload until checked
+- [ ] Mock upload flow completes end-to-end in ~3s
+- [ ] Progress bar animates 0→100%
+- [ ] Success state shows the document id (or navigates to results — TBD)
+- [ ] Failure states render appropriate error UI
+- [ ] Visually matches the wireframe pixel-for-pixel (verified by side-by-side)
+
+**Requirements**: US-009 (Upload Screen), 1.1-1.5
+
+---
+
+### Task 5.2: Upload Screen UI — Routing, Edge Cases & Accessibility Audit
+
+**Goal**: Wire the screen into the app, handle all edge cases, complete WCAG 2.1 AA audit.
+
+**Routing**:
+
+- [ ] `/upload` route in `App.tsx` (protected via `ProtectedRoute`)
+- [ ] Navigation from Home screen "+ Upload contract" button now routes to `/upload`
+- [ ] Successful upload navigates to `/results/:documentId` (placeholder for Phase 6/7)
+- [ ] Cancel button returns to `/`
+
+**Edge Cases**:
+
+- [ ] File too large (>50MB) — inline error + helpful message
+- [ ] Invalid file type — inline error listing supported types
+- [ ] Network failure mid-upload — retry button + error toast
+- [ ] User navigates away during upload — confirm dialog
+- [ ] Consent unchecked — upload button disabled with explanation
+- [ ] No file selected — upload button disabled
+- [ ] Successful upload — clear success state with next-action CTA
+
+**Storybook Stories** (all states, like HomePage):
+
+- [ ] Empty / initial state
+- [ ] FileSelected (PDF) / FileSelected (DOCX)
+- [ ] FileSelected with consent checked
+- [ ] Uploading at 25% / 50% / 75% / 100%
+- [ ] Processing state
+- [ ] Success state
+- [ ] Error: file too large
+- [ ] Error: invalid type
+- [ ] Error: network failure
+
+**Accessibility Audit** (WCAG 2.1 AA):
+
+- [ ] Focus indicators visible on all interactive elements
+- [ ] Touch targets ≥44px
+- [ ] ARIA labels on icon-only buttons
+- [ ] Dropzone keyboard-accessible (Enter/Space to open file picker)
+- [ ] Progress announced via `aria-live="polite"`
+- [ ] Errors announced via `aria-live="assertive"` (or role="alert")
+- [ ] File input properly labelled
+- [ ] Consent checkbox associates label correctly
+- [ ] Color contrast ≥4.5:1
+- [ ] Run `jest-axe` test on UploadPage
+- [ ] Manual keyboard navigation test
+- [ ] Screen reader test (VoiceOver)
+
+**Definition of Done**:
+
+- [ ] All routes work
+- [ ] All edge cases produce correct UI
+- [ ] All Storybook stories render
+- [ ] `jest-axe` test passes with 0 violations
+- [ ] Keyboard-only flow completable end-to-end
+- [ ] `ACCESSIBILITY_AUDIT_UPLOAD.md` checklist filled in
+
+**Requirements**: US-009 (acceptance criteria), accessibility
+
+---
+
+### Task 5.3: Document Upload Backend — Domain & Application Layer
+
+**Goal**: Define the `Document` aggregate and CQRS commands/queries. Mock service in the UI stays in place; this task does NOT touch the frontend.
 
 **Domain Model**:
 
@@ -1714,321 +1922,145 @@ Aggregate: Document
     └── Status transitions: pending → uploading → processing → complete/failed
 ```
 
-**Deliverables**:
-
-- [ ] Document aggregate with factory
-- [ ] Value objects: DocumentId, DocumentName, DocumentType, FileSize, UploadStatus, StorageKey
-- [ ] Domain events: DocumentUploadStartedEvent, DocumentUploadCompletedEvent, DocumentUploadFailedEvent
-- [ ] Repository interface: IDocumentRepository
-- [ ] Unit tests for aggregate and value objects
-- [ ] Property test: File size validation, status transitions
-
-**Files**:
-
-```
-modules/documents/domain/
-├── document.aggregate.ts
-├── document-id.vo.ts
-├── document-name.vo.ts
-├── document-type.vo.ts
-├── file-size.vo.ts
-├── upload-status.vo.ts
-├── storage-key.vo.ts
-├── document.events.ts
-├── document.factory.ts
-└── document.repository.ts (interface)
-```
-
-**Requirements**: US-009 (Upload Screen), 1.1-1.5 (Document Upload)
-
----
-
-### Task 5.2: Document Upload Application Layer
-
-**Goal**: Commands and queries for document upload workflow
-
-**CQRS Structure**:
+**Application Layer (CQRS)**:
 
 ```
 Commands:
 ├── InitiateUploadCommand → InitiateUploadHandler
 │   ├── Validate file (size, type)
-│   ├── Generate presigned URL (GCS)
+│   ├── Generate presigned URL (via StorageService — stubbed in this task)
 │   ├── Create Document aggregate (status: pending)
 │   └── Return upload URL + documentId
 ├── CompleteUploadCommand → CompleteUploadHandler
 │   ├── Update Document status (uploading → processing)
-│   ├── Trigger OCR job
-│   └── Emit DocumentUploadCompletedEvent
+│   ├── Emit DocumentUploadCompletedEvent
+│   └── (OCR job triggering moved to a later phase)
 └── FailUploadCommand → FailUploadHandler
     ├── Update Document status (uploading → failed)
     └── Emit DocumentUploadFailedEvent
 
 Queries:
 └── GetUploadStatusQuery → GetUploadStatusHandler
-    └── Return current upload status + progress
+    └── Return current upload status
 ```
 
 **Deliverables**:
 
-- [ ] InitiateUploadCommand + InitiateUploadHandler
-- [ ] CompleteUploadCommand + CompleteUploadHandler
-- [ ] FailUploadCommand + FailUploadHandler
-- [ ] GetUploadStatusQuery + GetUploadStatusHandler
-- [ ] Unit tests for all handlers (mock repositories, storage service)
+- [ ] Document aggregate + factory
+- [ ] All value objects with validation
+- [ ] All domain events
+- [ ] `IDocumentRepository` interface
+- [ ] `IStorageService` interface (real impl in Task 5.4)
+- [ ] All command and query handlers
+- [ ] Unit tests for aggregate, value objects, and handlers (mock repos + storage)
+- [ ] Property test: file size validation, status transitions
 
 **Files**:
 
 ```
-modules/documents/application/
-├── commands/
-│   ├── initiate-upload.command.ts
-│   ├── initiate-upload.handler.ts
-│   ├── complete-upload.command.ts
-│   ├── complete-upload.handler.ts
-│   ├── fail-upload.command.ts
-│   └── fail-upload.handler.ts
-└── queries/
-    ├── get-upload-status.query.ts
-    └── get-upload-status.handler.ts
+apps/backend/src/modules/documents/
+├── domain/
+│   ├── document.aggregate.ts
+│   ├── document-id.vo.ts
+│   ├── document-name.vo.ts
+│   ├── document-type.vo.ts
+│   ├── file-size.vo.ts
+│   ├── upload-status.vo.ts
+│   ├── storage-key.vo.ts
+│   ├── document.events.ts
+│   ├── document.factory.ts
+│   ├── document.repository.ts          # interface
+│   └── storage.service.ts              # interface (port)
+└── application/
+    ├── commands/
+    │   ├── initiate-upload.command.ts
+    │   ├── initiate-upload.handler.ts
+    │   ├── complete-upload.command.ts
+    │   ├── complete-upload.handler.ts
+    │   ├── fail-upload.command.ts
+    │   └── fail-upload.handler.ts
+    └── queries/
+        ├── get-upload-status.query.ts
+        └── get-upload-status.handler.ts
 ```
+
+**Definition of Done**:
+
+- [ ] All domain and application tests pass
+- [ ] Coverage ≥90% on domain, ≥80% overall
+- [ ] No frontend changes in this task
 
 **Requirements**: 1.1-1.5
 
 ---
 
-### Task 5.3: Document Upload Infrastructure Layer
+### Task 5.4: Document Upload Backend — Infrastructure & Integration
 
-**Goal**: Prisma repository, storage service, and upload controller
+**Goal**: Build the real infrastructure (Prisma repo, GCS/local storage, controller) AND swap the frontend `documentService` from mock to real. This is the task that "turns it on".
 
-**Deliverables**:
+**Backend Deliverables**:
 
-- [ ] PrismaDocumentRepository implementing IDocumentRepository
-- [ ] StorageService (GCS presigned URLs, local filesystem for dev)
-- [ ] DocumentController with endpoints:
-  - POST /documents/upload/initiate (returns presigned URL)
-  - POST /documents/upload/complete (confirms upload)
-  - GET /documents/:id/status (polling endpoint)
-- [ ] DTOs: InitiateUploadDto, UploadResponseDto, CompleteUploadDto, UploadStatusDto
-- [ ] DocumentMapper (Document aggregate ↔ Prisma ↔ DTO)
-- [ ] DocumentModule wiring
-- [ ] Integration tests (full upload flow)
+- [ ] `PrismaDocumentRepository` implementing `IDocumentRepository`
+- [ ] `Document` Prisma model + migration
+- [ ] `StorageService` real implementation:
+  - Local filesystem driver for dev (writes to `apps/backend/uploads/`)
+  - GCS driver for prod (presigned URLs)
+  - Driver chosen by `AppConfigService` based on env
+- [ ] `DocumentController` with endpoints:
+  - `POST /api/v1/documents/upload/initiate` (auth-guarded) → returns presigned URL + documentId
+  - `POST /api/v1/documents/upload/complete` (auth-guarded) → confirms upload
+  - `GET /api/v1/documents/:id/status` (auth-guarded) → returns current status
+- [ ] DTOs: `InitiateUploadDto`, `UploadResponseDto`, `CompleteUploadDto`, `UploadStatusDto`
+- [ ] `DocumentMapper` (Aggregate ↔ Prisma ↔ DTO)
+- [ ] `DocumentModule` wiring (controller, handlers, repo, storage, mapper)
+- [ ] All endpoints protected by `SessionAuthGuard`
+- [ ] All requests/responses follow `ApiResponse<T>` envelope
 
-**Files**:
+**Frontend Swap (one file)**:
 
-```
-modules/documents/infrastructure/
-├── prisma-document.repository.ts
-├── storage.service.ts
-├── document.controller.ts
-├── document.mapper.ts
-├── document.module.ts
-└── dtos/
-    ├── initiate-upload.dto.ts
-    ├── upload-response.dto.ts
-    ├── complete-upload.dto.ts
-    └── upload-status.dto.ts
-```
-
-**Requirements**: 1.1-1.5
-
----
-
-### Task 5.4: Upload Screen UI
-
-**Goal**: Drag-and-drop upload interface with 3-tier API architecture
-
-**3-Tier API Call Stack**:
-
-```
-UI Hook (useUpload.ts)
-  → Service (documentService.ts)
-    → httpService (httpService.ts)
-      → Axios (client.ts)
-```
-
-**Component Structure** (applies to ALL components):
-
-- **ComponentName.tsx**: JSX only, max 15 lines, no logic
-- **useComponentName.ts**: All UI logic (hooks, state, handlers)
-- **ComponentName.module.css**: All styles
-- **ComponentName.test.tsx**: Unit tests
-- **ComponentName.stories.tsx**: Storybook story
-
-**API Layer**:
-
-- [ ] Add to **src/api/endpoints.ts**:
-  ```typescript
-  export const API = {
-    // ... existing endpoints
-    INITIATE_UPLOAD: '/api/v1/documents/upload/initiate',
-    COMPLETE_UPLOAD: '/api/v1/documents/upload/complete',
-    UPLOAD_STATUS: (id: string) => `/api/v1/documents/${id}/status`,
-  };
-  ```
-
-**Service Layer**:
-
-- [ ] **src/services/documentService.ts**
-  - Calls httpService for upload endpoints
-  - Unwraps ApiResponse<T>
-  - No axios imports
-
-  ```typescript
-  export const documentService = {
-    initiateUpload: async (file: File): Promise<UploadResponse> => {
-      return httpService
-        .post<UploadResponse>(API.INITIATE_UPLOAD, {
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-        })
-        .then(unwrap);
-    },
-
-    uploadToStorage: async (url: string, file: File): Promise<void> => {
-      // Direct upload to GCS presigned URL (not through httpService)
-      await fetch(url, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type },
-      });
-    },
-
-    completeUpload: async (documentId: string): Promise<void> => {
-      return httpService.post<void>(API.COMPLETE_UPLOAD, { documentId }).then(unwrap);
-    },
-
-    getUploadStatus: async (documentId: string): Promise<UploadStatus> => {
-      return httpService.get<UploadStatus>(API.UPLOAD_STATUS(documentId)).then(unwrap);
-    },
-  };
-  ```
-
-**Hook Layer**:
-
-- [ ] **useUpload.ts**: React Query mutation hook
-  - Calls documentService methods
-  - No httpService or axios imports
-  - Returns { upload, isUploading, progress, error }
-
-  ```typescript
-  export function useUpload() {
-    const uploadMutation = useMutation({
-      mutationFn: async (file: File) => {
-        // 1. Initiate upload
-        const { uploadUrl, documentId } = await documentService.initiateUpload(file);
-
-        // 2. Upload to storage
-        await documentService.uploadToStorage(uploadUrl, file);
-
-        // 3. Complete upload
-        await documentService.completeUpload(documentId);
-
-        return { documentId };
-      },
-    });
-
-    return {
-      upload: uploadMutation.mutate,
-      isUploading: uploadMutation.isPending,
-      error: uploadMutation.error,
-    };
-  }
-  ```
-
-**UI Components**:
-
-- [ ] **UploadPage** component
-  - Uses useUpload hook
-  - Passes upload function to child components
-  - No API calls directly
-- [ ] **UploadDropzone** component (Base: Shadcn UI)
-  - Drag-and-drop area (dashed border, blue on hover)
-  - File input (hidden, triggered by click)
-  - File validation (size ≤50MB, type PDF/DOCX)
-  - Shows selected file name + size
-  - "Choose file" button (≥44px touch target)
-  - Keyboard accessible (Tab, Enter, Space)
-  - ARIA labels for screen readers
-- [ ] **ConsentCheckbox** component (Base: Shadcn UI Checkbox)
-  - Checkbox + label: "I confirm this document is authorized..."
-  - Required before upload
-  - Keyboard accessible (Space to toggle)
-  - ARIA required
-- [ ] **UploadButton** component
-  - Disabled until file selected + consent checked
-  - Shows loading spinner during upload
-  - Touch target ≥44px
-  - Focus indicator visible
-  - ARIA label
-- [ ] **UploadProgress** component
-  - Progress bar (0-100%)
-  - Status text: "Uploading...", "Processing...", "Complete"
-  - Cancel button (if upload in progress)
-  - ARIA live region for status updates
+- [ ] Edit `apps/frontend/src/services/documentService.ts` — replace mock implementation with real HTTP calls via `httpService`. Hook signature unchanged. Mock toggle (dev-flag) removed. No other frontend files change.
 
 **Files**:
 
 ```
-frontend/src/
-├── api/
-│   └── endpoints.ts           # Add upload endpoints
-├── services/
-│   └── documentService.ts     # Upload domain logic, calls httpService
-├── hooks/
-│   └── useUpload.ts           # React Query mutation hook, calls service
-├── pages/UploadPage/
-│   ├── UploadPage.tsx         # JSX only, max 15 lines
-│   ├── useUploadPage.ts       # All logic (uses useUpload)
-│   ├── UploadPage.module.css  # Styles
-│   ├── UploadPage.test.tsx    # Tests
-│   └── UploadPage.stories.tsx # Storybook
-└── components/upload/
-    ├── UploadDropzone/
-    │   ├── UploadDropzone.tsx
-    │   ├── useUploadDropzone.ts
-    │   ├── UploadDropzone.module.css
-    │   ├── UploadDropzone.test.tsx
-    │   └── UploadDropzone.stories.tsx
-    ├── ConsentCheckbox/
-    │   ├── ConsentCheckbox.tsx
-    │   ├── useConsentCheckbox.ts
-    │   ├── ConsentCheckbox.module.css
-    │   ├── ConsentCheckbox.test.tsx
-    │   └── ConsentCheckbox.stories.tsx
-    ├── UploadButton/
-    │   ├── UploadButton.tsx
-    │   ├── useUploadButton.ts
-    │   ├── UploadButton.module.css
-    │   ├── UploadButton.test.tsx
-    │   └── UploadButton.stories.tsx
-    └── UploadProgress/
-        ├── UploadProgress.tsx
-        ├── useUploadProgress.ts
-        ├── UploadProgress.module.css
-        ├── UploadProgress.test.tsx
-        └── UploadProgress.stories.tsx
+apps/backend/src/modules/documents/
+└── infrastructure/
+    ├── prisma-document.repository.ts
+    ├── storage/
+    │   ├── storage.service.ts          # Interface re-export
+    │   ├── local-storage.driver.ts
+    │   └── gcs-storage.driver.ts
+    ├── document.controller.ts
+    ├── document.mapper.ts
+    ├── document.module.ts
+    └── dtos/
+        ├── initiate-upload.dto.ts
+        ├── upload-response.dto.ts
+        ├── complete-upload.dto.ts
+        └── upload-status.dto.ts
+
+apps/backend/prisma/migrations/
+└── <timestamp>_add_documents/
+    └── migration.sql
 ```
 
-**Accessibility Requirements** (ALL components):
+**Testing**:
 
-- [ ] Focus indicators visible (3px outline)
-- [ ] Touch targets ≥44px on mobile
-- [ ] ARIA labels on all interactive elements
-- [ ] Keyboard navigation (Tab, Enter, Space)
-- [ ] Color contrast ≥4.5:1
-- [ ] ARIA live regions for status updates
-- [ ] Screen reader tested
+- [ ] Repository integration tests (against test DB)
+- [ ] StorageService unit tests (local driver) + smoke test (GCS, optional gated by env)
+- [ ] Controller E2E tests (full upload flow: initiate → PUT to storage → complete → status)
+- [ ] Auth guard enforcement test (401 without session cookie)
+- [ ] Frontend integration test verifying real `documentService` against a mocked backend (MSW or similar)
 
-**Testing Requirements**:
+**Definition of Done**:
 
-- [ ] Mock at service boundary (not axios)
-- [ ] Test hooks against mocked services
-- [ ] Test components with mocked hooks
-- [ ] Integration test: full upload flow
+- [ ] Real upload works end-to-end in dev (local filesystem driver)
+- [ ] Auth-required: unauthenticated requests get 401
+- [ ] Frontend uses real service; `/upload` flow uploads a real file to disk
+- [ ] All tests pass (unit + integration + E2E)
+- [ ] No mock code remaining in `documentService.ts`
 
-**Requirements**: US-009 (all acceptance criteria), 1.1-1.5
+**Requirements**: US-009, 1.1-1.5
 
 ---
 
