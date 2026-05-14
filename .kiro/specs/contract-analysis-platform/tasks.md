@@ -1932,7 +1932,7 @@ apps/frontend/ANALYTICS.md             # event taxonomy reference
 - **Page copy**: stays "contract" / "Analyze contract" (matches current product brand). Don't parameterise the noun in v1.
 - **State machine**: dropped the `processing` state for v1. Document lifecycle is `pending → uploading → complete/failed`. Add `processing` back when OCR/extraction lands.
 - **Multi-tenancy**: `Document` carries `OrgId`. All repository queries filter by it. For v1, **`OrgId` is derived 1:1 from the session's `userId`** (no separate `Org` aggregate yet) — the field exists, the query plumbing works, real `Org` / `UserOrgMembership` models land in a later phase when actual multi-tenancy ships. This way Phase 5 doesn't snowball.
-- **Local-dev storage**: backend-proxied pattern. Local driver returns a backend URL (`/api/v1/documents/upload/raw/:storageKey`); browser PUTs to backend; backend writes to `apps/backend/uploads/`. Same client code path as GCS-presigned in prod — only the URL is different.
+- **Storage architecture (updated 2026-05-14)**: **all uploads are backend-proxied**, not just local. The browser PUTs to `/api/v1/documents/upload/raw/:storageKey` regardless of `STORAGE_DRIVER`; the controller streams the body through `IStorageService.writeStream` to the active driver (disk or GCS). Rationale: every byte flows through our perimeter — scannable, auditable, encryptable under our own key. Trade-off: backend bears the streaming cost (~50 MB streaming through Node per upload). Direct-to-GCS (presigned URL) capability is retained in `GcsStorageDriver` as a private utility for a possible future opt-in.
 - **Idempotency on `InitiateUpload`**: not enforced in v1. Accept that a double-click can produce an orphan Document; cleanup is a later concern.
 - **Delete-anytime trust badge**: kept in UI copy, backed by a soft-delete in v1 (status flag, file stays on disk). Real cleanup is a later concern.
 
@@ -2226,7 +2226,7 @@ apps/backend/src/modules/documents/
 - [ ] `Document` Prisma model + migration
 - [ ] `StorageService` implementations:
   - **`LocalStorageDriver`** — fully working, writes to `apps/backend/uploads/`, serves PUT via a controller route
-  - **`GcsStorageDriver`** — fully working (decision updated 2026-05-14: full deployment, not stub). Mints V4 presigned PUT URLs via `@google-cloud/storage`. Browser uploads directly to GCS; bytes never touch the backend.
+  - **`GcsStorageDriver`** — fully working (decision updated 2026-05-14). Streams body bytes through the backend to GCS via the SDK's `file.createWriteStream()`. Bytes pass through the backend perimeter (scannable/auditable). The original V4 presigned-URL minting code is retained as a private capability for a possible future direct-upload opt-in but is not used by the current architecture.
   - Both drivers registered as providers; a factory in `DocumentsModule` reads `STORAGE_DRIVER` env var (`local` | `gcs`) and binds one to the `IStorageService` port at boot.
   - Local-mode boot skips `GcsStorageDriver.onModuleInit` so missing GCS env vars are not a startup blocker in dev.
 - [ ] `DocumentController` with endpoints:

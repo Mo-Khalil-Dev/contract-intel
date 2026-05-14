@@ -1,5 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Storage, type StorageOptions } from '@google-cloud/storage';
+import type { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
 import { AppConfigService } from '../../../../config/app-config.service';
 import { StorageDriver } from '../../../../config/environment-variables';
 import { InfrastructureException } from '../../../../shared/exceptions/app-error';
@@ -10,11 +12,17 @@ import { IStorageService, UploadUrlGrant } from '../../domain/ports/storage-serv
 const UPLOAD_TTL_SECONDS = 60 * 15;
 
 /**
- * Google Cloud Storage driver.
+ * Google Cloud Storage driver — **backend-proxied** mode.
  *
- * Mints V4 presigned PUT URLs the browser uploads directly to — file
- * bytes never touch the backend in prod. The same code path that local
- * dev uses (browser PUT → uploadUrl) works here; only the URL differs.
+ * Architecture (decided 2026-05-14): the browser PUTs to our backend
+ * controller, which streams the bytes to GCS using this driver's
+ * `writeStream`. The browser never talks to googleapis.com directly,
+ * so:
+ *   - bytes flow through our perimeter (scannable, auditable, encryptable
+ *     under our own key)
+ *   - no GCS bucket CORS config needed
+ *   - presigned-URL minting is unused (left as a private capability for
+ *     a possible future direct-upload mode)
  *
  * Configuration (env, validated at boot):
  *   GCS_PROJECT_ID            — your GCP project id
@@ -92,28 +100,52 @@ export class GcsStorageDriver implements IStorageService, OnModuleInit {
     return { projectId, keyFilename: raw };
   }
 
-  async generateUploadUrl(key: StorageKey, type: DocumentType): Promise<UploadUrlGrant> {
-    const file = this.storage.bucket(this.bucketName).file(key.value);
+  /**
+   * Return the backend URL the browser will PUT to. In the proxied
+   * architecture this is the same URL the local driver returns — the
+   * difference (disk vs GCS) is handled inside `writeStream`.
+   */
+  generateUploadUrl(key: StorageKey, _type: DocumentType): Promise<UploadUrlGrant> {
+    const url = `/api/v1/documents/upload/raw/${encodeURIComponent(key.value)}`;
     const expiresAt = new Date(Date.now() + UPLOAD_TTL_SECONDS * 1000);
+    return Promise.resolve({ url, expiresAt, method: 'PUT' });
+  }
+
+  /**
+   * Stream incoming bytes (typically the express request body) to GCS.
+   * Counts bytes for the caller's sanity-check. Throws
+   * `STORAGE_WRITE_FAILED` if the GCS write errors.
+   */
+  async writeStream(
+    key: StorageKey,
+    source: Readable,
+    contentType?: string,
+  ): Promise<{ bytesWritten: number }> {
+    const file = this.storage.bucket(this.bucketName).file(key.value);
+    const sink = file.createWriteStream({
+      resumable: false, // <50MB → single PUT is faster + simpler than resumable
+      metadata: contentType ? { contentType } : undefined,
+    });
+
+    let bytesWritten = 0;
+    source.on('data', (chunk: Buffer) => {
+      bytesWritten += chunk.length;
+    });
+
     try {
-      const [url] = await file.getSignedUrl({
-        version: 'v4',
-        action: 'write',
-        expires: expiresAt,
-        contentType:
-          (type.value as string) === 'PDF' ? 'application/pdf' : 'application/octet-stream',
-      });
-      return { url, expiresAt, method: 'PUT' };
+      await pipeline(source, sink);
     } catch (err) {
-      this.logger.error(
-        `[GcsStorage] failed to mint presigned URL for ${key.value}`,
-        err as Error,
-      );
+      this.logger.error(`[GcsStorage] write failed for ${key.value}`, err as Error);
+      // Best-effort cleanup so half-uploaded objects don't linger.
+      await file.delete().catch(() => undefined);
       throw new InfrastructureException(
-        'GCS_PRESIGN_FAILED',
-        `Could not mint upload URL: ${(err as Error).message}`,
+        'STORAGE_WRITE_FAILED',
+        `Failed to write to GCS: ${(err as Error).message}`,
       );
     }
+
+    this.logger.log(`[GcsStorage] wrote ${bytesWritten} bytes to gs://${this.bucketName}/${key.value}`);
+    return { bytesWritten };
   }
 
   /** Verify a file exists in the bucket — useful for /complete to

@@ -14,6 +14,7 @@ function fakeStorage(): jest.Mocked<IStorageService> {
       expiresAt: new Date('2026-05-14T11:00:00Z'),
       method: 'PUT',
     }),
+    writeStream: jest.fn().mockResolvedValue({ bytesWritten: 0 }),
   };
 }
 

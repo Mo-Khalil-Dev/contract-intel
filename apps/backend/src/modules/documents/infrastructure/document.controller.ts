@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Post,
   Put,
@@ -16,7 +17,6 @@ import {
   CurrentUser,
   RequestUser,
 } from '../../auth/infrastructure/decorators/current-user.decorator';
-import { Public } from '../../auth/infrastructure/decorators/public.decorator';
 import {
   InitiateUploadCommand,
   InitiateUploadResult,
@@ -28,7 +28,7 @@ import {
   GetUploadStatusResult,
 } from '../application/queries/get-upload-status.query';
 import { StorageKey } from '../domain/value-objects/storage-key.vo';
-import { LocalStorageDriver } from './storage/local-storage.driver';
+import { IStorageService, STORAGE_SERVICE } from '../domain/ports/storage-service.port';
 import { InitiateUploadDto, UploadResponseDto } from './dtos/initiate-upload.dto';
 import { CompleteUploadDto, UploadStatusDto } from './dtos/complete-upload.dto';
 
@@ -38,10 +38,10 @@ export class DocumentController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-    /** Concrete LocalStorageDriver — only used by the raw PUT endpoint
-     *  below, which only exists when STORAGE_DRIVER=local. In gcs mode
-     *  the browser PUTs straight to GCS and this method is never hit. */
-    private readonly localStorage: LocalStorageDriver,
+    /** The active storage driver chosen by the factory in DocumentsModule
+     *  (LocalStorageDriver or GcsStorageDriver). The controller doesn't
+     *  care which one — it just calls writeStream on the port. */
+    @Inject(STORAGE_SERVICE) private readonly storage: IStorageService,
   ) {}
 
   // ── Step 1: initiate ─────────────────────────────────────────────
@@ -64,27 +64,27 @@ export class DocumentController {
     };
   }
 
-  // ── Step 2: raw PUT (local-dev only) ─────────────────────────────
+  // ── Step 2: raw PUT — backend-proxied for all storage backends ───
 
   /**
-   * The browser PUTs file bytes here when running against the local
-   * storage driver. The `@Public()` decorator is necessary because the
-   * presigned URL pattern doesn't carry our session cookie — instead,
-   * the storageKey itself is the capability. The key is opaque
-   * (`{documentId}.pdf`) and unguessable; the document row was already
-   * created by /initiate which IS authenticated.
+   * The browser PUTs file bytes here. The controller streams them to
+   * whichever storage driver is active (local FS or GCS) via the
+   * IStorageService port. Auth-guarded — the session cookie authenticates
+   * every byte that flows through our perimeter.
    *
-   * In GCS mode this route is unreachable (browser PUTs to googleapis.com).
+   * In a future "direct-upload" mode the URL minted by /initiate could
+   * point elsewhere (presigned GCS) and bypass this route entirely.
    */
-  @Public()
   @Put('upload/raw/:storageKey')
   @HttpCode(HttpStatus.NO_CONTENT)
   async raw(
+    @CurrentUser() _user: RequestUser,
     @Param('storageKey') rawKey: string,
     @Req() req: Request,
   ): Promise<void> {
     const key = StorageKey.fromString(decodeURIComponent(rawKey));
-    await this.localStorage.writeStream(key, req);
+    const contentType = req.headers['content-type'];
+    await this.storage.writeStream(key, req, contentType);
   }
 
   // ── Step 3: complete ─────────────────────────────────────────────

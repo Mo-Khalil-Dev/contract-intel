@@ -1,4 +1,5 @@
 import { Storage } from '@google-cloud/storage';
+import { PassThrough, Readable, Writable } from 'stream';
 import { GcsStorageDriver } from './gcs-storage.driver';
 import { AppConfigService } from '../../../../config/app-config.service';
 import { StorageDriver } from '../../../../config/environment-variables';
@@ -29,13 +30,29 @@ function makeConfig(overrides: Partial<MockedConfig> = {}): AppConfigService {
 function mockStorageImpl({
   signedUrl = 'https://storage.googleapis.com/test/url',
   exists = true,
-}: { signedUrl?: string; exists?: boolean } = {}) {
+  writeSink,
+  deleteImpl,
+}: {
+  signedUrl?: string;
+  exists?: boolean;
+  /** Optional override for `file.createWriteStream()` — useful for
+   *  asserting on what got written or simulating a write failure. */
+  writeSink?: Writable;
+  deleteImpl?: jest.Mock;
+} = {}) {
   const getSignedUrl = jest.fn().mockResolvedValue([signedUrl]);
   const existsFn = jest.fn().mockResolvedValue([exists]);
-  const file = jest.fn().mockReturnValue({ getSignedUrl, exists: existsFn });
+  const createWriteStream = jest.fn().mockReturnValue(writeSink ?? new PassThrough());
+  const deleteFn = deleteImpl ?? jest.fn().mockResolvedValue(undefined);
+  const file = jest.fn().mockReturnValue({
+    getSignedUrl,
+    exists: existsFn,
+    createWriteStream,
+    delete: deleteFn,
+  });
   const bucket = jest.fn().mockReturnValue({ file });
   MockStorage.mockImplementation(() => ({ bucket }) as unknown as Storage);
-  return { bucket, file, getSignedUrl, existsFn };
+  return { bucket, file, getSignedUrl, existsFn, createWriteStream, deleteFn };
 }
 
 describe('GcsStorageDriver', () => {
@@ -140,10 +157,12 @@ describe('GcsStorageDriver', () => {
   });
 
   describe('generateUploadUrl', () => {
-    it('mints a V4 presigned PUT URL with PDF content type', async () => {
-      const mocks = mockStorageImpl({
-        signedUrl: 'https://storage.googleapis.com/test-bucket/abc.pdf?sig=...',
-      });
+    // Architecture (2026-05-14): backend-proxied uploads. Both drivers
+    // return the same backend route; the difference (FS vs GCS) lives
+    // inside writeStream. Presigned-URL minting is retained as a private
+    // capability but not used by the port contract.
+    it('returns the backend raw-PUT URL (no presigned URL minted)', async () => {
+      const mocks = mockStorageImpl();
       const driver = new GcsStorageDriver(makeConfig());
       driver.onModuleInit();
 
@@ -153,48 +172,86 @@ describe('GcsStorageDriver', () => {
 
       const grant = await driver.generateUploadUrl(key, type);
 
-      expect(grant.url).toBe('https://storage.googleapis.com/test-bucket/abc.pdf?sig=...');
+      expect(grant.url).toBe(
+        '/api/v1/documents/upload/raw/5a0eef1d-4433-454e-a1a5-7ca51bf48955.pdf',
+      );
       expect(grant.method).toBe('PUT');
       expect(grant.expiresAt.getTime()).toBeGreaterThan(Date.now());
 
-      expect(mocks.bucket).toHaveBeenCalledWith('test-bucket');
-      expect(mocks.file).toHaveBeenCalledWith(key.value);
-      expect(mocks.getSignedUrl).toHaveBeenCalledWith(
+      // No SDK call should have been made — the URL is constructed locally.
+      expect(mocks.getSignedUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('writeStream', () => {
+    function uploadKey(): StorageKey {
+      const id = DocumentId.fromString('5a0eef1d-4433-454e-a1a5-7ca51bf48955');
+      return StorageKey.forDocument(id, DocumentType.fromValue('PDF'));
+    }
+
+    it('streams source bytes to GCS via createWriteStream', async () => {
+      const sink = new PassThrough();
+      const chunks: Buffer[] = [];
+      sink.on('data', (c: Buffer) => chunks.push(c));
+
+      const mocks = mockStorageImpl({ writeSink: sink });
+      const driver = new GcsStorageDriver(makeConfig());
+      driver.onModuleInit();
+
+      const payload = Buffer.from('%PDF-1.4\nhello\n%EOF\n', 'utf8');
+      const source = Readable.from([payload]);
+
+      const result = await driver.writeStream(uploadKey(), source, 'application/pdf');
+
+      expect(result.bytesWritten).toBe(payload.length);
+      expect(Buffer.concat(chunks).toString()).toBe(payload.toString());
+
+      // SDK was asked for a non-resumable upload with the right content type.
+      expect(mocks.createWriteStream).toHaveBeenCalledWith(
         expect.objectContaining({
-          version: 'v4',
-          action: 'write',
-          contentType: 'application/pdf',
+          resumable: false,
+          metadata: expect.objectContaining({ contentType: 'application/pdf' }),
         }),
       );
     });
 
-    it('wraps SDK errors in InfrastructureException', async () => {
-      mockStorageImpl();
-      MockStorage.mockImplementation(
-        () =>
-          ({
-            bucket: () => ({
-              file: () => ({
-                getSignedUrl: jest.fn().mockRejectedValue(new Error('SDK boom')),
-              }),
-            }),
-          }) as unknown as Storage,
-      );
+    it('wraps SDK write errors in InfrastructureException and cleans up the half-written file', async () => {
+      // A Writable that errors on first write — simulates GCS rejecting the upload.
+      const failingSink = new Writable({
+        write(_chunk, _enc, cb) {
+          cb(new Error('GCS write boom'));
+        },
+      });
+      const deleteFn = jest.fn().mockResolvedValue(undefined);
+      mockStorageImpl({ writeSink: failingSink, deleteImpl: deleteFn });
 
       const driver = new GcsStorageDriver(makeConfig());
       driver.onModuleInit();
+      const source = Readable.from([Buffer.from('payload')]);
 
-      const id = DocumentId.fromString('5a0eef1d-4433-454e-a1a5-7ca51bf48955');
-      const type = DocumentType.fromValue('PDF');
+      await expect(
+        driver.writeStream(uploadKey(), source, 'application/pdf'),
+      ).rejects.toMatchObject({
+        constructor: InfrastructureException,
+        code: 'STORAGE_WRITE_FAILED',
+      });
 
-      try {
-        await driver.generateUploadUrl(StorageKey.forDocument(id, type), type);
-        fail('expected generateUploadUrl to throw');
-      } catch (e) {
-        expect(e).toBeInstanceOf(InfrastructureException);
-        expect((e as InfrastructureException).code).toBe('GCS_PRESIGN_FAILED');
-        expect((e as InfrastructureException).message).toContain('SDK boom');
-      }
+      // Half-written object should be deleted (best-effort cleanup).
+      expect(deleteFn).toHaveBeenCalled();
+    });
+
+    it('omits contentType metadata when not provided', async () => {
+      const sink = new PassThrough();
+      const mocks = mockStorageImpl({ writeSink: sink });
+      const driver = new GcsStorageDriver(makeConfig());
+      driver.onModuleInit();
+
+      const source = Readable.from([Buffer.from('x')]);
+      await driver.writeStream(uploadKey(), source);
+
+      const call = mocks.createWriteStream.mock.calls[0][0];
+      expect(call.metadata).toBeUndefined();
+      expect(call.resumable).toBe(false);
     });
   });
 

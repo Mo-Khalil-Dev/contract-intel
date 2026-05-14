@@ -8,6 +8,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { DocumentController } from '../src/modules/documents/infrastructure/document.controller';
 import { LocalStorageDriver } from '../src/modules/documents/infrastructure/storage/local-storage.driver';
+import { STORAGE_SERVICE } from '../src/modules/documents/domain/ports/storage-service.port';
 import { ResponseInterceptor } from '../src/shared/infrastructure/interceptors/response.interceptor';
 import { HttpExceptionFilter } from '../src/shared/exceptions/http-exception.filter';
 import { AppConfigService } from '../src/config/app-config.service';
@@ -46,6 +47,9 @@ describe('Documents E2E (upload flow)', () => {
           useValue: { localStoragePath: uploadsDir } as Partial<AppConfigService>,
         },
         LocalStorageDriver,
+        // The controller now injects via the IStorageService port, so
+        // bind the port symbol to the real LocalStorageDriver instance.
+        { provide: STORAGE_SERVICE, useExisting: LocalStorageDriver },
       ],
     }).compile();
 
