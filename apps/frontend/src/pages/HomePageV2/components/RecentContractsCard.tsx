@@ -18,11 +18,7 @@ function formatUploadDate(raw: string | Date): string {
 }
 
 /** Card with a header strip and a stacked list of recent contract rows. */
-export function RecentContractsCard({
-  contracts,
-  onSeeAll,
-  onRowClick,
-}: RecentContractsCardProps) {
+export function RecentContractsCard({ contracts, onSeeAll, onRowClick }: RecentContractsCardProps) {
   return (
     <div className={styles.card}>
       <div className={styles.header}>

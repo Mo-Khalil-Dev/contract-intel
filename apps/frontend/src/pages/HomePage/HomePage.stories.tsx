@@ -101,12 +101,8 @@ const meta: Meta<typeof HomePage> = {
   },
   args: {
     displayUser: { name: 'Sarah Johnson', email: 'sarah.johnson@example.com' },
-    onNav: (screen: string, params?: Record<string, string>) => {
-      console.log(`Navigation: ${screen}`, params);
-    },
-    onSignOut: () => {
-      console.log('Sign out clicked');
-    },
+    onNav: () => {},
+    onSignOut: () => {},
   },
 };
 
@@ -347,7 +343,8 @@ export const LongContractNames: Story = {
       urgentRenewals: [
         {
           id: 'renewal-1',
-          contractName: 'Extremely Long Vendor Agreement with Multiple Renewal Clauses and Extended Service Periods',
+          contractName:
+            'Extremely Long Vendor Agreement with Multiple Renewal Clauses and Extended Service Periods',
           party: 'Another Very Long Company Name Corporation',
           renewalDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
           daysRemaining: 10,
@@ -408,7 +405,8 @@ export const LoadingState: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Shows the dashboard while data is loading. Skeleton components provide visual feedback.',
+        story:
+          'Shows the dashboard while data is loading. Skeleton components provide visual feedback.',
       },
     },
   },

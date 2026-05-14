@@ -29,7 +29,9 @@ export function GreetingSection({
     <section className={styles.section}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.greeting}>{greeting}, {displayName}.</h1>
+          <h1 className={styles.greeting}>
+            {greeting}, {displayName}.
+          </h1>
           <p className={styles.context}>
             You have{' '}
             <span className={styles.critical}>

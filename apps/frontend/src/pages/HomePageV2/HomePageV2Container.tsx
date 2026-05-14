@@ -18,7 +18,10 @@ export function HomePageV2Container() {
   const userInitials = useMemo(() => {
     const source = vm?.user.displayName?.trim() || vm?.user.email || 'U';
     const parts = source.split(/\s+/).slice(0, 2);
-    const initials = parts.map((p) => p[0] ?? '').join('').toUpperCase();
+    const initials = parts
+      .map((p) => p[0] ?? '')
+      .join('')
+      .toUpperCase();
     return initials.slice(0, 2) || 'U';
   }, [vm]);
 
@@ -68,11 +71,6 @@ export function HomePageV2Container() {
   }
 
   return (
-    <HomePageV2
-      vm={vm}
-      greetingName={greetingName}
-      userInitials={userInitials}
-      onNav={handleNav}
-    />
+    <HomePageV2 vm={vm} greetingName={greetingName} userInitials={userInitials} onNav={handleNav} />
   );
 }

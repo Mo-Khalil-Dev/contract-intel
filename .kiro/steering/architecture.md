@@ -282,19 +282,20 @@ src/components/core/
 ```typescript
 // src/errors/AppError.ts
 export class AppError extends Error {
-  readonly code: string;        // Machine-readable code (e.g. "CONTRACT_NOT_FOUND")
-  readonly status: number;      // HTTP status (0 = network/timeout)
-  readonly detail: string;      // User-safe message — safe to display directly
+  readonly code: string; // Machine-readable code (e.g. "CONTRACT_NOT_FOUND")
+  readonly status: number; // HTTP status (0 = network/timeout)
+  readonly detail: string; // User-safe message — safe to display directly
   readonly correlationId?: string;
   readonly fieldErrors?: Record<string, string[]>;
 
-  get isNetworkError(): boolean  // status === 0
-  get isClientError(): boolean   // 4xx
-  get isServerError(): boolean   // 5xx
+  get isNetworkError(): boolean; // status === 0
+  get isClientError(): boolean; // 4xx
+  get isServerError(): boolean; // 5xx
 }
 ```
 
 **Rules:**
+
 - `AppError` is the ONLY error type that leaves the API layer
 - Never catch a raw `AxiosError` in a hook or component — it will already be an `AppError` by the time it reaches you
 - `detail` is always safe to show to the user — never show `message` (which may contain internal info)
@@ -319,19 +320,20 @@ All toasts go through `feedbackService`. Never call `toast` from `sonner` direct
 
 ```typescript
 // src/services/feedbackService.ts
-feedbackService.success('Contract approved')
-feedbackService.error(err)                          // AppError → shows err.detail automatically
-feedbackService.error('Failed to upload contract')  // plain string
-feedbackService.warning('Session expires in 5 min')
-feedbackService.info('Analysis running in background')
+feedbackService.success('Contract approved');
+feedbackService.error(err); // AppError → shows err.detail automatically
+feedbackService.error('Failed to upload contract'); // plain string
+feedbackService.warning('Session expires in 5 min');
+feedbackService.info('Analysis running in background');
 
 // For async operations with loading state:
-const id = feedbackService.loading('Uploading...')
-feedbackService.resolveLoading(id, 'Upload complete')
-feedbackService.rejectLoading(id, err)
+const id = feedbackService.loading('Uploading...');
+feedbackService.resolveLoading(id, 'Upload complete');
+feedbackService.rejectLoading(id, err);
 ```
 
 **Rules:**
+
 - ❌ Never call `toast.success(...)` / `toast.error(...)` directly — always use `feedbackService`
 - ✅ Pass the full `AppError` to `feedbackService.error()` — it extracts `detail` and `correlationId` automatically
 - ✅ Use `loading` / `resolveLoading` / `rejectLoading` for multi-step async operations
@@ -356,6 +358,7 @@ Wraps the entire app (and optionally individual feature sections) to catch unhan
 ```
 
 **Rules:**
+
 - The top-level `<ErrorBoundary>` in `App.tsx` is mandatory — never remove it
 - `<Toaster>` must be inside `<ErrorBoundary>` but outside `<BrowserRouter>` so it survives route changes
 - `componentDidCatch` is the integration point for Sentry/LogRocket — add the SDK call there when APM is wired up
@@ -383,7 +386,7 @@ const approveMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['reference-data'] });
     feedbackService.success('Contract approved');
   },
-  onError: (err) => feedbackService.error(err),  // AppError passed directly
+  onError: (err) => feedbackService.error(err), // AppError passed directly
 });
 
 // ✅ DO: Manual async with loading toast
@@ -398,7 +401,7 @@ const handleUpload = async (file: File) => {
 };
 
 // ❌ DON'T: Raw error handling in a hook
-onError: (err: any) => toast.error(err.message)  // Never do this
+onError: (err: any) => toast.error(err.message); // Never do this
 ```
 
 ### Error Messages Map
@@ -408,16 +411,16 @@ All user-facing error strings live in `src/errors/errorMessages.ts`. Never hardc
 ```typescript
 // src/errors/errorMessages.ts
 export const ERROR_MESSAGES: Record<string, string> = {
-  NETWORK_ERROR:              'Unable to reach the server. Please check your connection.',
-  UNAUTHORIZED:               'Your session has expired. Please sign in again.',
-  FORBIDDEN:                  "You don't have permission to perform this action.",
-  NOT_FOUND:                  "The resource you're looking for doesn't exist.",
-  CONTRACT_NOT_FOUND:         'Contract not found.',
-  CONTRACT_ALREADY_APPROVED:  'This contract has already been approved.',
-  CONTRACT_ANALYSIS_FAILED:   'Contract analysis failed. Please try uploading again.',
-  DOCUMENT_TOO_LARGE:         'The file is too large. Maximum size is 50 MB.',
-  UNSUPPORTED_FILE_TYPE:      'Only PDF and DOCX files are supported.',
-  SERVER_ERROR:               'Something went wrong on our end. Please try again later.',
+  NETWORK_ERROR: 'Unable to reach the server. Please check your connection.',
+  UNAUTHORIZED: 'Your session has expired. Please sign in again.',
+  FORBIDDEN: "You don't have permission to perform this action.",
+  NOT_FOUND: "The resource you're looking for doesn't exist.",
+  CONTRACT_NOT_FOUND: 'Contract not found.',
+  CONTRACT_ALREADY_APPROVED: 'This contract has already been approved.',
+  CONTRACT_ANALYSIS_FAILED: 'Contract analysis failed. Please try uploading again.',
+  DOCUMENT_TOO_LARGE: 'The file is too large. Maximum size is 50 MB.',
+  UNSUPPORTED_FILE_TYPE: 'Only PDF and DOCX files are supported.',
+  SERVER_ERROR: 'Something went wrong on our end. Please try again later.',
   // ...
 };
 ```

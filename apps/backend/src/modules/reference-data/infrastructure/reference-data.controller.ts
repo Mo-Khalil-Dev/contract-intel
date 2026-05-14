@@ -1,7 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
-import { CurrentUser, RequestUser } from '../../auth/infrastructure/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  RequestUser,
+} from '../../auth/infrastructure/decorators/current-user.decorator';
 import { GetReferenceDataQuery } from '../application/queries/get-reference-data.query';
 import { ReferenceDataResponseDto } from './dtos/reference-data.response.dto';
 import { ReferenceDataViewModel } from '../application/queries/get-reference-data.handler';

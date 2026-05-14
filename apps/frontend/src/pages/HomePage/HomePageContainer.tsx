@@ -64,10 +64,7 @@ export function HomePageContainer() {
           <p className={styles.errorMessage}>
             {error instanceof Error ? error.message : 'An unexpected error occurred'}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className={styles.retryButton}
-          >
+          <button onClick={() => window.location.reload()} className={styles.retryButton}>
             Retry
           </button>
         </div>
@@ -83,10 +80,7 @@ export function HomePageContainer() {
           <p className={styles.errorMessage}>
             Unable to retrieve dashboard data. Please try again.
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className={styles.retryButton}
-          >
+          <button onClick={() => window.location.reload()} className={styles.retryButton}>
             Retry
           </button>
         </div>

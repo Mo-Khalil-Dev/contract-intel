@@ -69,9 +69,7 @@ describe('Reference Data E2E (GET /reference-data)', () => {
 
   describe('GET /reference-data', () => {
     it('should return 200 with complete dashboard data', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/reference-data')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/reference-data').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -106,27 +104,21 @@ describe('Reference Data E2E (GET /reference-data)', () => {
     });
 
     it('should return at most 4 recent contracts', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/reference-data')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/reference-data').expect(200);
 
       expect(response.body.data.recentContracts).toBeDefined();
       expect(response.body.data.recentContracts.length).toBeLessThanOrEqual(4);
     });
 
     it('should return at most 3 urgent renewals', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/reference-data')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/reference-data').expect(200);
 
       expect(response.body.data.urgentRenewals).toBeDefined();
       expect(response.body.data.urgentRenewals.length).toBeLessThanOrEqual(3);
     });
 
     it('should have correct contract structure', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/reference-data')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/reference-data').expect(200);
 
       if (response.body.data.recentContracts.length > 0) {
         const contract = response.body.data.recentContracts[0];
@@ -141,9 +133,7 @@ describe('Reference Data E2E (GET /reference-data)', () => {
     });
 
     it('should have correct renewal structure', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/reference-data')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/reference-data').expect(200);
 
       if (response.body.data.urgentRenewals.length > 0) {
         const renewal = response.body.data.urgentRenewals[0];

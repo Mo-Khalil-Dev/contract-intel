@@ -18,8 +18,8 @@ export function DarkCallToActionCard({ onUpload }: DarkCallToActionCardProps) {
         <div className={styles.eyebrow}>Where to start</div>
         <div className={styles.headline}>Send a contract for review</div>
         <p className={styles.copy}>
-          Drop a PDF or Word file here and ContractIntel will run it against the Northwind
-          playbook before passing it to a reviewer.
+          Drop a PDF or Word file here and ContractIntel will run it against the Northwind playbook
+          before passing it to a reviewer.
         </p>
         <div className={styles.actions}>
           <Button

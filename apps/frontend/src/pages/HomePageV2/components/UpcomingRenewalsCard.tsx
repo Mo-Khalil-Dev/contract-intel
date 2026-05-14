@@ -44,9 +44,7 @@ export function UpcomingRenewalsCard({
                 {formatRenewalDate(r.renewalDate)} · {r.party}
               </span>
               <span className={styles.metaCountdown} style={{ color }}>
-                {r.daysRemaining < 0
-                  ? `${Math.abs(r.daysRemaining)}d late`
-                  : `${r.daysRemaining}d`}
+                {r.daysRemaining < 0 ? `${Math.abs(r.daysRemaining)}d late` : `${r.daysRemaining}d`}
               </span>
             </div>
           </div>

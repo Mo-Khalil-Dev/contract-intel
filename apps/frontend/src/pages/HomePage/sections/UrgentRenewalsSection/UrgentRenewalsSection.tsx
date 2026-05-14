@@ -16,10 +16,7 @@ function getUrgencyBadge(urgency: string) {
   return urgencyMap[urgency] || 'default';
 }
 
-export function UrgentRenewalsSection({
-  renewals,
-  onSelectRenewal,
-}: UrgentRenewalsSectionProps) {
+export function UrgentRenewalsSection({ renewals, onSelectRenewal }: UrgentRenewalsSectionProps) {
   const displayedRenewals = renewals.slice(0, 3);
 
   if (displayedRenewals.length === 0) {
@@ -68,9 +65,7 @@ export function UrgentRenewalsSection({
                   </span>
                 </td>
                 <td>
-                  <Badge variant={getUrgencyBadge(renewal.urgency)}>
-                    {renewal.urgency}
-                  </Badge>
+                  <Badge variant={getUrgencyBadge(renewal.urgency)}>{renewal.urgency}</Badge>
                 </td>
               </tr>
             ))}

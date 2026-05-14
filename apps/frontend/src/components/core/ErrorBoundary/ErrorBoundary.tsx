@@ -70,6 +70,7 @@ interface DefaultErrorFallbackProps {
   onReset: () => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 function DefaultErrorFallback({ error, onReset }: DefaultErrorFallbackProps) {
   const { title, description } = useErrorBoundary(error);
 

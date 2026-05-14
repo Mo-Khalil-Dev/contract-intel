@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RiskBadge } from '@/components/core/RiskBadge';
 import { TypePill } from '@/components/core/TypePill';
 import { RecentContractItem } from '@/types/referenceData';
@@ -16,9 +16,31 @@ export function WhereToStartSection({ lastOpenedContract, onUpload }: WhereToSta
       <div className={styles.grid}>
         <Card className={styles.uploadCard}>
           <CardContent className={styles.uploadCardContent}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', color: 'white', marginBottom: 'var(--spacing-xs)' }}>WHERE TO START</div>
-            <h3 style={{ color: 'white', fontSize: '1.125rem', margin: '0 0 var(--spacing-md) 0', fontWeight: 600 }}>Send a contract for review</h3>
-            <p className={styles.uploadDescription}>Drop a PDF or Word file here and ContractIntel will run it against the Northwind playbook before passing it to a reviewer.</p>
+            <div
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                color: 'white',
+                marginBottom: 'var(--spacing-xs)',
+              }}
+            >
+              WHERE TO START
+            </div>
+            <h3
+              style={{
+                color: 'white',
+                fontSize: '1.125rem',
+                margin: '0 0 var(--spacing-md) 0',
+                fontWeight: 600,
+              }}
+            >
+              Send a contract for review
+            </h3>
+            <p className={styles.uploadDescription}>
+              Drop a PDF or Word file here and ContractIntel will run it against the Northwind
+              playbook before passing it to a reviewer.
+            </p>
             <Button onClick={onUpload} className={styles.uploadButton}>
               + Upload contract
             </Button>

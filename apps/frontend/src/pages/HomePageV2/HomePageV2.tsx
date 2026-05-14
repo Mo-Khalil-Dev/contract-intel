@@ -103,9 +103,7 @@ export function HomePageV2({ vm, userInitials, greetingName, onNav }: HomePageV2
             label="Renewals < 60 days"
             value={kpis.urgentRenewalCount}
             sub={
-              urgentRenewals[0]
-                ? `Next: ${formatNextRenewal(urgentRenewals[0].renewalDate)}`
-                : '—'
+              urgentRenewals[0] ? `Next: ${formatNextRenewal(urgentRenewals[0].renewalDate)}` : '—'
             }
             valueColor={T.orange}
           />

@@ -13,7 +13,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={3}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/John Doe\./)).toBeInTheDocument();
     });
@@ -28,7 +28,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={1}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/Jane Smith\.$/)).toBeInTheDocument();
     });
@@ -54,7 +54,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/Good morning/)).toBeInTheDocument();
     });
@@ -70,7 +70,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/Good afternoon/)).toBeInTheDocument();
     });
@@ -86,7 +86,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/Good evening/)).toBeInTheDocument();
     });
@@ -103,7 +103,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText('5')).toBeInTheDocument();
     });
@@ -118,7 +118,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={7}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText('7')).toBeInTheDocument();
     });
@@ -133,7 +133,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={5}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText('0')).toBeInTheDocument();
     });
@@ -148,7 +148,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={3}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/2 critical flag/)).toBeInTheDocument();
     });
@@ -163,7 +163,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={3}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/3 urgent renewal/)).toBeInTheDocument();
     });
@@ -180,7 +180,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByRole('button', { name: /View all contracts/ })).toBeInTheDocument();
     });
@@ -195,7 +195,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByRole('button', { name: /Upload contract/ })).toBeInTheDocument();
     });
@@ -211,7 +211,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       const viewAllButton = screen.getByRole('button', { name: /View all contracts/ });
       await user.click(viewAllButton);
@@ -229,7 +229,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       const uploadButton = screen.getByRole('button', { name: /Upload contract/ });
       await user.click(uploadButton);
@@ -248,7 +248,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       const greeting = container.querySelector('.greeting');
       expect(greeting).toBeInTheDocument();
@@ -264,7 +264,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       const context = container.querySelector('.context');
       expect(context).toBeInTheDocument();
@@ -282,7 +282,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={3}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/2 critical flag/)).toBeInTheDocument();
       expect(screen.getByText(/3 urgent renewal/)).toBeInTheDocument();
@@ -298,7 +298,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={0}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/1 critical flag[^s]/)).toBeInTheDocument();
     });
@@ -313,7 +313,7 @@ describe('GreetingSection', () => {
           urgentRenewalCount={1}
           onViewAll={mockOnViewAll}
           onUpload={mockOnUpload}
-        />
+        />,
       );
       expect(screen.getByText(/1 urgent renewal[^s]/)).toBeInTheDocument();
     });

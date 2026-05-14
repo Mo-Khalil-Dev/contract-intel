@@ -13,7 +13,10 @@ describe('authService', () => {
   describe('getCurrentUser', () => {
     it('fetches current user', async () => {
       const mockUser = { id: '123', email: 'test@example.com', name: 'Test User' };
-      (httpModule.httpService.get as jest.Mock).mockResolvedValueOnce({ success: true, data: mockUser });
+      (httpModule.httpService.get as jest.Mock).mockResolvedValueOnce({
+        success: true,
+        data: mockUser,
+      });
       (unwrapModule.unwrap as jest.Mock).mockReturnValueOnce(mockUser);
 
       const result = await authService.getCurrentUser();

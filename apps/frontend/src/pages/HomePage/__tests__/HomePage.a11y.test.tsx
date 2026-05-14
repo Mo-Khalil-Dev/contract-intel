@@ -58,7 +58,7 @@ describe('HomePage - Accessibility', () => {
         displayUser={{ name: 'Sarah Johnson', email: 'sarah.johnson@example.com' }}
         onNav={() => {}}
         onSignOut={() => {}}
-      />
+      />,
     );
 
     const results = await axe(container);
@@ -72,7 +72,7 @@ describe('HomePage - Accessibility', () => {
         displayUser={{ name: 'Sarah Johnson', email: 'sarah.johnson@example.com' }}
         onNav={() => {}}
         onSignOut={() => {}}
-      />
+      />,
     );
 
     // Check for h1 (should be the greeting)
@@ -90,7 +90,7 @@ describe('HomePage - Accessibility', () => {
         displayUser={{ name: 'Sarah Johnson', email: 'sarah.johnson@example.com' }}
         onNav={() => {}}
         onSignOut={() => {}}
-      />
+      />,
     );
 
     const buttons = getAllByRole('button');
@@ -111,7 +111,7 @@ describe('HomePage - Accessibility', () => {
         displayUser={{ name: 'Sarah Johnson', email: 'sarah.johnson@example.com' }}
         onNav={() => {}}
         onSignOut={() => {}}
-      />
+      />,
     );
 
     const results = await axe(container, {
@@ -135,7 +135,7 @@ describe('HomePage - Accessibility', () => {
         displayUser={{ name: 'Sarah Johnson', email: 'sarah.johnson@example.com' }}
         onNav={() => {}}
         onSignOut={() => {}}
-      />
+      />,
     );
 
     const results = await axe(container);
@@ -149,7 +149,7 @@ describe('HomePage - Accessibility', () => {
         displayUser={{ name: 'Sarah Johnson', email: 'sarah.johnson@example.com' }}
         onNav={() => {}}
         onSignOut={() => {}}
-      />
+      />,
     );
 
     // Check for main landmark

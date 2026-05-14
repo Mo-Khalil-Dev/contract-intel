@@ -23,7 +23,11 @@ export const httpService = {
     }
   },
 
-  async post<T>(url: string, data?: unknown, config?: Parameters<typeof apiClient.post>[2]): Promise<ApiResponse<T>> {
+  async post<T>(
+    url: string,
+    data?: unknown,
+    config?: Parameters<typeof apiClient.post>[2],
+  ): Promise<ApiResponse<T>> {
     try {
       const res = await apiClient.post<ApiResponse<T>>(url, data, config);
       return res.data;
@@ -32,7 +36,11 @@ export const httpService = {
     }
   },
 
-  async put<T>(url: string, data?: unknown, config?: Parameters<typeof apiClient.put>[2]): Promise<ApiResponse<T>> {
+  async put<T>(
+    url: string,
+    data?: unknown,
+    config?: Parameters<typeof apiClient.put>[2],
+  ): Promise<ApiResponse<T>> {
     try {
       const res = await apiClient.put<ApiResponse<T>>(url, data, config);
       return res.data;
@@ -41,7 +49,11 @@ export const httpService = {
     }
   },
 
-  async patch<T>(url: string, data?: unknown, config?: Parameters<typeof apiClient.patch>[2]): Promise<ApiResponse<T>> {
+  async patch<T>(
+    url: string,
+    data?: unknown,
+    config?: Parameters<typeof apiClient.patch>[2],
+  ): Promise<ApiResponse<T>> {
     try {
       const res = await apiClient.patch<ApiResponse<T>>(url, data, config);
       return res.data;
@@ -50,7 +62,10 @@ export const httpService = {
     }
   },
 
-  async delete<T>(url: string, config?: Parameters<typeof apiClient.delete>[1]): Promise<ApiResponse<T>> {
+  async delete<T>(
+    url: string,
+    config?: Parameters<typeof apiClient.delete>[1],
+  ): Promise<ApiResponse<T>> {
     try {
       const res = await apiClient.delete<ApiResponse<T>>(url, config);
       return res.data;

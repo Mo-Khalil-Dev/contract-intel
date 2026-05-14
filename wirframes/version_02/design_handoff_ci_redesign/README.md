@@ -28,19 +28,19 @@ The accent color is exposed as a tweak in the prototype; **the canonical accent 
 
 Open `screens/index.html` for live thumbnail previews of every screen. Each screen is also exported as a standalone HTML file under `screens/`.
 
-| # | File | Name | Purpose |
-|---|---|---|---|
-| 01 | `screens/home.html` | **Home** | Landing surface. Workspace banner, portfolio KPIs (avg risk, total reds, in-progress count), 4-step "how the flow works" explainer, recent contracts list, urgent renewals strip, team activity. |
-| 02 | `screens/upload.html` | **Upload** | Drag-and-drop zone for new PDFs / DOCX. Optional metadata capture (counterparty, contract type, owner). Tweakable variant: `default` (compact zone) vs `simple` (large zone). |
-| 03 | `screens/processing.html` | **Processing** | Live extraction state shown while AI parses the contract. Progressive step list: pages OCR'd → clauses extracted → playbook compared → flags scored. Animated pulse on the active step. |
-| 04 | `screens/results.html` | **Results** | The core review surface. Risk score mega-number, flag breakdown (red / amber / green counts), full flag list as **accordion** or **cards** (tweakable), contract metadata side panel, action bar (Export, Deep Dive, Approve). |
-| 05 | `screens/deepdive.html` | **Deep Dive** | One flag, full context. Severity header, original clause text (with citation: page + section), market-standard comparison list, suggested replacement language with copy-to-clipboard, reviewer notes. |
-| 06 | `screens/compare.html` | **Compare** | Side-by-side compare of two contracts. Diff highlighting. Used to spot off-playbook terms across vendors. |
-| 07 | `screens/portfolio.html` | **Portfolio** | All contracts in one list. Tweakable: `table` (dense data view), `card` (chunkier), `minimal` (text-forward). Search, filter by status / risk / owner, sort by date / risk / value. |
-| 08 | `screens/playbook.html` | **Playbook** | Reusable clause library. Cards for each standard clause (liability cap, indemnity, IP, termination, etc.) with the "ideal" language and acceptable fallbacks. |
-| 09 | `screens/export.html` | **Export** | Configure an export. Choose format (redlined Word, summary PDF, CSV), audience (internal / counterparty), include sections (executive summary, flags, suggested language, market standards). |
-| 10 | `screens/renewals.html` | **Renewals** | Upcoming renewals timeline. Cards grouped by urgency (next 30 / 60 / 90 days). Each card shows counterparty, value, days remaining, owner. |
-| 11 | `screens/settings.html` | **Settings** | Workspace, user, and integration preferences. |
+| #   | File                      | Name           | Purpose                                                                                                                                                                                                                        |
+| --- | ------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 01  | `screens/home.html`       | **Home**       | Landing surface. Workspace banner, portfolio KPIs (avg risk, total reds, in-progress count), 4-step "how the flow works" explainer, recent contracts list, urgent renewals strip, team activity.                               |
+| 02  | `screens/upload.html`     | **Upload**     | Drag-and-drop zone for new PDFs / DOCX. Optional metadata capture (counterparty, contract type, owner). Tweakable variant: `default` (compact zone) vs `simple` (large zone).                                                  |
+| 03  | `screens/processing.html` | **Processing** | Live extraction state shown while AI parses the contract. Progressive step list: pages OCR'd → clauses extracted → playbook compared → flags scored. Animated pulse on the active step.                                        |
+| 04  | `screens/results.html`    | **Results**    | The core review surface. Risk score mega-number, flag breakdown (red / amber / green counts), full flag list as **accordion** or **cards** (tweakable), contract metadata side panel, action bar (Export, Deep Dive, Approve). |
+| 05  | `screens/deepdive.html`   | **Deep Dive**  | One flag, full context. Severity header, original clause text (with citation: page + section), market-standard comparison list, suggested replacement language with copy-to-clipboard, reviewer notes.                         |
+| 06  | `screens/compare.html`    | **Compare**    | Side-by-side compare of two contracts. Diff highlighting. Used to spot off-playbook terms across vendors.                                                                                                                      |
+| 07  | `screens/portfolio.html`  | **Portfolio**  | All contracts in one list. Tweakable: `table` (dense data view), `card` (chunkier), `minimal` (text-forward). Search, filter by status / risk / owner, sort by date / risk / value.                                            |
+| 08  | `screens/playbook.html`   | **Playbook**   | Reusable clause library. Cards for each standard clause (liability cap, indemnity, IP, termination, etc.) with the "ideal" language and acceptable fallbacks.                                                                  |
+| 09  | `screens/export.html`     | **Export**     | Configure an export. Choose format (redlined Word, summary PDF, CSV), audience (internal / counterparty), include sections (executive summary, flags, suggested language, market standards).                                   |
+| 10  | `screens/renewals.html`   | **Renewals**   | Upcoming renewals timeline. Cards grouped by urgency (next 30 / 60 / 90 days). Each card shows counterparty, value, days remaining, owner.                                                                                     |
+| 11  | `screens/settings.html`   | **Settings**   | Workspace, user, and integration preferences.                                                                                                                                                                                  |
 
 ### Top-level chrome (shared across all screens)
 
@@ -50,6 +50,7 @@ Open `screens/index.html` for live thumbnail previews of every screen. Each scre
 ## Interactions & Behavior
 
 ### Navigation
+
 The prototype uses a single React state machine (`screen` enum + `contractId` + `flagId`). In your codebase, map these to routes:
 
 ```
@@ -67,12 +68,14 @@ The prototype uses a single React state machine (`screen` enum + `contractId` + 
 ```
 
 ### Key transitions
+
 - **Upload → Processing**: on drop, files are staged in local state, user hits "Start analysis", screen transitions immediately. No real upload in the prototype.
 - **Processing → Results**: after the simulated pipeline completes (~5 s in the mock), auto-navigates to results for `contractId: 1`. In production, poll / subscribe to a job status endpoint.
 - **Results → Deep Dive**: clicking any flag row opens that flag's full detail page. Back button returns preserving scroll/state.
 - **Results → Export**: opens the export configurator with the current contract preselected.
 
 ### Micro-interactions
+
 - Buttons: `transition: all 0.15s`. No transforms on press.
 - Cards on Home / Portfolio: on hover, border darkens (`#E5E7EB` → `#CBD5E1`), shadow appears (`0 4px 16px -8px rgba(15,23,42,.18)`), `translateY(-2px)`.
 - Processing step list: active step pulses (`@keyframes ciPulse` — opacity 1 → 0.3 → 1, 1.4s ease-in-out infinite).
@@ -80,10 +83,12 @@ The prototype uses a single React state machine (`screen` enum + `contractId` + 
 - Tabs on Results (Flags / Clauses / Metadata): underline slides; on narrow screens row becomes horizontally scrollable (`overflow-x: auto`).
 
 ### Form validation
+
 - Upload requires at least one file before "Start analysis" enables.
 - Export requires at least one section selected.
 
 ### Responsive behavior
+
 Breakpoints are codified in `ContractIntel Redesign.html`'s `<style id="ci-responsive">` block:
 
 - **≤ 1100 px** (tablet landscape) — minor reflows; sidebars narrow.
@@ -95,17 +100,18 @@ Breakpoints are codified in `ContractIntel Redesign.html`'s `<style id="ci-respo
 
 In the prototype, state is held in `App` (`app.jsx`):
 
-| State | Type | Notes |
-|---|---|---|
-| `screen` | string enum | Current view |
-| `contractId` | number / null | Active contract for Results / Deep Dive / Export |
-| `flagId` | number / null | Active flag for Deep Dive |
-| `uploadedFiles` | File[] / null | Staged for Processing |
-| `tweaks` | object | Layout variant, risk style, upload style, accent color — these are **design tweaks for review**, not production settings. Drop the Tweaks panel entirely in your build. |
+| State           | Type          | Notes                                                                                                                                                                   |
+| --------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `screen`        | string enum   | Current view                                                                                                                                                            |
+| `contractId`    | number / null | Active contract for Results / Deep Dive / Export                                                                                                                        |
+| `flagId`        | number / null | Active flag for Deep Dive                                                                                                                                               |
+| `uploadedFiles` | File[] / null | Staged for Processing                                                                                                                                                   |
+| `tweaks`        | object        | Layout variant, risk style, upload style, accent color — these are **design tweaks for review**, not production settings. Drop the Tweaks panel entirely in your build. |
 
 For production: model `Contract`, `RiskFlag`, `Clause`, `Renewal`, `TeamMember`, `Playbook`, `PlaybookClause`. Sample shapes are in `data.js`.
 
 Server interactions you'll need to wire up:
+
 - Upload: multipart POST → returns `contractId`, starts an analysis job.
 - Processing: poll `GET /contracts/:id/status` or subscribe via SSE / websocket.
 - Results: `GET /contracts/:id` (with embedded flags + clauses).
@@ -208,20 +214,21 @@ Modal               16px
 ### Shadows
 
 Single elevation only:
+
 ```
 hover-elevation: 0 4px 16px -8px rgba(15, 23, 42, 0.18)
 ```
 
 ### Buttons (`<Btn>` in `components.jsx`)
 
-| Variant | Background | Color | Border |
-|---|---|---|---|
-| `primary` | `#2563EB` | `#FFFFFF` | none |
-| `secondary` | `#FFFFFF` | `#334155` | `1px #CBD5E1` |
-| `ghost` | transparent | `#64748B` | none |
-| `danger` | `#FEF2F2` | `#EF4444` | `1px #FCA5A5` |
-| `success` | `#ECFDF5` | `#059669` | `1px #6EE7B7` |
-| `dark` | `#0F172A` | `#FFFFFF` | none |
+| Variant     | Background  | Color     | Border        |
+| ----------- | ----------- | --------- | ------------- |
+| `primary`   | `#2563EB`   | `#FFFFFF` | none          |
+| `secondary` | `#FFFFFF`   | `#334155` | `1px #CBD5E1` |
+| `ghost`     | transparent | `#64748B` | none          |
+| `danger`    | `#FEF2F2`   | `#EF4444` | `1px #FCA5A5` |
+| `success`   | `#ECFDF5`   | `#059669` | `1px #6EE7B7` |
+| `dark`      | `#0F172A`   | `#FFFFFF` | none          |
 
 Sizes: `sm` (6×14 / 13px), `md` (10×20 / 14px), `lg` (14×28 / 16px).
 
@@ -230,6 +237,7 @@ Sizes: `sm` (6×14 / 13px), `md` (10×20 / 14px), `lg` (14×28 / 16px).
 No raster images are required by the design — all visuals are CSS / inline SVG. Icons are inline SVGs in the component files (small, monochrome, 14–16 px). Replace with your codebase's icon library (Lucide, Phosphor, Heroicons — any of these match the visual weight).
 
 The only external dependencies fetched at runtime:
+
 - **Google Fonts**: DM Sans + DM Mono (`https://fonts.googleapis.com/css2?family=DM+Sans...&family=DM+Mono...`)
 - **React 18** + **Babel** (only because the prototype is in-browser JSX — do not ship these to production).
 

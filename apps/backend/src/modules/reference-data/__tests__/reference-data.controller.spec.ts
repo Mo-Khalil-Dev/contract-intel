@@ -4,7 +4,6 @@ import { ReferenceDataController } from '../infrastructure/reference-data.contro
 import { ReferenceDataViewModel } from '../application/queries/get-reference-data.handler';
 import { RequestUser } from '../../auth/infrastructure/decorators/current-user.decorator';
 
-
 describe('ReferenceDataController', () => {
   let controller: ReferenceDataController;
 

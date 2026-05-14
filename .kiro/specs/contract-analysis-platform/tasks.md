@@ -46,6 +46,7 @@
 - ⏳ Task 5.4: Document Upload Backend — Infrastructure & Integration (swap mock to real)
 
 **Specification Updates**:
+
 - Commit 01e1d35: Separate access/refresh token storage
 - Commit 97dbd90: Add login initiation flow
 - Commit d0c5dfd: Automatic redirect with returnUrl preservation
@@ -53,6 +54,7 @@
 **Completed Work** (Phases 1-3):
 
 **Phase 1: Foundation**
+
 - Monorepo scaffold (backend + frontend) — apps/backend (NestJS 11) and apps/frontend (React 18 + Vite)
 - Shared kernel: Result, BaseEntity, ValueObject, AggregateRoot, DomainEvent
 - Exception hierarchy: AppError → Domain/Application/Infrastructure + 5 common exceptions + global HttpExceptionFilter (RFC 7807)
@@ -64,6 +66,7 @@
 - All following Clean Architecture + DDD + CQRS + Vertical Slicing patterns
 
 **Phase 2: Design System**
+
 - Design tokens: Single source of truth in `designTokens.ts` with risk/severity helpers, wired into Tailwind v4
 - Shadcn UI: 12 primitives installed (button, badge, input, card, dialog, tabs, checkbox, dropdown-menu, sonner, avatar, tooltip, skeleton)
 - Domain components: RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard (35 tests)
@@ -74,6 +77,7 @@
 - Total: 62 component tests, all passing
 
 **Phase 3: Authentication**
+
 - Domain model: User + Session aggregates, 10 value objects, 6 domain events (89 tests)
 - Application layer: Login/Logout/Refresh commands, GetCurrentUser/ValidateSession queries, event handlers (25 tests)
 - Infrastructure: Prisma repositories, Auth0Service (code exchange, refresh, revoke), SessionEncryptionService (AES-256-CBC + PBKDF2), SessionAuthGuard (auto-refresh), AuthController (4 endpoints), StateTokenService (HMAC-signed state with CSRF + returnUrl), SessionCookieService (signed httpOnly cookie) (51 tests)
@@ -99,6 +103,7 @@
 3. **Routing, Edge Cases & Accessibility** (Task 4.3) — Wire into React Router, handle empty states, run axe audit, add Storybook stories for all states
 
 **Architecture decisions**:
+
 - `useReferenceData` uses React Query (`queryKey: ['reference-data']`, `refetchOnWindowFocus: false`) — same hook signature as the real implementation. Swapping mock → real API in Phase 5 requires changing only `referenceDataService.ts`, nothing else.
 - Frontend follows the **3-tier API call stack** even with mock data: `useReferenceData` → `referenceDataService` → (mock, no HTTP). This keeps the architecture honest.
 - All pixel values, colors, font sizes, spacing, and border radii come directly from US-008 wireframe spec — no approximations.
@@ -109,13 +114,13 @@
 
 ## Phase Plan (Post-Phase 1)
 
-| Phase   | Theme                                                       | Tasks   | Status                    |
-| ------- | ----------------------------------------------------------- | ------- | ------------------------- |
-| Phase 2 | Design System (Shadcn UI base + domain components)          | 5 tasks | ✅ **COMPLETE (100%)**    |
-| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI)    | 4 tasks | ✅ **COMPLETE (100%)**    |
-| Phase 4 | Home Screen (Backend reference data + UI + a11y)            | 5 tasks | ✅ **COMPLETE (100%)**    |
-| Phase 5 | Upload Screen (UI-first: mock → real backend swap)          | 4 tasks | 📋 **NEXT (0%)**          |
-| Phase 6 | Audit Service (append-only event log + admin UI)            | 4 tasks | 📋 Planned                |
+| Phase   | Theme                                                    | Tasks   | Status                 |
+| ------- | -------------------------------------------------------- | ------- | ---------------------- |
+| Phase 2 | Design System (Shadcn UI base + domain components)       | 5 tasks | ✅ **COMPLETE (100%)** |
+| Phase 3 | Authentication (Auth0 + Session encryption + Guard + UI) | 4 tasks | ✅ **COMPLETE (100%)** |
+| Phase 4 | Home Screen (Backend reference data + UI + a11y)         | 5 tasks | ✅ **COMPLETE (100%)** |
+| Phase 5 | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | 📋 **NEXT (0%)**       |
+| Phase 6 | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 Planned             |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
 
@@ -132,6 +137,7 @@
 **Phase 3 architectural decision (2026-05-13)**: Auth0 redirects to a **frontend** callback page (`http://localhost:5173/auth/callback`) which then POSTs `{ code, state }` to the backend. Backend mints/verifies the OAuth state (HMAC-signed, carries CSRF token + returnUrl) and owns the session cookie. End-to-end smoke-tested against the real Auth0 dev tenant — login → exchange → cookie → /me → logout → 401 all verified.
 
 **Phase 3 UI implementation (2026-05-14)**: Frontend auth layer follows 3-tier API architecture:
+
 - **Layer 1 (UI)**: `useAuth` React Query hook — returns `{ user, isLoading, isAuthenticated, logout }`
 - **Layer 2 (Service)**: `authService` — `getCurrentUser()`, `logout()` methods (no HTTP calls)
 - **Layer 3 (HTTP)**: `httpService` + axios with 401 interceptor → auto-redirects to login
@@ -163,6 +169,7 @@
 **Component approach**: Use v2-style custom components (plain React + CSS modules + Lucide), **not Shadcn**. Build new components inside `apps/frontend/src/pages/UploadPage/components/` following the `HomePageV2/components/` template.
 
 **What's being built**:
+
 1. **Task 5.1 — UI** with mock service: drag-and-drop dropzone, file validation (PDF/DOCX, ≤50MB), consent checkbox, progress bar, success/error states
 2. **Task 5.2 — Routing, edge cases, a11y**: `/upload` route, error/loading/empty/validation states, axe audit, Storybook
 3. **Task 5.3 — Backend domain + application**: Document aggregate, value objects, CQRS commands (InitiateUpload, CompleteUpload, FailUpload), GetUploadStatus query
@@ -817,6 +824,7 @@ apps/frontend/src/components/core/icons.test.tsx
 **Overview**: Implement Auth0 Universal Login with Authorization Code Flow, server-side token encryption, and seamless automatic redirect flow. Users accessing protected routes without authentication are automatically redirected to Auth0, then returned to their original destination after login.
 
 **Key Architecture Decisions**:
+
 - ✅ Tokens stored server-side only (never in browser)
 - ✅ Access and refresh tokens encrypted separately (AES-256-CBC)
 - ✅ httpOnly session cookie with signed reference
@@ -1284,6 +1292,7 @@ frontend/src/
    - **No LoginPage needed** - automatic redirect to Auth0
 
 **Key Architecture Decisions**:
+
 - ✅ Tokens never touch browser (server-side only)
 - ✅ Access and refresh tokens encrypted separately
 - ✅ Automatic redirect on 401 with returnUrl preservation
@@ -1291,6 +1300,7 @@ frontend/src/
 - ✅ Backend handles all Auth0 communication
 
 **Authentication Flow**:
+
 ```
 Protected route → 401 → Axios interceptor → /api/v1/auth/login?returnUrl=...
 → Auth0 Universal Login → /api/v1/auth/callback → Original route
@@ -2492,6 +2502,7 @@ Phase 4 delivers the first user-facing screen: the Home Dashboard. It introduces
 
 - [ ] Create `src/modules/reference-data/` vertical slice skeleton
 - [ ] Define TypeScript interfaces / value objects for the view model:
+
   ```
   DashboardViewModel {
     kpis: {
@@ -2524,6 +2535,7 @@ Phase 4 delivers the first user-facing screen: the Home Dashboard. It introduces
     urgency: 'overdue' | 'critical' | 'warning' | 'ok'
   }
   ```
+
 - [ ] Create `GetDashboardViewQuery` (no params — scoped to authenticated user's context)
 - [ ] Create `GetDashboardViewHandler` implementing `IQueryHandler<GetDashboardViewQuery, DashboardViewModel>`
   - Returns hardcoded seed data matching the US-008 wireframe sample (9 contracts, 6 renewals)
@@ -2538,6 +2550,7 @@ Phase 4 delivers the first user-facing screen: the Home Dashboard. It introduces
   - `nextRenewalDate` is the date of the renewal with smallest positive `daysRemaining`
 
 **Files**:
+
 ```
 src/modules/reference-data/
 ├── application/
@@ -2584,6 +2597,7 @@ src/modules/reference-data/
   - Authenticated request (mock session) → 200 with `{ success: true, data: { kpis: {...}, recentContracts: [...], urgentRenewals: [...] } }`
 
 **Files**:
+
 ```
 src/modules/reference-data/
 ├── application/
@@ -2615,67 +2629,73 @@ test/
 
 - [ ] Add `API.REFERENCE_DATA = '/api/v1/reference-data'` to `src/api/endpoints.ts`
 - [ ] Add TypeScript types to `src/types/referenceData.ts`:
+
   ```typescript
   export interface RecentContractItem {
-    id: string
-    name: string
-    type: 'vendor' | 'license' | 'lease' | 'nda' | 'partnership' | 'customer'
-    riskScore: number
-    riskLevel: 'low' | 'medium' | 'high' | 'critical'
-    uploadedAt: string
+    id: string;
+    name: string;
+    type: 'vendor' | 'license' | 'lease' | 'nda' | 'partnership' | 'customer';
+    riskScore: number;
+    riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    uploadedAt: string;
   }
 
   export interface UrgentRenewalItem {
-    id: string
-    contractName: string
-    renewalDate: string
-    daysRemaining: number
-    urgency: 'overdue' | 'critical' | 'warning' | 'ok'
+    id: string;
+    contractName: string;
+    renewalDate: string;
+    daysRemaining: number;
+    urgency: 'overdue' | 'critical' | 'warning' | 'ok';
   }
 
   export interface DashboardKpis {
-    activeContractCount: number
-    inProgressCount: number
-    avgRiskScore: number
-    criticalFlagCount: number
-    urgentRenewalCount: number
-    nextRenewalDate: string | null
+    activeContractCount: number;
+    inProgressCount: number;
+    avgRiskScore: number;
+    criticalFlagCount: number;
+    urgentRenewalCount: number;
+    nextRenewalDate: string | null;
   }
 
   export interface DashboardViewModel {
-    kpis: DashboardKpis
-    recentContracts: RecentContractItem[]
-    urgentRenewals: UrgentRenewalItem[]
-    lastOpenedContract: RecentContractItem | null
+    kpis: DashboardKpis;
+    recentContracts: RecentContractItem[];
+    urgentRenewals: UrgentRenewalItem[];
+    lastOpenedContract: RecentContractItem | null;
   }
   ```
+
 - [ ] Create `src/services/referenceDataService.ts`:
+
   ```typescript
-  import { httpService } from '@/api/httpService'
-  import { API } from '@/api/endpoints'
-  import { unwrap } from '@/api/unwrap'
-  import { DashboardViewModel } from '@/types/referenceData'
+  import { httpService } from '@/api/httpService';
+  import { API } from '@/api/endpoints';
+  import { unwrap } from '@/api/unwrap';
+  import { DashboardViewModel } from '@/types/referenceData';
 
   export const referenceDataService = {
     getDashboard: (): Promise<DashboardViewModel> =>
       httpService.get<DashboardViewModel>(API.REFERENCE_DATA).then(unwrap),
-  }
+  };
   ```
+
 - [ ] Create `src/hooks/useReferenceData.ts`:
+
   ```typescript
-  import { useQuery } from 'react-query'
-  import { referenceDataService } from '@/services/referenceDataService'
-  import { DashboardViewModel } from '@/types/referenceData'
+  import { useQuery } from 'react-query';
+  import { referenceDataService } from '@/services/referenceDataService';
+  import { DashboardViewModel } from '@/types/referenceData';
 
   export function useReferenceData() {
     return useQuery<DashboardViewModel>({
       queryKey: ['reference-data'],
       queryFn: referenceDataService.getDashboard,
       refetchOnWindowFocus: false,
-      staleTime: 30_000,   // 30s — mutations will invalidate manually
-    })
+      staleTime: 30_000, // 30s — mutations will invalidate manually
+    });
   }
   ```
+
 - [ ] Unit tests for `referenceDataService` (`src/services/__tests__/referenceDataService.spec.ts`):
   - Calls `httpService.get` with `API.REFERENCE_DATA`
   - Calls `unwrap` on the response
@@ -2688,6 +2708,7 @@ test/
   - `refetchOnWindowFocus` is false
 
 **Files**:
+
 ```
 apps/frontend/src/
 ├── api/
@@ -2715,6 +2736,7 @@ apps/frontend/src/
 **Requirements**: US-008 (all layout, typography, spacing, color, and interaction specs)
 
 **Component structure** (follow the mandatory component-folder pattern):
+
 ```
 src/pages/HomePage/
 ├── HomePage.tsx                  # JSX only, ≤15 lines, composes sections
@@ -2765,6 +2787,7 @@ src/pages/HomePage/
   - `NoUrgentRenewals` — renewals all >60 days
 
 **Unit tests** (`HomePage.test.tsx` + per-section tests):
+
 - Greeting shows correct time-of-day salutation
 - Critical flag count renders in red
 - Urgent renewal count renders in orange when >0
@@ -2817,6 +2840,7 @@ src/pages/HomePage/
 - [ ] Smoke test: `npm run dev` → login → home screen renders with seed data
 
 **Files**:
+
 ```
 apps/frontend/src/
 ├── pages/
@@ -2832,13 +2856,13 @@ apps/frontend/src/
 
 ### Phase 4 Summary
 
-| Task | Layer | Deliverable | Tests |
-|------|-------|-------------|-------|
-| 4.1 | Backend domain + application | `GetDashboardViewQuery` + handler + seed data | 10–15 |
-| 4.2 | Backend infrastructure | `GET /api/v1/reference-data` controller + module + e2e | 8–12 |
-| 4.3 | Frontend API layer | `referenceDataService` + `useReferenceData` hook + types | 8–12 |
-| 4.4 | Frontend UI (static) | All `HomePage` sections, stories, accessibility | 25–35 |
-| 4.5 | Frontend integration | `HomePageContainer`, routing, MSW integration tests | 8–12 |
+| Task | Layer                        | Deliverable                                              | Tests |
+| ---- | ---------------------------- | -------------------------------------------------------- | ----- |
+| 4.1  | Backend domain + application | `GetDashboardViewQuery` + handler + seed data            | 10–15 |
+| 4.2  | Backend infrastructure       | `GET /api/v1/reference-data` controller + module + e2e   | 8–12  |
+| 4.3  | Frontend API layer           | `referenceDataService` + `useReferenceData` hook + types | 8–12  |
+| 4.4  | Frontend UI (static)         | All `HomePage` sections, stories, accessibility          | 25–35 |
+| 4.5  | Frontend integration         | `HomePageContainer`, routing, MSW integration tests      | 8–12  |
 
 **Estimated total new tests**: 60–85 tests  
 **Estimated effort**: 7–10 days  

@@ -63,9 +63,8 @@ export function PlaybookAndContacts() {
           <div className={styles.eyebrow}>The Northwind playbook</div>
           <h2 className={styles.h2}>What every contract is checked against</h2>
           <p className={styles.lede}>
-            Our playbook codifies the positions agreed with the Board and Finance. Anything
-            outside these lines is flagged for review — no exceptions without sign-off from
-            Head of Legal.
+            Our playbook codifies the positions agreed with the Board and Finance. Anything outside
+            these lines is flagged for review — no exceptions without sign-off from Head of Legal.
           </p>
           <div className={styles.rules}>
             {RULES.map((r) => (
@@ -84,8 +83,8 @@ export function PlaybookAndContacts() {
           <div className={styles.eyebrow}>Need a hand?</div>
           <h2 className={styles.h2}>Who to ask</h2>
           <p className={styles.lede}>
-            Reviews are handled by the Legal Ops team. If you&apos;re stuck on a clause or need
-            an exception, reach out directly.
+            Reviews are handled by the Legal Ops team. If you&apos;re stuck on a clause or need an
+            exception, reach out directly.
           </p>
           <div className={styles.contactCard}>
             {CONTACTS.map((c) => (
@@ -102,8 +101,8 @@ export function PlaybookAndContacts() {
           </div>
           <div className={styles.reminder}>
             <strong className={styles.reminderHead}>Reminder</strong>
-            ContractIntel suggests language but doesn&apos;t replace sign-off. Every contract
-            above £25k still needs a reviewer&apos;s approval before signature.
+            ContractIntel suggests language but doesn&apos;t replace sign-off. Every contract above
+            £25k still needs a reviewer&apos;s approval before signature.
           </div>
         </div>
       </div>

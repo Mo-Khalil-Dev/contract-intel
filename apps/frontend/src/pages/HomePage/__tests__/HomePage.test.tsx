@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HomePage } from '../HomePage';
-import { DashboardViewModel, RecentContractItem, UrgentRenewalItem } from '@/types/referenceData';
+import { DashboardViewModel } from '@/types/referenceData';
 
 const mockDashboardData: DashboardViewModel = {
   user: {
@@ -76,7 +76,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText(/Good morning|Good afternoon|Good evening/)).toBeInTheDocument();
     });
@@ -90,7 +90,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('Active contracts')).toBeInTheDocument();
       expect(screen.getByText('Average risk score')).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('Upload a contract')).toBeInTheDocument();
     });
@@ -119,7 +119,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('How it works')).toBeInTheDocument();
     });
@@ -133,7 +133,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('Recent contracts')).toBeInTheDocument();
     });
@@ -147,7 +147,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('Urgent renewals')).toBeInTheDocument();
     });
@@ -163,7 +163,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText(/John Doe/)).toBeInTheDocument();
     });
@@ -177,7 +177,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('5')).toBeInTheDocument();
     });
@@ -191,7 +191,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText(/2 urgent renewal/)).toBeInTheDocument();
     });
@@ -207,7 +207,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('12')).toBeInTheDocument(); // active contracts
       expect(screen.getByText('45')).toBeInTheDocument(); // avg risk score
@@ -224,7 +224,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('AWS Services Agreement')).toBeInTheDocument();
       expect(screen.getByText('Microsoft Enterprise License')).toBeInTheDocument();
@@ -240,11 +240,11 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       const buttons = screen.getAllByRole('button');
       // Find a contract row button (not the action buttons)
-      const contractButtons = buttons.filter(btn => {
+      const contractButtons = buttons.filter((btn) => {
         const text = btn.textContent;
         return text?.includes('AWS') || text?.includes('Microsoft');
       });
@@ -265,7 +265,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('AWS Services Agreement')).toBeInTheDocument();
     });
@@ -273,14 +273,13 @@ describe('HomePage', () => {
     it('should call onNav with renewals screen when renewal is selected', async () => {
       const mockOnNav = jest.fn();
       const mockOnSignOut = jest.fn();
-      const user = userEvent.setup();
       render(
         <HomePage
           data={mockDashboardData}
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       // This test checks that the callback is properly wired
       // The actual interaction would be tested in the section component tests
@@ -299,7 +298,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       const viewAllButton = screen.getByRole('button', { name: /View all contracts/ });
       await user.click(viewAllButton);
@@ -316,7 +315,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       const uploadButtons = screen.getAllByRole('button', { name: /Upload contract/ });
       if (uploadButtons.length > 0) {
@@ -334,7 +333,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       const containerDiv = container.querySelector('.container');
       expect(containerDiv).toBeInTheDocument();
@@ -347,7 +346,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       expect(container.querySelector('header')).toBeInTheDocument();
     });
@@ -367,7 +366,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('No contracts uploaded yet')).toBeInTheDocument();
     });
@@ -385,7 +384,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('No urgent renewals')).toBeInTheDocument();
     });
@@ -403,7 +402,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       expect(screen.getByText('Upload a contract')).toBeInTheDocument();
     });
@@ -423,7 +422,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={mockOnNav}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       // HomePage defaults to displayName || 'User', so we check for 'User'
       expect(screen.getByText(/User\./)).toBeInTheDocument();
@@ -436,7 +435,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       // TopNav should be rendered with user info
       expect(container.querySelector('nav')).toBeInTheDocument();
@@ -451,7 +450,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       expect(screen.getByText('Northwind Holdings Ltd')).toBeInTheDocument();
     });
@@ -463,7 +462,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       expect(screen.getByText(/Legal Operations/)).toBeInTheDocument();
     });
@@ -471,13 +470,13 @@ describe('HomePage', () => {
 
   describe('navigation links', () => {
     it('should render navigation links', () => {
-      const { container } = render(
+      render(
         <HomePage
           data={mockDashboardData}
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       expect(screen.getByText('Home')).toBeInTheDocument();
       expect(screen.getByText('Portfolio')).toBeInTheDocument();
@@ -495,7 +494,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={mockOnSignOut}
-        />
+        />,
       );
       // onSignOut is passed to TopNav, which is rendered
       expect(mockOnSignOut).toBeDefined();
@@ -510,7 +509,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       // Verify key sections render
       expect(screen.getByText(/Good morning|Good afternoon|Good evening/)).toBeInTheDocument();
@@ -527,7 +526,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       // Verify KPI data is displayed
       expect(screen.getByText('12')).toBeInTheDocument();
@@ -541,7 +540,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       expect(screen.getByText('AWS Services Agreement')).toBeInTheDocument();
     });
@@ -553,7 +552,7 @@ describe('HomePage', () => {
           displayUser={{ name: 'John Doe', email: 'john@example.com' }}
           onNav={jest.fn()}
           onSignOut={jest.fn()}
-        />
+        />,
       );
       expect(screen.getByText('AWS Services Agreement')).toBeInTheDocument();
     });

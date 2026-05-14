@@ -35,12 +35,7 @@ export function TopNav({ active, userInitials, onNav }: TopNavProps) {
         <div className={styles.logoWrap} onClick={() => onNav('home')}>
           <div className={styles.logoBox}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M3 2h7l3 3v9H3V2z"
-                stroke="#fff"
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-              />
+              <path d="M3 2h7l3 3v9H3V2z" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
               <path
                 d="M10 2v3h3"
                 stroke="#fff"

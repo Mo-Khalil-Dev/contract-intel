@@ -32,7 +32,10 @@ export class RecentContractDto {
   @ApiProperty({ example: 'Acme Corp Vendor Agreement' })
   name!: string;
 
-  @ApiProperty({ example: 'vendor', enum: ['vendor', 'license', 'partnership', 'customer', 'lease', 'nda'] })
+  @ApiProperty({
+    example: 'vendor',
+    enum: ['vendor', 'license', 'partnership', 'customer', 'lease', 'nda'],
+  })
   type!: string;
 
   @ApiProperty({ example: 'Acme Corporation' })

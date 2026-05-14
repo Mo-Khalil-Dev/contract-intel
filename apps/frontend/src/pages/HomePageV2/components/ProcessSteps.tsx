@@ -52,8 +52,8 @@ export function ProcessSteps({ onPolicyClick }: ProcessStepsProps) {
             <h2 className={styles.h2}>How contracts move through Legal Ops</h2>
             <p className={styles.lede}>
               All third-party contracts above £25k must be run through ContractIntel before
-              signature. The platform applies our internal playbook, then routes the review to
-              the right reviewer.
+              signature. The platform applies our internal playbook, then routes the review to the
+              right reviewer.
             </p>
           </div>
           <a

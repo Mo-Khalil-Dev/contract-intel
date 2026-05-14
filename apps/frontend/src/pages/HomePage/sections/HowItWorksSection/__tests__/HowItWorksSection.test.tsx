@@ -30,16 +30,12 @@ describe('HowItWorksSection', () => {
 
     it('should display Upload description', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Start by uploading contract documents/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Start by uploading contract documents/)).toBeInTheDocument();
     });
 
     it('should display Upload "who" line', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Available to all team members/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Available to all team members/)).toBeInTheDocument();
     });
   });
 
@@ -57,16 +53,12 @@ describe('HowItWorksSection', () => {
 
     it('should display Review description', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Our AI analyzes the content/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Our AI analyzes the content/)).toBeInTheDocument();
     });
 
     it('should display Review "who" line', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Powered by intelligent analysis/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Powered by intelligent analysis/)).toBeInTheDocument();
     });
   });
 
@@ -84,16 +76,12 @@ describe('HowItWorksSection', () => {
 
     it('should display Flag description', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Issues are flagged for review/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Issues are flagged for review/)).toBeInTheDocument();
     });
 
     it('should display Flag "who" line', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Prioritized by risk level/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Prioritized by risk level/)).toBeInTheDocument();
     });
   });
 
@@ -110,16 +98,12 @@ describe('HowItWorksSection', () => {
 
     it('should display Decide description', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Make informed decisions on contract/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Make informed decisions on contract/)).toBeInTheDocument();
     });
 
     it('should display Decide "who" line', () => {
       render(<HowItWorksSection />);
-      expect(
-        screen.getByText(/Stakeholders get visibility/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Stakeholders get visibility/)).toBeInTheDocument();
     });
   });
 

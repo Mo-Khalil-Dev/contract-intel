@@ -9,7 +9,14 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ReferenceDataModule } from './modules/reference-data/reference-data.module';
 
 @Module({
-  imports: [AppConfigModule, LoggerModule, PrismaModule, CqrsModule, AuthModule, ReferenceDataModule],
+  imports: [
+    AppConfigModule,
+    LoggerModule,
+    PrismaModule,
+    CqrsModule,
+    AuthModule,
+    ReferenceDataModule,
+  ],
   providers: [
     {
       provide: APP_INTERCEPTOR,

@@ -46,17 +46,13 @@ describe('RecentContractsSection', () => {
   describe('rendering with data', () => {
     it('should render section title', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       expect(screen.getByText('Recent contracts')).toBeInTheDocument();
     });
 
     it('should render up to 4 contracts', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       expect(screen.getByText('AWS Services Agreement')).toBeInTheDocument();
       expect(screen.getByText('Microsoft Enterprise License')).toBeInTheDocument();
       expect(screen.getByText('Google Workspace Agreement')).toBeInTheDocument();
@@ -66,21 +62,14 @@ describe('RecentContractsSection', () => {
     it('should limit display to 4 contracts', () => {
       const mockOnSelect = jest.fn();
       const manyContracts = [...mockContracts, ...mockContracts];
-      render(
-        <RecentContractsSection
-          contracts={manyContracts}
-          onSelectContract={mockOnSelect}
-        />
-      );
+      render(<RecentContractsSection contracts={manyContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       expect(buttons).toHaveLength(4);
     });
 
     it('should render table with correct headers', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       expect(screen.getByText('Name')).toBeInTheDocument();
       expect(screen.getByText('Type')).toBeInTheDocument();
       expect(screen.getByText('Risk')).toBeInTheDocument();
@@ -90,7 +79,7 @@ describe('RecentContractsSection', () => {
     it('should display contract names with title attribute', () => {
       const mockOnSelect = jest.fn();
       const { container } = render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
+        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />,
       );
       const nameCell = container.querySelector('[title="AWS Services Agreement"]');
       expect(nameCell).toBeInTheDocument();
@@ -98,9 +87,7 @@ describe('RecentContractsSection', () => {
 
     it('should display dates in localized format', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const rows = screen.getAllByRole('button');
       expect(rows).toHaveLength(4);
     });
@@ -130,9 +117,7 @@ describe('RecentContractsSection', () => {
     it('should call onSelectContract when row is clicked', async () => {
       const mockOnSelect = jest.fn();
       const user = userEvent.setup();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       await user.click(buttons[0]);
       expect(mockOnSelect).toHaveBeenCalledWith('1');
@@ -141,9 +126,7 @@ describe('RecentContractsSection', () => {
     it('should call onSelectContract with correct IDs for multiple clicks', async () => {
       const mockOnSelect = jest.fn();
       const user = userEvent.setup();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       await user.click(buttons[0]);
       await user.click(buttons[1]);
@@ -155,9 +138,7 @@ describe('RecentContractsSection', () => {
     it('should handle Enter key press', async () => {
       const mockOnSelect = jest.fn();
       const user = userEvent.setup();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       buttons[0].focus();
       await user.keyboard('{Enter}');
@@ -167,9 +148,7 @@ describe('RecentContractsSection', () => {
     it('should handle Space key press', async () => {
       const mockOnSelect = jest.fn();
       const user = userEvent.setup();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       buttons[0].focus();
       await user.keyboard(' ');
@@ -180,18 +159,14 @@ describe('RecentContractsSection', () => {
   describe('accessibility', () => {
     it('should have proper table semantics', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const table = screen.getByRole('table');
       expect(table).toBeInTheDocument();
     });
 
     it('should have column headers with scope attribute', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const headers = screen.getAllByRole('columnheader');
       expect(headers).toHaveLength(4);
       headers.forEach((header) => {
@@ -201,9 +176,7 @@ describe('RecentContractsSection', () => {
 
     it('should have rows marked as buttons with tabIndex', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       buttons.forEach((btn) => {
         expect(btn).toHaveAttribute('tabIndex', '0');
@@ -213,7 +186,7 @@ describe('RecentContractsSection', () => {
     it('should have focus-visible styling support', () => {
       const mockOnSelect = jest.fn();
       const { container } = render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
+        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />,
       );
       const rows = container.querySelectorAll('[role="button"]');
       rows.forEach((row) => {
@@ -226,7 +199,7 @@ describe('RecentContractsSection', () => {
     it('should alternate row background colors', () => {
       const mockOnSelect = jest.fn();
       const { container } = render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
+        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />,
       );
       const rows = container.querySelectorAll('[role="button"]');
       expect(rows[0]).toHaveClass('rowEven');
@@ -238,7 +211,7 @@ describe('RecentContractsSection', () => {
     it('should apply nameCell class for name truncation', () => {
       const mockOnSelect = jest.fn();
       const { container } = render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
+        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />,
       );
       const nameCell = container.querySelector('.nameCell');
       expect(nameCell).toBeInTheDocument();
@@ -247,7 +220,7 @@ describe('RecentContractsSection', () => {
     it('should apply dateCell class for date styling', () => {
       const mockOnSelect = jest.fn();
       const { container } = render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
+        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />,
       );
       const dateCell = container.querySelector('.dateCell');
       expect(dateCell).toBeInTheDocument();
@@ -257,9 +230,7 @@ describe('RecentContractsSection', () => {
   describe('data formatting', () => {
     it('should display all contract names', () => {
       const mockOnSelect = jest.fn();
-      render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
-      );
+      render(<RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />);
       mockContracts.slice(0, 4).forEach((contract) => {
         expect(screen.getByText(contract.name)).toBeInTheDocument();
       });
@@ -268,7 +239,7 @@ describe('RecentContractsSection', () => {
     it('should format contract names with proper ellipsis support (via CSS)', () => {
       const mockOnSelect = jest.fn();
       const { container } = render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
+        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />,
       );
       const nameCell = container.querySelector('.nameCell');
       expect(nameCell).toHaveClass('nameCell');
@@ -277,7 +248,7 @@ describe('RecentContractsSection', () => {
     it('should use DM Mono font for dates (via class)', () => {
       const mockOnSelect = jest.fn();
       const { container } = render(
-        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />
+        <RecentContractsSection contracts={mockContracts} onSelectContract={mockOnSelect} />,
       );
       const dateCell = container.querySelector('.dateCell');
       expect(dateCell).toBeInTheDocument();
@@ -292,12 +263,7 @@ describe('RecentContractsSection', () => {
         id: String(i),
         name: `Contract ${i}`,
       }));
-      render(
-        <RecentContractsSection
-          contracts={tenContracts}
-          onSelectContract={mockOnSelect}
-        />
-      );
+      render(<RecentContractsSection contracts={tenContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       expect(buttons).toHaveLength(4);
     });
@@ -305,12 +271,7 @@ describe('RecentContractsSection', () => {
     it('should display all items when fewer than 4 are provided', () => {
       const mockOnSelect = jest.fn();
       const twoContracts = mockContracts.slice(0, 2);
-      render(
-        <RecentContractsSection
-          contracts={twoContracts}
-          onSelectContract={mockOnSelect}
-        />
-      );
+      render(<RecentContractsSection contracts={twoContracts} onSelectContract={mockOnSelect} />);
       const buttons = screen.getAllByRole('button');
       expect(buttons).toHaveLength(2);
     });

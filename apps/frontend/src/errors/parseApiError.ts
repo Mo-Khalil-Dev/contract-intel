@@ -45,8 +45,7 @@ export function parseApiError(error: unknown): AppError {
 
     const { status, data, headers } = axiosError.response;
     const correlationId =
-      (headers['x-request-id'] as string | undefined) ??
-      data?.error?.correlationId;
+      (headers['x-request-id'] as string | undefined) ?? data?.error?.correlationId;
 
     // Backend returned a well-formed Problem Details body
     if (data?.error) {

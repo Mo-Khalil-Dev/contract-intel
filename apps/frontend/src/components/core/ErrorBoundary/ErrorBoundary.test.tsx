@@ -88,7 +88,9 @@ describe('ErrorBoundary', () => {
 
   it('renders a custom fallback when provided', () => {
     render(
-      <ErrorBoundary fallback={(err, reset) => <button onClick={reset}>Custom: {err.message}</button>}>
+      <ErrorBoundary
+        fallback={(err, reset) => <button onClick={reset}>Custom: {err.message}</button>}
+      >
         <Bomb error={new Error('custom error')} />
       </ErrorBoundary>,
     );

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { HomePageContainer } from '../HomePageContainer';
@@ -86,7 +86,9 @@ describe('HomePageContainer', () => {
       });
 
       render(<HomePageContainer />, { wrapper: createWrapper() });
-      expect(screen.getByText(/loading/i) || document.querySelector('.loadingContainer')).toBeTruthy();
+      expect(
+        screen.getByText(/loading/i) || document.querySelector('.loadingContainer'),
+      ).toBeTruthy();
     });
   });
 
@@ -234,7 +236,7 @@ describe('HomePageContainer', () => {
         error: null,
       });
 
-      const { container } = render(<HomePageContainer />, { wrapper: createWrapper() });
+      render(<HomePageContainer />, { wrapper: createWrapper() });
 
       // Verify sign out functionality would be called
       // In full integration, this would clear tokens and redirect
