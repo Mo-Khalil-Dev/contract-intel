@@ -1,5 +1,6 @@
 import React from 'react';
 import { useErrorBoundary } from './useErrorBoundary';
+import { posthog } from '@/analytics/posthog';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -42,6 +43,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     // In production this is where you'd send to Sentry / LogRocket.
     // For now, log to console so it's visible during development.
     console.error('[ErrorBoundary] Uncaught error:', error, info.componentStack);
+    posthog.captureException(error, { properties: { componentStack: info.componentStack } });
   }
 
   reset(): void {
