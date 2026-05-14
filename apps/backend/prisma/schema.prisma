@@ -52,3 +52,27 @@ model Session {
   @@index([userId])
   @@index([expiresAt])
 }
+
+// -----------------------------------------------------------------------------
+// Documents domain (Phase 5)
+// -----------------------------------------------------------------------------
+
+model Document {
+  id             String    @id // UUID, supplied by the application (DocumentId VO)
+  name           String    // Original filename — never used as storage key
+  type           String    // DocumentType enum (PDF in v1)
+  sizeBytes      Int       // Validated ≤50 MB at the VO layer
+  status         String    // pending | uploading | complete | failed
+  storageKey     String    @unique // Opaque '{documentId}.{ext}' — addresses the blob
+  uploadedBy     String    // UserId UUID (the requester)
+  orgId          String    // v1: orgId == uploadedBy. Will become a real Org FK later.
+  failureReason  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  completedAt   DateTime?
+
+  // Every read is scoped by orgId, so the index drives every list query.
+  @@index([orgId])
+  @@index([uploadedBy])
+  @@index([orgId, status])
+}

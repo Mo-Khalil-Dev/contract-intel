@@ -7,6 +7,7 @@ import { PrismaModule } from './shared/infrastructure/prisma/prisma.module';
 import { ResponseInterceptor } from './shared/infrastructure/interceptors/response.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { ReferenceDataModule } from './modules/reference-data/reference-data.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
     CqrsModule,
     AuthModule,
     ReferenceDataModule,
+    DocumentsModule,
   ],
   providers: [
     {
