@@ -178,7 +178,7 @@
 
 **What's being built**:
 
-1. **Task 5.1 — UI** with mock service: drag-and-drop dropzone, file validation (PDF/DOCX, ≤50MB), consent checkbox, progress bar, success/error states
+1. **Task 5.1 — UI** with mock service: drag-and-drop dropzone, file validation (PDF only, ≤50MB), consent checkbox, progress bar, success/error states
 2. **Task 5.2 — Routing, edge cases, a11y**: `/upload` route, error/loading/empty/validation states, axe audit, Storybook
 3. **Task 5.3 — Backend domain + application**: Document aggregate, value objects, CQRS commands (InitiateUpload, CompleteUpload, FailUpload), GetUploadStatus query
 4. **Task 5.4 — Backend infrastructure + integration**: PrismaDocumentRepository, StorageService (GCS prod / local dev), DocumentController, swap mock → real service, E2E test
@@ -1895,6 +1895,19 @@ apps/frontend/ANALYTICS.md             # event taxonomy reference
 
 **Component approach**: Custom components (plain React + CSS modules + Lucide). NOT Shadcn. Follow the `HomePageV2/components/` pattern.
 
+### Locked design decisions (2026-05-14)
+
+- **Single-file v1**: One file per upload. No bulk. Wireframe's "up to 20 at once" is deferred.
+- **File types: PDF only**. Wireframe shows PDF/DOCX/PPTX; we ship PDF first and add the others when the extraction pipeline is ready for them.
+- **Post-submit flow: 3-screen** (matches wireframe). Upload submits → navigate to `/processing/:documentId` → on completion navigate to `/results/:documentId`. `/processing` and `/results` are stubs in Phase 5; full pages land in later phases.
+- **Consent copy**: kept literal — names "Claude AI" as the analyser. Transparent, easy to revisit if the AI vendor ever changes.
+- **Page copy**: stays "contract" / "Analyze contract" (matches current product brand). Don't parameterise the noun in v1.
+- **State machine**: dropped the `processing` state for v1. Document lifecycle is `pending → uploading → complete/failed`. Add `processing` back when OCR/extraction lands.
+- **Multi-tenancy**: `Document` carries `OrgId`. All repository queries filter by it. For v1, **`OrgId` is derived 1:1 from the session's `userId`** (no separate `Org` aggregate yet) — the field exists, the query plumbing works, real `Org` / `UserOrgMembership` models land in a later phase when actual multi-tenancy ships. This way Phase 5 doesn't snowball.
+- **Local-dev storage**: backend-proxied pattern. Local driver returns a backend URL (`/api/v1/documents/upload/raw/:storageKey`); browser PUTs to backend; backend writes to `apps/backend/uploads/`. Same client code path as GCS-presigned in prod — only the URL is different.
+- **Idempotency on `InitiateUpload`**: not enforced in v1. Accept that a double-click can produce an orphan Document; cleanup is a later concern.
+- **Delete-anytime trust badge**: kept in UI copy, backed by a soft-delete in v1 (status flag, file stays on disk). Real cleanup is a later concern.
+
 ---
 
 ### Task 5.1: Upload Screen UI — Pixel-Sharp Layout (with mock service)
@@ -1908,7 +1921,7 @@ documentService (mock):
 ├── initiateUpload(file) → { uploadUrl: 'mock://...', documentId: 'doc-<uuid>' } after 300ms
 ├── uploadToStorage(url, file) → resolves with simulated 0%→100% progress over ~2s
 ├── completeUpload(documentId) → resolves after 200ms
-└── getUploadStatus(id) → cycles 'pending' → 'uploading' → 'processing' → 'complete'
+└── getUploadStatus(id) → cycles 'pending' → 'uploading' → 'complete'
 
 Failure modes (toggleable via dev-mode flag for testing):
 ├── 'file-too-large' → throw at initiateUpload
@@ -1967,7 +1980,7 @@ In Phase 5.1, `documentService.ts` returns mocked data directly. In Phase 5.4, o
 - [ ] **UploadButton** — primary CTA, disabled until file + consent
 - [ ] **UploadProgress** — progress bar 0–100% with status text
 - [ ] **UploadStatusToast** (or inline panel) — success/error feedback
-- [ ] **HelperText** — "PDF, DOCX · up to 50 MB · 60s analysis"
+- [ ] **HelperText** — "PDF · up to 50 MB · 60s analysis"
 
 **Files**:
 
@@ -1999,7 +2012,7 @@ apps/frontend/src/
 **Definition of Done**:
 
 - [ ] `/upload` route renders the page
-- [ ] Drag-and-drop accepts PDF + DOCX, rejects others with clear error
+- [ ] Drag-and-drop accepts PDF only, rejects everything else with a clear error
 - [ ] File size validation (≤50MB) with clear error
 - [ ] Consent checkbox blocks upload until checked
 - [ ] Mock upload flow completes end-to-end in ~3s
@@ -2036,7 +2049,7 @@ apps/frontend/src/
 **Storybook Stories** (all states, like HomePage):
 
 - [ ] Empty / initial state
-- [ ] FileSelected (PDF) / FileSelected (DOCX)
+- [ ] FileSelected (PDF, small) / FileSelected (PDF, near 50MB limit)
 - [ ] FileSelected with consent checked
 - [ ] Uploading at 25% / 50% / 75% / 100%
 - [ ] Processing state
@@ -2084,21 +2097,23 @@ Aggregate: Document
 ├── Value Objects:
 │   ├── DocumentId (UUID)
 │   ├── DocumentName
-│   ├── DocumentType (PDF, DOCX)
+│   ├── DocumentType (PDF only in v1)
 │   ├── FileSize
-│   ├── UploadStatus (enum: pending, uploading, processing, complete, failed)
-│   ├── StorageKey
-│   └── UploadedBy (UserId)
+│   ├── UploadStatus (enum: pending, uploading, complete, failed)
+│   ├── StorageKey (opaque, e.g. `{documentId}.pdf`)
+│   ├── UploadedBy (UserId)
+│   └── OrgId (data isolation — every repo query filters by it;
+│             in v1 derived 1:1 from UserId until Org aggregate ships)
 ├── Domain Events:
 │   ├── DocumentUploadStartedEvent
 │   ├── DocumentUploadCompletedEvent
-│   ├── DocumentUploadFailedEvent
-│   └── DocumentProcessingStartedEvent
+│   └── DocumentUploadFailedEvent
 └── Invariants:
     ├── File size must be ≤50MB
-    ├── File type must be PDF or DOCX
+    ├── File type must be PDF (DOCX/PPTX deferred to a later phase)
     ├── Document name must not be empty
-    └── Status transitions: pending → uploading → processing → complete/failed
+    └── Status transitions: pending → uploading → complete/failed
+        (no `processing` state in v1 — re-added when extraction pipeline lands)
 ```
 
 **Application Layer (CQRS)**:
@@ -2106,21 +2121,21 @@ Aggregate: Document
 ```
 Commands:
 ├── InitiateUploadCommand → InitiateUploadHandler
-│   ├── Validate file (size, type)
-│   ├── Generate presigned URL (via StorageService — stubbed in this task)
-│   ├── Create Document aggregate (status: pending)
+│   ├── Validate file (size, type=PDF) and OrgId from session
+│   ├── Generate storage URL (real GCS presigned in prod, backend-proxied URL in dev)
+│   ├── Create Document aggregate (status: pending, scoped to OrgId)
 │   └── Return upload URL + documentId
 ├── CompleteUploadCommand → CompleteUploadHandler
-│   ├── Update Document status (uploading → processing)
+│   ├── Update Document status (uploading → complete)
 │   ├── Emit DocumentUploadCompletedEvent
-│   └── (OCR job triggering moved to a later phase)
+│   └── (Extraction pipeline triggering moved to a later phase)
 └── FailUploadCommand → FailUploadHandler
     ├── Update Document status (uploading → failed)
     └── Emit DocumentUploadFailedEvent
 
 Queries:
 └── GetUploadStatusQuery → GetUploadStatusHandler
-    └── Return current upload status
+    └── Return current upload status (scoped to caller's OrgId)
 ```
 
 **Deliverables**:
