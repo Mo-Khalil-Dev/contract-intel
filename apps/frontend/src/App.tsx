@@ -1,3 +1,4 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,25 +11,27 @@ import { KPICard } from '@/components/core/KPICard';
 import { PageShell } from '@/components/layout/PageShell';
 import { TopNav } from '@/components/layout/TopNav';
 import { OrgBanner } from '@/components/layout/OrgBanner';
+import { ProtectedRoute } from '@/components/features/ProtectedRoute/ProtectedRoute';
+import { LoginCallbackPage } from '@/pages/LoginCallbackPage';
+import { useAuth } from '@/hooks/useAuth';
 
-const navLinks = [
-  { href: '/', label: 'Home', current: true },
-  { href: '/portfolio', label: 'Portfolio' },
-  { href: '/renewals', label: 'Renewals' },
-  { href: '/settings', label: 'Settings' },
-];
+function HomePage() {
+  const { user, logout } = useAuth();
 
-const user = {
-  name: 'Mo Khalil',
-  email: 'mo@northwind.com',
-};
+  const navLinks = [
+    { href: '/', label: 'Home', current: true },
+    { href: '/portfolio', label: 'Portfolio' },
+    { href: '/renewals', label: 'Renewals' },
+    { href: '/settings', label: 'Settings' },
+  ];
 
-function App() {
+  const displayUser = user ? { name: user.name || user.email, email: user.email } : undefined;
+
   return (
     <PageShell
       header={
         <>
-          <TopNav links={navLinks} user={user} />
+          <TopNav links={navLinks} user={displayUser} onSignOut={logout} />
           <OrgBanner
             orgName="Northwind Holdings Ltd"
             workspaceTag="Legal Operations · Contract Review Workspace"
@@ -38,8 +41,8 @@ function App() {
     >
       <div className="space-y-xl">
         <header>
-          <h1 className="text-ink text-4xl font-extrabold tracking-tighter">Good morning, Mo.</h1>
-          <p className="text-ink-soft text-lg">Phase 2 — Design System smoke test</p>
+          <h1 className="text-ink text-4xl font-extrabold tracking-tighter">Good morning, {user?.name || 'User'}.</h1>
+          <p className="text-ink-soft text-lg">Phase 3 — Authentication complete</p>
         </header>
 
         <section className="space-y-md">
@@ -136,6 +139,24 @@ function App() {
         </section>
       </div>
     </PageShell>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/auth/callback" element={<LoginCallbackPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
