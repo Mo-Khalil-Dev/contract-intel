@@ -51,3 +51,6 @@ temp/
 
 *storybook.log
 storybook-static
+
+# Backend upload directory (local FS storage driver)
+apps/backend/uploads/

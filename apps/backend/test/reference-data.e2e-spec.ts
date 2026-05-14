@@ -60,6 +60,18 @@ describe('Reference Data E2E (GET /reference-data)', () => {
 
     app = moduleRef.createNestApplication();
     app.useGlobalFilters(new HttpExceptionFilter());
+    // The controller reads `request.user.userId` via @CurrentUser. The
+    // auth guard isn't mounted in this test setup, so inject a stub
+    // user — otherwise every route 500s. (Pre-existing gap surfaced
+    // when the documents e2e suite was added.)
+    app.use((req: any, _res: any, next: any) => {
+      req.user = {
+        userId: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        displayName: 'Test User',
+      };
+      next();
+    });
     await app.init();
   });
 
