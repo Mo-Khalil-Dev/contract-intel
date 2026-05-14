@@ -57,6 +57,6 @@ const EVENT_HANDLERS = [UserLoggedInHandler, SessionInvalidatedHandler];
       useClass: SessionAuthGuard,
     },
   ],
-  exports: [SessionCookieService],
+  exports: [SessionCookieService, USER_REPOSITORY],
 })
 export class AuthModule {}

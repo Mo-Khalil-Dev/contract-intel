@@ -1,10 +1,11 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { API } from './endpoints';
 
 export const apiClient = axios.create({
   baseURL: 'http://localhost:3000',
   withCredentials: true,
 });
+
 
 // 401 response interceptor: redirect to login with returnUrl
 apiClient.interceptors.response.use(

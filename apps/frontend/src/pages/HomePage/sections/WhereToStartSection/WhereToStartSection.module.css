@@ -1,0 +1,101 @@
+.section {
+  width: 100%;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-soft);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg);
+}
+
+.uploadCard {
+  background: var(--color-ink) !important;
+  color: var(--color-white);
+  overflow: visible !important;
+}
+
+.uploadCard h2,
+.uploadCard h3,
+.uploadCard p,
+.uploadCard span,
+.uploadCard div {
+  color: var(--color-white) !important;
+}
+
+.uploadCardHeader {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.uploadCardContent {
+  padding: var(--spacing-md);
+}
+
+.uploadButton {
+  width: 100%;
+  margin-top: var(--spacing-md);
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.rightColumnTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-soft);
+}
+
+.cardTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.resumeContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.contractName {
+  font-weight: 600;
+  color: var(--color-ink);
+  line-height: 1.4;
+}
+
+.contractMeta {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.sampleContent {
+  font-size: 0.875rem;
+  color: var(--color-ink-soft);
+  line-height: 1.5;
+}
+
+.sampleContent p {
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 1.8fr 1fr;
+  }
+}

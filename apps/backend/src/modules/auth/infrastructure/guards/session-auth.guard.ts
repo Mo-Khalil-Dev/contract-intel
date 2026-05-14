@@ -33,6 +33,18 @@ export class SessionAuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<Request & { user?: RequestUser }>();
+
+    // Development mode: allow testing without auth
+    if (process.env.NODE_ENV === 'development' && request.headers['x-dev-bypass'] === 'true') {
+      request.user = {
+        userId: 'dev-user-123',
+        sessionId: 'dev-session-123',
+        email: 'dev@example.com',
+        role: 'user',
+      };
+      return true;
+    }
+
     const sessionIdRaw = this.cookies.read(request);
 
     if (!sessionIdRaw) {

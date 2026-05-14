@@ -1,0 +1,108 @@
+.section {
+  width: 100%;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.table th {
+  text-align: left;
+  padding: var(--spacing-md);
+  font-weight: 600;
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row {
+  background-color: var(--color-background-primary);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-left: 4px solid transparent;
+}
+
+.row:hover {
+  background-color: var(--color-background-tertiary);
+}
+
+.row:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.urgency-critical {
+  border-left-color: var(--color-error-600);
+}
+
+.urgency-high {
+  border-left-color: var(--color-warning-600);
+}
+
+.urgency-medium {
+  border-left-color: var(--color-success-600);
+}
+
+.nameCell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.dateCell {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.875rem;
+  color: var(--color-ink-soft);
+}
+
+.daysCell {
+  font-family: 'DM Mono', monospace;
+  font-weight: 600;
+}
+
+.days-critical {
+  color: var(--color-error-600);
+}
+
+.days-high {
+  color: var(--color-warning-600);
+}
+
+.days-medium {
+  color: var(--color-success-600);
+}
+
+.emptyState {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-ink-soft);
+  background-color: var(--color-background-secondary);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+  .table th:nth-child(2),
+  .table td:nth-child(2) {
+    display: none;
+  }
+}

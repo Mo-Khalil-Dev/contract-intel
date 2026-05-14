@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContractIntel — Screens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --ink: #0F172A;
+      --ink-soft: #475569;
+      --ink-mute: #94A3B8;
+      --border: #E5E7EB;
+      --border-strong: #CBD5E1;
+      --blue: #2563EB;
+      --blue-light: #DBEAFE;
+    }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+    .page { max-width: 1440px; margin: 0 auto; padding: 56px 40px 96px; }
+
+    header { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; padding-bottom: 28px; border-bottom: 1px solid var(--border); margin-bottom: 40px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 32px; height: 32px; border-radius: 8px; background: var(--ink); color: #fff; display: grid; place-items: center; font-family: 'DM Mono', monospace; font-weight: 600; font-size: 14px; letter-spacing: -0.02em; }
+    .eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mute); margin: 0 0 8px; }
+    h1 { font-family: 'DM Sans', sans-serif; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+    .meta { display: flex; flex-direction: column; gap: 4px; text-align: right; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+    .meta strong { color: var(--ink); font-weight: 500; }
+
+    .legend { display: flex; gap: 24px; margin-bottom: 32px; font-size: 13px; color: var(--ink-soft); flex-wrap: wrap; }
+    .legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 680px)  { .grid { grid-template-columns: 1fr; } }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; text-decoration: none; color: inherit; }
+    .card:hover { border-color: var(--border-strong); box-shadow: 0 4px 16px -8px rgba(15,23,42,.18); transform: translateY(-2px); }
+    .card:hover .open { color: var(--blue); }
+
+    .thumb-wrap { position: relative; height: 280px; background: #F1F5F9; border-bottom: 1px solid var(--border); overflow: hidden; }
+    .thumb-frame {
+      /* 1440 x 1440 viewport scaled to ~480 wide -> scale 0.333 */
+      border: 0; width: 1440px; height: 1440px;
+      transform: scale(0.34); transform-origin: top left;
+      pointer-events: none; background: var(--bg);
+    }
+    .thumb-overlay { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(15,23,42,.04); }
+    .thumb-loader { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-mute); font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .thumb-loader.hidden { display: none; }
+
+    .meta-row { padding: 16px 20px 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .titles { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .idx { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; color: var(--ink-mute); }
+    .name { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+    .desc { font-size: 13px; color: var(--ink-soft); line-height: 1.4; margin-top: 2px; }
+    .open { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); flex-shrink: 0; padding-top: 2px; transition: color .15s ease; }
+
+    .tag { display: inline-block; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: var(--blue-light); color: var(--blue); margin-top: 8px; }
+    .tag.gray { background: #F1F5F9; color: var(--ink-soft); }
+
+    footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-mute); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    footer a { color: var(--ink-soft); text-decoration: none; }
+    footer a:hover { color: var(--blue); }
+  </style>
+</head>
+<body data-screen-label="Screens Index">
+  <div class="page">
+    <header>
+      <div>
+        <div class="brand">
+          <div class="logo">CI</div>
+          <span class="eyebrow" style="margin: 0;">ContractIntel · Redesign</span>
+        </div>
+        <h1 style="margin-top: 16px;">Screen exports</h1>
+        <p style="margin: 8px 0 0; color: var(--ink-soft); font-size: 14px; max-width: 540px;">Each screen is exported as a standalone HTML file. Open one to view it in isolation, or jump back to the full prototype with the unified shell.</p>
+      </div>
+      <div class="meta">
+        <div><strong>11</strong> screens</div>
+        <div>v6 · 2026-05-14</div>
+        <div><a href="../ContractIntel Redesign.html" style="color: var(--blue); text-decoration: none;">↗ Full prototype</a></div>
+      </div>
+    </header>
+
+    <div class="legend">
+      <span><span class="dot" style="background: var(--blue);"></span>Core flow</span>
+      <span><span class="dot" style="background: #94A3B8;"></span>Tools &amp; admin</span>
+      <span style="margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px;">Click any card to open ↗</span>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <footer>
+      <span>ContractIntel · Screen index</span>
+      <span><a href="../ContractIntel Redesign.html">Open full prototype →</a></span>
+    </footer>
+  </div>
+
+  <script>
+    const SCREENS = [
+      { file: 'home.html',       name: 'Home',         desc: 'Landing surface with portfolio overview, recent activity, and quick actions.', tag: 'Core' },
+      { file: 'upload.html',     name: 'Upload',       desc: 'Drag-and-drop upload zone for new contracts, with metadata capture.', tag: 'Core' },
+      { file: 'processing.html', name: 'Processing',   desc: 'Live extraction and analysis state — shown while contracts are parsed.', tag: 'Core' },
+      { file: 'results.html',    name: 'Results',      desc: 'Risk summary, flagged clauses, and per-contract review breakdown.', tag: 'Core' },
+      { file: 'deepdive.html',   name: 'Deep Dive',    desc: 'Single-flag inspection: full clause text, citation, and reviewer notes.', tag: 'Core' },
+      { file: 'compare.html',    name: 'Compare',      desc: 'Side-by-side contract comparison with diff highlighting.', tag: 'Tool' },
+      { file: 'portfolio.html',  name: 'Portfolio',    desc: 'All contracts in one searchable, sortable list.', tag: 'Core' },
+      { file: 'playbook.html',   name: 'Playbook',     desc: 'Reusable clause library and review playbooks for repeat work.', tag: 'Tool' },
+      { file: 'export.html',     name: 'Export',       desc: 'Configure a redlined Word, summary PDF, or CSV export.', tag: 'Tool' },
+      { file: 'renewals.html',   name: 'Renewals',     desc: 'Upcoming contract renewals timeline and reminders.', tag: 'Tool' },
+      { file: 'settings.html',   name: 'Settings',     desc: 'Workspace, user, and integration preferences.', tag: 'Admin' },
+    ];
+
+    const grid = document.getElementById('grid');
+    SCREENS.forEach((s, i) => {
+      const idx = String(i + 1).padStart(2, '0');
+      const tagClass = s.tag === 'Core' ? '' : 'gray';
+      const a = document.createElement('a');
+      a.href = s.file;
+      a.className = 'card';
+      a.innerHTML = `
+        <div class="thumb-wrap">
+          <div class="thumb-loader" data-loader>LOADING ${s.file.toUpperCase()}</div>
+          <iframe class="thumb-frame" src="${s.file}" loading="lazy" scrolling="no" aria-hidden="true" tabindex="-1"
+                  onload="this.previousElementSibling.classList.add('hidden')"></iframe>
+          <div class="thumb-overlay"></div>
+        </div>
+        <div class="meta-row">
+          <div class="titles">
+            <span class="idx">${idx} / 11</span>
+            <span class="name">${s.name}</span>
+            <span class="desc">${s.desc}</span>
+            <span class="tag ${tagClass}">${s.tag}</span>
+          </div>
+          <span class="open">Open →</span>
+        </div>
+      `;
+      grid.appendChild(a);
+    });
+  </script>
+</body>
+</html>
