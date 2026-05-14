@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useReferenceData } from '@/hooks/useReferenceData';
+import { authService } from '@/services/authService';
+import { API } from '@/api/endpoints';
 import { HomePage } from './HomePage';
 import { Skeleton } from '@/components/ui/skeleton';
 import styles from './HomePageContainer.module.css';
@@ -33,11 +35,14 @@ export function HomePageContainer() {
     }
   };
 
-  const handleSignOut = () => {
-    // Clear auth state and redirect to login
-    localStorage.removeItem('auth_token');
-    sessionStorage.removeItem('auth_token');
-    navigate('/login');
+  const handleSignOut = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // Ignore — session may already be invalid. We still want to redirect.
+    }
+    // Backend clears the session cookie; bounce to login flow.
+    window.location.href = API.AUTH_LOGIN;
   };
 
   if (isLoading) {
