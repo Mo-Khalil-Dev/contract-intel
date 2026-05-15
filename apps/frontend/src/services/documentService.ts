@@ -13,6 +13,7 @@
  */
 
 import { httpService } from '@/api/httpService';
+import { API_BASE_URL } from '@/api/client';
 import { API } from '@/api/endpoints';
 import type {
   DocumentId,
@@ -101,9 +102,20 @@ export const documentService = {
   ): Promise<void> {
     const { onProgress, signal } = options;
 
+    // Backend returns a relative path (e.g. /api/v1/documents/upload/raw/<key>)
+    // because both storage drivers route bytes through the backend. On Railway
+    // the frontend and backend are different origins, so a relative URL would
+    // hit the SPA host (which 200s with index.html, fooling XHR into thinking
+    // the upload succeeded). Always prepend the API origin for non-absolute URLs.
+    const absoluteUrl = url.startsWith('http://') || url.startsWith('https://')
+      ? url
+      : `${API_BASE_URL}${url}`;
+
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open('PUT', url, true);
+      xhr.open('PUT', absoluteUrl, true);
+      // Send the session cookie so SessionAuthGuard accepts the request.
+      xhr.withCredentials = true;
       xhr.setRequestHeader('Content-Type', file.type);
 
       if (onProgress) {
