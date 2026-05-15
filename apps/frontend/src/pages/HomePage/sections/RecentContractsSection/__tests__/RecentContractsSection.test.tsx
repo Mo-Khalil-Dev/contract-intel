@@ -7,7 +7,7 @@ const mockContracts: RecentContractItem[] = [
   {
     id: '1',
     name: 'AWS Services Agreement',
-    type: 'SaaS',
+    type: 'vendor',
     party: 'Amazon Web Services Inc.',
     flagCount: 2,
     riskScore: 72,
@@ -16,7 +16,7 @@ const mockContracts: RecentContractItem[] = [
   {
     id: '2',
     name: 'Microsoft Enterprise License',
-    type: 'License',
+    type: 'license',
     party: 'Microsoft Corporation',
     flagCount: 0,
     riskScore: 28,
@@ -25,7 +25,7 @@ const mockContracts: RecentContractItem[] = [
   {
     id: '3',
     name: 'Google Workspace Agreement',
-    type: 'SaaS',
+    type: 'vendor',
     party: 'Google LLC',
     flagCount: 1,
     riskScore: 68,
@@ -34,7 +34,7 @@ const mockContracts: RecentContractItem[] = [
   {
     id: '4',
     name: 'Slack Enterprise Agreement',
-    type: 'SaaS',
+    type: 'vendor',
     party: 'Slack Technologies Inc.',
     flagCount: 3,
     riskScore: 15,

@@ -19,7 +19,7 @@ const baseData: DashboardViewModel = {
     {
       id: '1',
       name: 'AWS Services Agreement',
-      type: 'SaaS',
+      type: 'vendor',
       party: 'Amazon Web Services Inc.',
       flagCount: 2,
       riskScore: 72,
@@ -28,7 +28,7 @@ const baseData: DashboardViewModel = {
     {
       id: '2',
       name: 'Microsoft Enterprise License',
-      type: 'License',
+      type: 'license',
       party: 'Microsoft Corporation',
       flagCount: 0,
       riskScore: 28,
@@ -37,7 +37,7 @@ const baseData: DashboardViewModel = {
     {
       id: '3',
       name: 'Google Workspace Agreement',
-      type: 'SaaS',
+      type: 'vendor',
       party: 'Google LLC',
       flagCount: 1,
       riskScore: 68,
@@ -46,7 +46,7 @@ const baseData: DashboardViewModel = {
     {
       id: '4',
       name: 'Slack Enterprise Agreement',
-      type: 'SaaS',
+      type: 'vendor',
       party: 'Slack Technologies Inc.',
       flagCount: 3,
       riskScore: 15,
@@ -82,7 +82,7 @@ const baseData: DashboardViewModel = {
   lastOpenedContract: {
     id: '1',
     name: 'AWS Services Agreement',
-    type: 'SaaS',
+    type: 'vendor',
     party: 'Amazon Web Services Inc.',
     flagCount: 2,
     riskScore: 72,
@@ -130,7 +130,7 @@ export const HighRiskPortfolio: Story = {
         {
           id: '1',
           name: 'High Risk Vendor Agreement',
-          type: 'Service',
+          type: 'vendor',
           party: 'Unknown Vendor Inc.',
           flagCount: 8,
           riskScore: 95,
@@ -165,7 +165,7 @@ export const LowRiskPortfolio: Story = {
         {
           id: '1',
           name: 'Standard SaaS Agreement',
-          type: 'SaaS',
+          type: 'vendor',
           party: 'Safe Vendor Corp',
           flagCount: 0,
           riskScore: 12,
@@ -174,7 +174,7 @@ export const LowRiskPortfolio: Story = {
         {
           id: '2',
           name: 'Simple License Agreement',
-          type: 'License',
+          type: 'license',
           party: 'Trusted Provider Inc.',
           flagCount: 0,
           riskScore: 8,
@@ -305,7 +305,7 @@ export const SingleRecentContract: Story = {
         {
           id: '1',
           name: 'AWS Services Agreement',
-          type: 'SaaS',
+          type: 'vendor',
           party: 'Amazon Web Services Inc.',
           flagCount: 2,
           riskScore: 72,
@@ -333,7 +333,7 @@ export const LongContractNames: Story = {
         {
           id: '1',
           name: 'Very Long Software as a Service Agreement with Extended Terms and Conditions for Enterprise Usage',
-          type: 'SaaS',
+          type: 'vendor',
           party: 'Very Long Company Name with Many Words Inc.',
           flagCount: 2,
           riskScore: 72,
@@ -367,7 +367,7 @@ export const MultipleFlagsAndHighRisk: Story = {
         {
           id: '1',
           name: 'Complex Vendor Agreement',
-          type: 'Service',
+          type: 'vendor',
           party: 'Complex Vendor Corp',
           flagCount: 12,
           riskScore: 92,

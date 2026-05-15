@@ -20,7 +20,7 @@ const mockDashboardData: DashboardViewModel = {
     {
       id: '1',
       name: 'AWS Services Agreement',
-      type: 'SaaS',
+      type: 'vendor',
       party: 'Amazon Web Services Inc.',
       flagCount: 2,
       riskScore: 72,
@@ -29,7 +29,7 @@ const mockDashboardData: DashboardViewModel = {
     {
       id: '2',
       name: 'Microsoft Enterprise License',
-      type: 'License',
+      type: 'license',
       party: 'Microsoft Corporation',
       flagCount: 0,
       riskScore: 28,
@@ -57,7 +57,7 @@ const mockDashboardData: DashboardViewModel = {
   lastOpenedContract: {
     id: '1',
     name: 'AWS Services Agreement',
-    type: 'SaaS',
+    type: 'vendor',
     party: 'Amazon Web Services Inc.',
     flagCount: 2,
     riskScore: 72,

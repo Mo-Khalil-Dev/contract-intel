@@ -6,7 +6,7 @@ import { RecentContractItem } from '@/types/referenceData';
 const mockRecentContract: RecentContractItem = {
   id: '1',
   name: 'AWS Services Agreement',
-  type: 'SaaS',
+  type: 'vendor',
   party: 'Amazon Web Services Inc.',
   flagCount: 2,
   riskScore: 72,
@@ -61,7 +61,7 @@ describe('WhereToStartSection', () => {
 
     it('should display contract type in resume card', () => {
       render(<WhereToStartSection lastOpenedContract={mockRecentContract} onUpload={jest.fn()} />);
-      expect(screen.getByText('SaaS')).toBeInTheDocument();
+      expect(screen.getByText('Vendor')).toBeInTheDocument();
     });
 
     it('should not render resume card when lastOpenedContract is null', () => {
@@ -113,7 +113,7 @@ describe('WhereToStartSection', () => {
   describe('card styling', () => {
     it('should apply card class to cards', () => {
       const { container } = render(
-        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} onResume={jest.fn()} />,
+        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} />,
       );
       const cards = container.querySelectorAll('.card');
       expect(cards.length).toBeGreaterThan(0);
@@ -121,7 +121,7 @@ describe('WhereToStartSection', () => {
 
     it('should apply uploadCard class to upload card', () => {
       const { container } = render(
-        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} onResume={jest.fn()} />,
+        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} />,
       );
       const uploadCard = container.querySelector('.uploadCard');
       expect(uploadCard).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('WhereToStartSection', () => {
   describe('typography and spacing', () => {
     it('should display card titles with proper styling', () => {
       const { container } = render(
-        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} onResume={jest.fn()} />,
+        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} />,
       );
       const titles = container.querySelectorAll('.cardTitle');
       expect(titles.length).toBeGreaterThan(0);
@@ -139,7 +139,7 @@ describe('WhereToStartSection', () => {
 
     it('should display descriptions with consistent styling', () => {
       const { container } = render(
-        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} onResume={jest.fn()} />,
+        <WhereToStartSection lastOpenedContract={null} onUpload={jest.fn()} />,
       );
       const descriptions = container.querySelectorAll('.description');
       expect(descriptions.length).toBeGreaterThan(0);
@@ -164,7 +164,7 @@ describe('WhereToStartSection', () => {
     it('should display different contract types in resume card', () => {
       const licenseContract: RecentContractItem = {
         ...mockRecentContract,
-        type: 'License',
+        type: 'license',
       };
       render(<WhereToStartSection lastOpenedContract={licenseContract} onUpload={jest.fn()} />);
       expect(screen.getByText('License')).toBeInTheDocument();

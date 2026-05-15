@@ -79,7 +79,7 @@ GCS_SERVICE_ACCOUNT_KEY=<paste base64 here>
 ### `frontend` service
 
 ```
-VITE_API_URL=https://your-backend.up.railway.app/api/v1
+VITE_API_URL=https://your-backend.up.railway.app
 VITE_AUTH0_DOMAIN=dev-mk-xubo1eltr6n4b4ze.uk.auth0.com
 VITE_AUTH0_CLIENT_ID=...
 VITE_AUTH0_CALLBACK_URL=https://your-frontend.up.railway.app/auth/callback
