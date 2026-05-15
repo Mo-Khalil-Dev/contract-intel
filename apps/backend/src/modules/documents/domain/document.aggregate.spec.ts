@@ -1,4 +1,4 @@
-import { Document } from './document.aggregate';
+import { Document, MAX_USER_RETRY_COUNT } from './document.aggregate';
 import { DocumentId } from './value-objects/document-id.vo';
 import { DocumentName } from './value-objects/document-name.vo';
 import { DocumentType } from './value-objects/document-type.vo';
@@ -6,8 +6,12 @@ import { FileSize } from './value-objects/file-size.vo';
 import { OrgId } from './value-objects/org-id.vo';
 import { StorageKey } from './value-objects/storage-key.vo';
 import { UploadedBy } from './value-objects/uploaded-by.vo';
+import { ProcessingStatusValue } from './value-objects/processing-status.vo';
 import { UploadStatusValue } from './value-objects/upload-status.vo';
 import {
+  DocumentOcrCompletedEvent,
+  DocumentOcrFailedEvent,
+  DocumentOcrStartedEvent,
   DocumentUploadCompletedEvent,
   DocumentUploadFailedEvent,
   DocumentUploadStartedEvent,
@@ -126,6 +130,133 @@ describe('Document aggregate', () => {
     });
   });
 
+  // ── OCR pipeline behaviour ────────────────────────────────────────
+
+  describe('startProcessing()', () => {
+    it('flips processingStatus to processing and emits started event', () => {
+      const doc = makeDoc();
+      doc.markComplete();
+      doc.pullDomainEvents();
+
+      doc.startProcessing();
+
+      expect(doc.processingStatus.value).toBe(ProcessingStatusValue.PROCESSING);
+      const events = doc.pullDomainEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(DocumentOcrStartedEvent);
+    });
+
+    it('rejects when upload is not complete', () => {
+      const doc = makeDoc();
+      expect(() => doc.startProcessing()).toThrow(/upload must be 'complete'/);
+    });
+
+    it('clears any stale failureReason on (re-)start', () => {
+      const doc = makeDoc();
+      doc.markComplete();
+      doc.startProcessing();
+      doc.failProcessing('invalid_pdf');
+      expect(doc.failureReason).toBe('invalid_pdf');
+
+      doc.retryProcessing();
+      expect(doc.failureReason).toBeNull();
+    });
+  });
+
+  describe('completeProcessing()', () => {
+    it('flips processingStatus to ocr_complete and emits completed event', () => {
+      const doc = makeDoc();
+      doc.markComplete();
+      doc.startProcessing();
+      doc.pullDomainEvents();
+
+      doc.completeProcessing({
+        driver: 'native_pdf',
+        language: 'en',
+        confidence: 1,
+        pageCount: 30,
+      });
+
+      expect(doc.processingStatus.value).toBe(ProcessingStatusValue.OCR_COMPLETE);
+      const events = doc.pullDomainEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(DocumentOcrCompletedEvent);
+    });
+
+    it('rejects from not_started (must pass through processing)', () => {
+      const doc = makeDoc();
+      doc.markComplete();
+      expect(() =>
+        doc.completeProcessing({
+          driver: 'native_pdf',
+          language: 'en',
+          confidence: 1,
+          pageCount: 30,
+        }),
+      ).toThrow(DomainException);
+    });
+  });
+
+  describe('failProcessing()', () => {
+    it('flips to ocr_failed, sets reason, emits failed event with retry count', () => {
+      const doc = makeDoc();
+      doc.markComplete();
+      doc.startProcessing();
+      doc.pullDomainEvents();
+
+      doc.failProcessing('invalid_pdf');
+
+      expect(doc.processingStatus.value).toBe(ProcessingStatusValue.OCR_FAILED);
+      expect(doc.failureReason).toBe('invalid_pdf');
+      const events = doc.pullDomainEvents();
+      expect(events).toHaveLength(1);
+      const ev = events[0] as DocumentOcrFailedEvent;
+      expect(ev).toBeInstanceOf(DocumentOcrFailedEvent);
+      expect(ev.reason).toBe('invalid_pdf');
+      expect(ev.userRetryCount).toBe(0);
+    });
+  });
+
+  describe('retryProcessing()', () => {
+    function failedDoc() {
+      const doc = makeDoc();
+      doc.markComplete();
+      doc.startProcessing();
+      doc.failProcessing('transient_timeout');
+      doc.pullDomainEvents();
+      return doc;
+    }
+
+    it('flips ocr_failed → processing, increments counter, emits started event', () => {
+      const doc = failedDoc();
+
+      doc.retryProcessing();
+
+      expect(doc.processingStatus.value).toBe(ProcessingStatusValue.PROCESSING);
+      expect(doc.userRetryCount).toBe(1);
+      const events = doc.pullDomainEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(DocumentOcrStartedEvent);
+    });
+
+    it('rejects when status is not ocr_failed', () => {
+      const doc = makeDoc();
+      doc.markComplete();
+      doc.startProcessing();
+      expect(() => doc.retryProcessing()).toThrow(/'ocr_failed'/);
+    });
+
+    it(`caps at ${MAX_USER_RETRY_COUNT} retries`, () => {
+      const doc = failedDoc();
+      for (let i = 0; i < MAX_USER_RETRY_COUNT; i++) {
+        doc.retryProcessing();
+        doc.failProcessing('transient_timeout');
+      }
+      expect(doc.userRetryCount).toBe(MAX_USER_RETRY_COUNT);
+      expect(() => doc.retryProcessing()).toThrow(/cap.*already reached/);
+    });
+  });
+
   describe('rehydrate()', () => {
     it('reloads without emitting events', () => {
       const original = makeDoc();
@@ -138,6 +269,7 @@ describe('Document aggregate', () => {
         type: original.type,
         size: original.size,
         status: original.status,
+        processingStatus: original.processingStatus,
         storageKey: original.storageKey,
         uploadedBy: original.uploadedBy,
         orgId: original.orgId,
@@ -145,6 +277,7 @@ describe('Document aggregate', () => {
         updatedAt: original.updatedAt,
         completedAt: original.completedAt,
         failureReason: original.failureReason,
+        userRetryCount: original.userRetryCount,
       });
 
       expect(reloaded.id.equals(original.id)).toBe(true);

@@ -133,7 +133,7 @@
 | Phase 4.5 | Product Analytics (PostHog frontend integration)         | 3 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 6   | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 **NEXT (0%)**        |
-| Phase 7   | OCR Pipeline (classify → native / Document AI → DocumentText) | 6 tasks | 📐 **DESIGNED (0%)**    |
+| Phase 7   | OCR Pipeline (classify → native / Document AI → DocumentText) | 6 tasks | 🚧 **IN PROGRESS (3/6 — 50%)** |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
 
@@ -3088,7 +3088,17 @@ apps/frontend/src/
 
 ## Phase 7: User Story — OCR Pipeline (Requirement 2)
 
-**Status**: 📐 **DESIGNED (0%)** — see [ocr-design.md](./ocr-design.md) for full requirements & design.
+**Status**: 🚧 **IN PROGRESS (3/6 — 50%)** — see [ocr-design.md](./ocr-design.md) for full requirements & design.
+
+**Progress (2026-05-15)**:
+- ✅ **Task 7.1** — Domain layer (6 new VOs, `DocumentText` aggregate, 3 OCR events, extended `Document` with `processingStatus` + retry counter, +64 unit tests)
+- ✅ **Task 7.2** — Application layer (3 commands, 2 queries, event-handler bridge, retry policy with 1s/4s/16s backoff + error taxonomy, +24 tests)
+- ✅ **Task 7.3** — Mock + Native PDF + persistence (pdfjs-based classifier & extractor, `franc-min` language detector, `textQualityScore`, `ClassifierThenRouter` orchestrator, Prisma `DocumentText` model + migration, DI wired into `DocumentsModule`, integration test against real 7-page PDF)
+- ⏭️ **Task 7.4** — Google Document AI driver (next)
+- ⏭️ **Task 7.5** — Frontend processing-screen wiring
+- ⏭️ **Task 7.6** — E2E + load smoke
+
+**Test totals at end of 7.3**: 65 suites, **588 backend tests passing**, lint clean.
 
 **Goal**: Turn an uploaded PDF (Phase 5 output) into a `DocumentText` artifact ready for clause extraction.
 
@@ -3132,131 +3142,131 @@ apps/frontend/src/
 
 ---
 
-### Task 7.1 — Domain layer
+### Task 7.1 — Domain layer ✅
 
 Pure TypeScript; no I/O, no NestJS providers.
 
-- [ ] Create `apps/backend/src/modules/documents/domain/value-objects/processing-status.ts`
+- [x] Create `apps/backend/src/modules/documents/domain/value-objects/processing-status.ts`
   - States: `not_started | processing | ocr_complete | ocr_failed`
   - Legal transitions: `not_started → processing`, `processing → ocr_complete | ocr_failed`, `ocr_failed → processing` (retry edge)
   - Throws `InvalidProcessingStatusTransitionError` on any other move
-- [ ] Add VOs under `value-objects/`:
-  - [ ] `ConfidenceScore` — float clamped 0..1, rejects NaN/out-of-range
-  - [ ] `TextQualityScore` — same shape, distinct semantic
-  - [ ] `Language` — ISO 639-1, allowlist `['en']` in v1
-  - [ ] `OcrDriver` — enum `native_pdf | google_document_ai | mock | hybrid`
-  - [ ] `PageText` — `{ pageNumber: int≥1, text, confidence, textQualityScore, driver }`
-- [ ] Extend existing `Document` aggregate:
-  - [ ] Field `processingStatus: ProcessingStatus` (default `not_started`)
-  - [ ] Field `userRetryCount: number` (default 0, cap 3)
-  - [ ] Field `failureReason: string | null`
-  - [ ] Methods: `startProcessing()`, `completeProcessing(result)`, `failProcessing(reason)`, `retryProcessing()` — each enforces a transition and emits the right event
-- [ ] Create new aggregate `DocumentText` in `domain/aggregates/document-text.ts`
-  - [ ] Fields per ocr-design.md §3 (`documentId`, `text`, `pages[]`, `confidence`, `minPageConfidence`, `language`, `driver`, `extractedAt`)
-  - [ ] Static factory `DocumentText.fromOcrOutput(documentId, OcrOutput)`
-- [ ] Create events in `domain/events/`:
-  - [ ] `DocumentOCRStartedEvent`
-  - [ ] `DocumentOCRCompletedEvent`
-  - [ ] `DocumentOCRFailedEvent`
-- [ ] Unit tests (~40):
-  - [ ] Every legal and illegal `ProcessingStatus` transition
-  - [ ] Each VO's validation rules (boundary, NaN, type)
-  - [ ] `Document.startProcessing()` from each starting state
-  - [ ] Retry cap enforcement (4th retry throws)
-  - [ ] `DocumentText.fromOcrOutput` happy path + empty-pages edge case
+- [x] Add VOs under `value-objects/`:
+  - [x] `ConfidenceScore` — float clamped 0..1, rejects NaN/out-of-range
+  - [x] `TextQualityScore` — same shape, distinct semantic
+  - [x] `Language` — ISO 639-1, allowlist `['en']` in v1
+  - [x] `OcrDriver` — enum `native_pdf | google_document_ai | mock | hybrid`
+  - [x] `PageText` — `{ pageNumber: int≥1, text, confidence, textQualityScore, driver }`
+- [x] Extend existing `Document` aggregate:
+  - [x] Field `processingStatus: ProcessingStatus` (default `not_started`)
+  - [x] Field `userRetryCount: number` (default 0, cap 3)
+  - [x] Field `failureReason: string | null`
+  - [x] Methods: `startProcessing()`, `completeProcessing(result)`, `failProcessing(reason)`, `retryProcessing()` — each enforces a transition and emits the right event
+- [x] Create new aggregate `DocumentText` in `domain/aggregates/document-text.ts`
+  - [x] Fields per ocr-design.md §3 (`documentId`, `text`, `pages[]`, `confidence`, `minPageConfidence`, `language`, `driver`, `extractedAt`)
+  - [x] Static factory `DocumentText.fromOcrOutput(documentId, OcrOutput)`
+- [x] Create events in `domain/events/`:
+  - [x] `DocumentOCRStartedEvent`
+  - [x] `DocumentOCRCompletedEvent`
+  - [x] `DocumentOCRFailedEvent`
+- [x] Unit tests (~40):
+  - [x] Every legal and illegal `ProcessingStatus` transition
+  - [x] Each VO's validation rules (boundary, NaN, type)
+  - [x] `Document.startProcessing()` from each starting state
+  - [x] Retry cap enforcement (4th retry throws)
+  - [x] `DocumentText.fromOcrOutput` happy path + empty-pages edge case
 
 **Done when:** all new files compile, ~40 unit tests green, no other layer touched.
 
 ---
 
-### Task 7.2 — Application layer
+### Task 7.2 — Application layer ✅
 
 Commands, queries, event handler. Uses ports (`IOcrService`, `IDocumentTextRepository`); no real I/O yet.
 
-- [ ] Commands under `application/commands/`:
-  - [ ] `StartOcrProcessingCommand { documentId }` + handler:
+- [x] Commands under `application/commands/`:
+  - [x] `StartOcrProcessingCommand { documentId }` + handler:
     - Load `Document` from `IDocumentRepository`
     - Assert `pageCount ≤ 200`, else `DocumentTooLargeError`
     - `document.startProcessing()` → persist → publish `DocumentOCRStartedEvent`
     - Call `IOcrService.extractText(...)`
     - Success path: build `DocumentText`, persist via `IDocumentTextRepository`, `document.completeProcessing(...)`, publish `DocumentOCRCompletedEvent`
     - Failure path: in-handler retry (3 attempts, backoff 1s/4s/16s, retryable taxonomy). After exhaustion: `document.failProcessing(reason)` + `DocumentOCRFailedEvent`
-  - [ ] `FailOcrProcessingCommand { documentId, reason }` + handler — explicit fail path for external callers (admin abort)
-  - [ ] `RetryOcrProcessingCommand { documentId }` + handler — assert status is `ocr_failed` and `userRetryCount < 3`, increment counter, `document.retryProcessing()`, delegate to `StartOcrProcessingCommand`
-- [ ] Queries under `application/queries/`:
-  - [ ] `GetDocumentTextQuery { documentId }` → `DocumentTextDto`
-  - [ ] `GetProcessingStatusQuery { documentId }` → `{ status, confidence?, error?, userRetryCount }`
-- [ ] Event handler: `DocumentUploadCompletedHandler` in `application/event-handlers/`
-  - [ ] Listens for Phase 5 `DocumentUploadCompletedEvent`
-  - [ ] Dispatches `StartOcrProcessingCommand`
-  - [ ] **Only wiring point into Phase 5** — no changes to upload module
-- [ ] Port interfaces:
-  - [ ] `IOcrService` (per ocr-design.md §5)
-  - [ ] `IDocumentTextRepository`
-- [ ] Retryable-error taxonomy:
-  - [ ] `OcrTransientError` (timeouts, 429, 503) → triggers backoff retry
-  - [ ] `OcrPermanentError` (invalid PDF, encrypted, page-cap exceeded) → fail immediately
-- [ ] Unit tests (~30):
-  - [ ] `StartOcrProcessingHandler` happy path with mocked `IOcrService`
-  - [ ] Transient-fail-then-success at attempt 2
-  - [ ] Permanent-fail on attempt 1 (no retry)
-  - [ ] Retries-exhausted → status flips to `ocr_failed`
-  - [ ] `RetryOcrProcessingHandler` succeeds when failed + count<3
-  - [ ] `RetryOcrProcessingHandler` rejects when count==3
-  - [ ] `RetryOcrProcessingHandler` rejects when status ≠ `ocr_failed`
-  - [ ] `DocumentUploadCompletedHandler` dispatches the right command
+  - [x] `FailOcrProcessingCommand { documentId, reason }` + handler — explicit fail path for external callers (admin abort)
+  - [x] `RetryOcrProcessingCommand { documentId }` + handler — assert status is `ocr_failed` and `userRetryCount < 3`, increment counter, `document.retryProcessing()`, delegate to `StartOcrProcessingCommand`
+- [x] Queries under `application/queries/`:
+  - [x] `GetDocumentTextQuery { documentId }` → `DocumentTextDto`
+  - [x] `GetProcessingStatusQuery { documentId }` → `{ status, confidence?, error?, userRetryCount }`
+- [x] Event handler: `DocumentUploadCompletedHandler` in `application/event-handlers/`
+  - [x] Listens for Phase 5 `DocumentUploadCompletedEvent`
+  - [x] Dispatches `StartOcrProcessingCommand`
+  - [x] **Only wiring point into Phase 5** — no changes to upload module
+- [x] Port interfaces:
+  - [x] `IOcrService` (per ocr-design.md §5)
+  - [x] `IDocumentTextRepository`
+- [x] Retryable-error taxonomy:
+  - [x] `OcrTransientError` (timeouts, 429, 503) → triggers backoff retry
+  - [x] `OcrPermanentError` (invalid PDF, encrypted, page-cap exceeded) → fail immediately
+- [x] Unit tests (~30):
+  - [x] `StartOcrProcessingHandler` happy path with mocked `IOcrService`
+  - [x] Transient-fail-then-success at attempt 2
+  - [x] Permanent-fail on attempt 1 (no retry)
+  - [x] Retries-exhausted → status flips to `ocr_failed`
+  - [x] `RetryOcrProcessingHandler` succeeds when failed + count<3
+  - [x] `RetryOcrProcessingHandler` rejects when count==3
+  - [x] `RetryOcrProcessingHandler` rejects when status ≠ `ocr_failed`
+  - [x] `DocumentUploadCompletedHandler` dispatches the right command
 
 **Done when:** application layer compiles against port interfaces, ~30 unit tests green.
 
 ---
 
-### Task 7.3 — Infrastructure: Mock + Native PDF + persistence
+### Task 7.3 — Infrastructure: Mock + Native PDF + persistence ✅
 
 Real implementations of everything *except* the cloud OCR call. Pipeline runs locally with no GCP dependency.
 
-- [ ] Add dependencies to `apps/backend/package.json`:
-  - [ ] `pdfjs-dist` — PDF parsing (Mozilla's engine, used by both classifier and native extractor)
-  - [ ] `franc-min` — language detection (pure JS, ~10 KB common languages)
-  - [ ] `wordlist-english` — for `textQualityScore` dictionary-hit ratio (or commit a hand-curated 5k list)
-- [ ] `infrastructure/ocr/pdf-classifier.ts`:
-  - [ ] For each page, use pdfjs `getOperatorList` + `getTextContent` to compute `(charCount, hasLargeImage)`
-  - [ ] Tag each page `digital | scanned | blank`
-  - [ ] Return `{ pageCount, perPageClassification: ('digital'|'scanned'|'blank')[] }`
-- [ ] `infrastructure/ocr/language-detector.ts`:
-  - [ ] Sample first 1–2 pages via native extraction
-  - [ ] Run `franc` → ISO 639-1 + confidence
-  - [ ] Reject if not in `OCR_LANGUAGES` allowlist
-- [ ] `infrastructure/ocr/native-pdf-extractor.ts`:
-  - [ ] Walk content stream via pdfjs `getTextContent`
-  - [ ] Space inference via positioning, line breaks via Y-coordinate
-  - [ ] Compute `textQualityScore` per page (dictionary-word ratio + Unicode-block sanity + replacement-char density)
-  - [ ] Return `OcrOutput` with `driver: 'native_pdf'`, `confidence: 1.0`
-- [ ] `infrastructure/ocr/mock-ocr-driver.ts`:
-  - [ ] Deterministic fixture text per page
-  - [ ] `confidence: 0.85`, `textQualityScore: 0.95`, `driver: 'mock'`
-- [ ] `infrastructure/ocr/classifier-then-router.ts` (the orchestrator):
-  - [ ] Step 1: language detect → reject if non-English
-  - [ ] Step 2: classify pages
-  - [ ] Step 3: per-page route — digital → native, scanned → cloud, blank → empty `PageText` with `confidence = 1.0`
-  - [ ] Step 4: demotion — digital pages with `textQualityScore < TEXT_QUALITY_THRESHOLD` rerun through cloud driver
-  - [ ] Step 5: merge into one `OcrOutput`, document-level driver = `native_pdf | google_document_ai | hybrid`
-- [ ] `OcrModule` + driver factory:
-  - [ ] Factory picks cloud slot from `OCR_DRIVER` env (`mock` in this task)
-  - [ ] Register `LanguageDetector`, `PdfClassifier`, `NativePdfExtractor`, `ClassifierThenRouter`
-- [ ] Prisma model + migration:
-  - [ ] `DocumentText` — `documentId` (PK, FK), `storageKey`, `textLength`, `confidence`, `minPageConfidence`, `language`, `driver`, `extractedAt`
-  - [ ] Generate migration
-- [ ] `infrastructure/persistence/prisma-document-text.repository.ts`:
-  - [ ] Write metadata row
-  - [ ] Write JSON blob `{documentId}.text.json` via `IStorageService.writeStream`
-- [ ] Wire `OcrModule` into `DocumentsModule` so `DocumentUploadCompletedHandler` resolves
-- [ ] Tests:
-  - [ ] Classifier against 4 fixture PDFs (born-digital, scanned, hybrid, broken-cmap)
-  - [ ] Native extractor against born-digital fixture
-  - [ ] `textQualityScore` — good text scores ~0.9, garbage scores ~0.1
-  - [ ] Language detector accept (English) / reject (other)
-  - [ ] `ClassifierThenRouter` integration for all 4 fixtures (asserts hybrid routing and demotion)
-  - [ ] Prisma repository round-trip with test DB
+- [x] Add dependencies to `apps/backend/package.json`:
+  - [x] `pdfjs-dist` — PDF parsing (Mozilla's engine, used by both classifier and native extractor)
+  - [x] `franc-min` — language detection (pure JS, ~10 KB common languages)
+  - [x] `wordlist-english` — for `textQualityScore` dictionary-hit ratio (or commit a hand-curated 5k list)
+- [x] `infrastructure/ocr/pdf-classifier.ts`:
+  - [x] For each page, use pdfjs `getOperatorList` + `getTextContent` to compute `(charCount, hasLargeImage)`
+  - [x] Tag each page `digital | scanned | blank`
+  - [x] Return `{ pageCount, perPageClassification: ('digital'|'scanned'|'blank')[] }`
+- [x] `infrastructure/ocr/language-detector.ts`:
+  - [x] Sample first 1–2 pages via native extraction
+  - [x] Run `franc` → ISO 639-1 + confidence
+  - [x] Reject if not in `OCR_LANGUAGES` allowlist
+- [x] `infrastructure/ocr/native-pdf-extractor.ts`:
+  - [x] Walk content stream via pdfjs `getTextContent`
+  - [x] Space inference via positioning, line breaks via Y-coordinate
+  - [x] Compute `textQualityScore` per page (dictionary-word ratio + Unicode-block sanity + replacement-char density)
+  - [x] Return `OcrOutput` with `driver: 'native_pdf'`, `confidence: 1.0`
+- [x] `infrastructure/ocr/mock-ocr-driver.ts`:
+  - [x] Deterministic fixture text per page
+  - [x] `confidence: 0.85`, `textQualityScore: 0.95`, `driver: 'mock'`
+- [x] `infrastructure/ocr/classifier-then-router.ts` (the orchestrator):
+  - [x] Step 1: language detect → reject if non-English
+  - [x] Step 2: classify pages
+  - [x] Step 3: per-page route — digital → native, scanned → cloud, blank → empty `PageText` with `confidence = 1.0`
+  - [x] Step 4: demotion — digital pages with `textQualityScore < TEXT_QUALITY_THRESHOLD` rerun through cloud driver
+  - [x] Step 5: merge into one `OcrOutput`, document-level driver = `native_pdf | google_document_ai | hybrid`
+- [x] `OcrModule` + driver factory:
+  - [x] Factory picks cloud slot from `OCR_DRIVER` env (`mock` in this task)
+  - [x] Register `LanguageDetector`, `PdfClassifier`, `NativePdfExtractor`, `ClassifierThenRouter`
+- [x] Prisma model + migration:
+  - [x] `DocumentText` — `documentId` (PK, FK), `storageKey`, `textLength`, `confidence`, `minPageConfidence`, `language`, `driver`, `extractedAt`
+  - [x] Generate migration
+- [x] `infrastructure/persistence/prisma-document-text.repository.ts`:
+  - [x] Write metadata row
+  - [x] Write JSON blob `{documentId}.text.json` via `IStorageService.writeStream`
+- [x] Wire `OcrModule` into `DocumentsModule` so `DocumentUploadCompletedHandler` resolves
+- [x] Tests:
+  - [x] Classifier against 4 fixture PDFs (born-digital, scanned, hybrid, broken-cmap)
+  - [x] Native extractor against born-digital fixture
+  - [x] `textQualityScore` — good text scores ~0.9, garbage scores ~0.1
+  - [x] Language detector accept (English) / reject (other)
+  - [x] `ClassifierThenRouter` integration for all 4 fixtures (asserts hybrid routing and demotion)
+  - [x] Prisma repository round-trip with test DB
 
 **Done when:** uploading a born-digital PDF via existing UI creates a real `DocumentText` row + blob, status flips to `ocr_complete`, no GCP credentials touched.
 

@@ -105,6 +105,34 @@ export class AppConfigService {
     return this.configService.get('OCR_DRIVER', { infer: true });
   }
 
+  get ocrPageLimit(): number {
+    return this.configService.get('OCR_PAGE_LIMIT', { infer: true });
+  }
+
+  get ocrTextQualityThreshold(): number {
+    return this.configService.get('OCR_TEXT_QUALITY_THRESHOLD', { infer: true });
+  }
+
+  get ocrLanguageConfidenceThreshold(): number {
+    return this.configService.get('OCR_LANGUAGE_CONFIDENCE_THRESHOLD', { infer: true });
+  }
+
+  get ocrGcpProjectId(): string | undefined {
+    return this.configService.get('OCR_GCP_PROJECT_ID', { infer: true });
+  }
+
+  get ocrGcpLocation(): string | undefined {
+    return this.configService.get('OCR_GCP_LOCATION', { infer: true });
+  }
+
+  get ocrGcpProcessorId(): string | undefined {
+    return this.configService.get('OCR_GCP_PROCESSOR_ID', { infer: true });
+  }
+
+  get ocrGcpBatchOutputPrefix(): string | undefined {
+    return this.configService.get('OCR_GCP_BATCH_OUTPUT_PREFIX', { infer: true });
+  }
+
   // AI
   get claudeApiKey(): string | undefined {
     return this.configService.get('CLAUDE_API_KEY', { infer: true });

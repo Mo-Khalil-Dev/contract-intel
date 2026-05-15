@@ -44,6 +44,7 @@ describe('CompleteUploadHandler', () => {
 
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(doc),
+      findById: jest.fn(),
       save: jest.fn().mockResolvedValue(undefined),
     };
     const bus = fakeBus();
@@ -59,6 +60,7 @@ describe('CompleteUploadHandler', () => {
   it('throws DOCUMENT_NOT_FOUND when the document does not exist in this org', async () => {
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(null),
+      findById: jest.fn(),
       save: jest.fn(),
     };
     const handler = new CompleteUploadHandler(repo, fakeBus());
@@ -77,6 +79,7 @@ describe('CompleteUploadHandler', () => {
     const doc = fakeDocument();
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(doc),
+      findById: jest.fn(),
       save: jest.fn().mockResolvedValue(undefined),
     };
     const handler = new CompleteUploadHandler(repo, fakeBus());
@@ -90,6 +93,7 @@ describe('CompleteUploadHandler', () => {
   it('rejects invalid documentId before touching the repo', async () => {
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn(),
+      findById: jest.fn(),
       save: jest.fn(),
     };
     const handler = new CompleteUploadHandler(repo, fakeBus());

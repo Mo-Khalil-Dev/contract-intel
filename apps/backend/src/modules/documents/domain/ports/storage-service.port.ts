@@ -55,4 +55,11 @@ export interface IStorageService {
     source: Readable,
     contentType?: string,
   ): Promise<{ bytesWritten: number }>;
+
+  /**
+   * Open a readable stream of the bytes stored under `key`. Used by the
+   * Phase 7 OCR pipeline to feed the PDF into pdfjs / Document AI.
+   * Throws if the object doesn't exist.
+   */
+  openReadStream(key: StorageKey): Promise<Readable>;
 }

@@ -143,21 +143,140 @@ type OcrOutput = {
 };
 ```
 
-### Pipeline: classify → route → (demote) → merge
+### Pipeline walkthrough (developer narrative)
 
-The composite service (renamed `ClassifierThenRouter`, was `TwoTrackOcrService`) runs these steps:
+The composite service is `ClassifierThenRouter`. The full sequence, start to finish, for a single uploaded PDF:
 
-1. **Language detection** on a cheap text sample (first 1-2 pages via native extractor, even on otherwise-scanned PDFs — usually enough). Reject non-English up front.
-2. **Per-page classification** (pdfjs walk): for each page, count text-showing operators and image XObject area. Tag each page `digital | scanned | blank`.
-3. **Route** by per-page tag:
-   - `digital` → `NativePdfExtractor` on that page.
-   - `scanned` → `GoogleDocAiDriver` on that page.
-   - `blank` → emit empty `PageText` with `confidence = 1.0`.
-4. **Quality-demote**: for any `digital` page where the extracted text scores `textQualityScore < TEXT_QUALITY_THRESHOLD` (default 0.5), rerun that page through `GoogleDocAiDriver`. Catches broken-cmap / garbled-text cases where the classifier was fooled by a present-but-useless text layer.
-5. **Merge** results by `pageNumber`. Document-level `driver` is set to:
-   - `native_pdf` if all non-blank pages used `native_pdf`,
-   - `google_document_ai` if all used the cloud driver,
-   - `hybrid` otherwise.
+#### Step 0 — Trigger
+
+`DocumentUploadCompletedHandler` hears the Phase 5 `DocumentUploadCompletedEvent` and dispatches `StartOcrProcessingCommand(documentId)`. `Document.processingStatus` flips `not_started → processing`. `DocumentOCRStartedEvent` fires. The frontend `/processing/:id` polling sees the status change and renders "Extracting text…".
+
+#### Step 1 — Open the PDF, sample some text
+
+Stream the PDF from `IStorageService` and parse with `pdfjs-dist`. **No rendering** — pdfjs is being used as a parser only. Pull text content for pages 1–2 via `page.getTextContent()`, concatenate into a sample string.
+
+Outcomes by PDF type:
+- Born-digital → sample is real text, hundreds to thousands of characters.
+- Pure-scanned → sample is empty or near-empty.
+- Searchable-scanned → sample is whatever the scanner's built-in OCR produced.
+
+#### Step 2 — Language detection
+
+Pass the sample to `franc-min` (see §5 "Language detection — how it actually works" for the full rules). Branches:
+
+- Sample <200 chars: skip detection, proceed (downstream `textQualityScore` is the safety net).
+- English with any confidence: accept, set `Document.language = 'en'`.
+- Non-English with confidence ≥ 0.10: **reject.** `failProcessing("unsupported_language:fra")`. No OCR call made; no money spent.
+- Non-English with confidence < 0.10 (ambiguous): accept with warning; let downstream checks decide.
+
+#### Step 3 — Page count check
+
+Read `pageCount` from pdfjs. If `> OCR_PAGE_LIMIT` (default 200), throw `DocumentTooLargeError` and fail. The cost ceiling: 200 scanned pages = $0.30 worst case.
+
+#### Step 4 — Per-page classification
+
+For each page, run two cheap pdfjs queries:
+- `getTextContent()` → count non-whitespace characters in the text layer.
+- `getOperatorList()` → look for `paintImageXObject` / `paintJpegXObject` operators indicating a large embedded image.
+
+Tag each page:
+- **`digital`** — ≥100 substantive text characters present.
+- **`scanned`** — <100 text characters and a large image XObject.
+- **`blank`** — <100 text characters and no significant image (cover page, separator). Emits empty text with `confidence = 1.0`.
+
+Worked examples:
+- 30-page born-digital contract → `[digital × 30]`
+- Scanned signed contract → `[scanned × 30]`
+- Born-digital body with appended scanned signature page → `[digital × 28, scanned × 2]`
+
+#### Step 5 — Route each page
+
+Walk the per-page tags and dispatch:
+
+- **`digital` pages → `NativePdfExtractor`** (pdfjs)
+  - Walks text operators, decodes via font cmaps, infers spaces/line breaks from positioning.
+  - Returns `{ text, confidence: 1.0, driver: 'native_pdf' }`.
+  - **Cost: $0. Latency: ~50ms/page.**
+- **`scanned` pages → `GoogleDocAiDriver`**
+  - Sync API if total scanned subset is ≤15 pages and ≤20 MB (response in 1–3s/page).
+  - Batch API otherwise (10–30s startup, then 0.5–2s/page; no page cap).
+  - Returns `{ text, confidence: <token-weighted-mean>, driver: 'google_document_ai' }`.
+  - **Cost: $0.0015/page. Latency: 1–3s/page sync, 0.5–2s/page batch.**
+- **`blank` pages → no driver call.**
+
+The 28-digital-2-scanned example costs ~$0.003 total.
+
+#### Step 6 — Quality demotion (the broken-cmap safety net)
+
+For each `digital` page, compute `textQualityScore`:
+- Dictionary-word ratio (against `wordlist-english`).
+- Unicode-block sanity (Basic Latin vs Private Use Area).
+- Replacement-character (`U+FFFD`) density.
+
+Clean English contract page → 0.7–0.9. Broken-cmap garbage → <0.2.
+
+If a page scores `< TEXT_QUALITY_THRESHOLD` (default 0.5), **demote** it: rerun through `GoogleDocAiDriver`. Costs $0.0015 to recover garbage that would otherwise land in the final artifact.
+
+#### Step 7 — Merge
+
+Assemble per-page results in `pageNumber` order. Document-level `driver`:
+- All pages used `native_pdf` → `'native_pdf'`
+- All pages used `google_document_ai` → `'google_document_ai'`
+- Mix → `'hybrid'`
+
+Document-level `confidence` = page-length-weighted mean across pages (so a noisy 1-page cover doesn't drag down a 100-page doc). `minPageConfidence` stashed as a triage signal.
+
+#### Step 8 — Persist
+
+Two writes:
+- **Blob:** full `DocumentText` JSON to `IStorageService` at `{documentId}.text.json`.
+- **Prisma row:** thin metadata (`documentId`, `storageKey`, `textLength`, `confidence`, `minPageConfidence`, `language`, `driver`, `extractedAt`). No `text` column; that lives in the blob.
+
+#### Step 9 — Complete
+
+`Document.processingStatus` transitions `processing → ocr_complete`. `DocumentOCRCompletedEvent` fires. Polling `/processing/:id` sees the terminal state and auto-redirects to `/results/:id`.
+
+#### What the user actually experiences
+
+| Scenario                            | Time on `/processing/:id` | Cost  | Outcome |
+|-------------------------------------|---------------------------|-------|---------|
+| 30-page born-digital contract       | ~5s                       | $0    | Auto-redirect to results |
+| 100-page scanned contract           | ~2min                     | $0.15 | Auto-redirect to results |
+| 30-page hybrid (28 digital + 2 scan) | ~7s                      | $0.003 | Auto-redirect to results |
+| French contract                     | ~3s                       | $0    | Error: "We only support English contracts. Detected: French" |
+| Corrupt PDF                         | ~25s                      | $0    | Error: 3 auto-retries failed; user has 3 manual retries |
+| 201-page PDF                        | <1s                       | $0    | Error: "Maximum 200 pages" |
+
+#### Error path summary
+
+| Where  | What | Status | Retry? |
+|--------|------|--------|--------|
+| Step 1 | pdfjs can't open (corrupt/encrypted PDF) | `ocr_failed: invalid_pdf` | yes (won't help) |
+| Step 2 | Non-English detected, confidence ≥ 0.10 | `ocr_failed: unsupported_language:<code>` | no (CTA: upload another) |
+| Step 3 | `pageCount > 200` | `ocr_failed: too_many_pages` | no |
+| Step 5 | Document AI transient (429/503/timeout) | In-handler retry 3× (1s/4s/16s), then `ocr_failed` | yes |
+| Step 5 | Document AI permanent (`INVALID_ARGUMENT`/`PERMISSION_DENIED`) | Immediate `ocr_failed` | yes (won't help) |
+| Step 8 | Storage write fails | In-handler retry, then `ocr_failed` | yes |
+
+#### File map
+
+| Step | File |
+|------|------|
+| 0    | `application/event-handlers/document-upload-completed.handler.ts` |
+| 1, 4 | `infrastructure/ocr/pdf-classifier.ts` |
+| 2    | `infrastructure/ocr/language-detector.ts` |
+| 3    | `application/commands/start-ocr-processing.handler.ts` |
+| 5a   | `infrastructure/ocr/native-pdf-extractor.ts` |
+| 5b   | `infrastructure/ocr/google-doc-ai-driver.ts` |
+| 1–7  | `infrastructure/ocr/classifier-then-router.ts` (orchestrator) |
+| 6    | `infrastructure/ocr/text-quality-score.ts` |
+| 8    | `infrastructure/persistence/prisma-document-text.repository.ts` |
+| 9    | Polling endpoint: `application/queries/get-processing-status.handler.ts` |
+| 9    | Frontend: `apps/frontend/src/pages/ProcessingPage/` |
+
+### Pipeline summary (one-glance reference)
+
+`Trigger → Open & sample → Language detect → Page-count gate → Classify pages → Route (digital→native, scanned→cloud, blank→empty) → Quality-demote dodgy digital pages → Merge → Persist (blob + row) → Complete`
 
 ### Language detection — how it actually works
 

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { promises as fs, createWriteStream } from 'fs';
+import { promises as fs, createWriteStream, createReadStream } from 'fs';
 import { join, resolve } from 'path';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
@@ -81,6 +81,19 @@ export class LocalStorageDriver implements IStorageService {
 
     this.logger.log(`[LocalStorage] wrote ${bytesWritten} bytes to ${target}`);
     return { bytesWritten };
+  }
+
+  async openReadStream(key: StorageKey): Promise<Readable> {
+    const target = join(this.root, key.value);
+    try {
+      await fs.access(target);
+    } catch {
+      throw new InfrastructureException(
+        'STORAGE_OBJECT_NOT_FOUND',
+        `No object at storage key ${key.value}`,
+      );
+    }
+    return createReadStream(target);
   }
 
   /** True if a file exists at the given key. */

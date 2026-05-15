@@ -148,6 +148,18 @@ export class GcsStorageDriver implements IStorageService, OnModuleInit {
     return { bytesWritten };
   }
 
+  async openReadStream(key: StorageKey): Promise<Readable> {
+    const file = this.storage.bucket(this.bucketName).file(key.value);
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new InfrastructureException(
+        'STORAGE_OBJECT_NOT_FOUND',
+        `No object at gs://${this.bucketName}/${key.value}`,
+      );
+    }
+    return file.createReadStream();
+  }
+
   /** Verify a file exists in the bucket — useful for /complete to
    *  defend against the frontend lying about a successful PUT. */
   async exists(key: StorageKey): Promise<boolean> {

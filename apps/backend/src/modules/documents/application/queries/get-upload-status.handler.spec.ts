@@ -33,6 +33,7 @@ describe('GetUploadStatusHandler', () => {
     const doc = fakeDocument();
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(doc),
+      findById: jest.fn(),
       save: jest.fn(),
     };
     const handler = new GetUploadStatusHandler(repo);
@@ -50,6 +51,7 @@ describe('GetUploadStatusHandler', () => {
     doc.markComplete(new Date('2026-05-14T10:00:02Z'));
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(doc),
+      findById: jest.fn(),
       save: jest.fn(),
     };
     const handler = new GetUploadStatusHandler(repo);
@@ -65,6 +67,7 @@ describe('GetUploadStatusHandler', () => {
     doc.markFailed('network');
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(doc),
+      findById: jest.fn(),
       save: jest.fn(),
     };
     const handler = new GetUploadStatusHandler(repo);
@@ -78,6 +81,7 @@ describe('GetUploadStatusHandler', () => {
   it('throws DOCUMENT_NOT_FOUND when the doc does not exist in this org', async () => {
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(null),
+      findById: jest.fn(),
       save: jest.fn(),
     };
     const handler = new GetUploadStatusHandler(repo);

@@ -5,6 +5,7 @@ import { DocumentName } from '../domain/value-objects/document-name.vo';
 import { DocumentType } from '../domain/value-objects/document-type.vo';
 import { FileSize } from '../domain/value-objects/file-size.vo';
 import { OrgId } from '../domain/value-objects/org-id.vo';
+import { ProcessingStatus } from '../domain/value-objects/processing-status.vo';
 import { StorageKey } from '../domain/value-objects/storage-key.vo';
 import { UploadStatus } from '../domain/value-objects/upload-status.vo';
 import { UploadedBy } from '../domain/value-objects/uploaded-by.vo';
@@ -21,6 +22,7 @@ export class DocumentMapper {
       type: DocumentType.fromValue(row.type),
       size: FileSize.fromBytes(row.sizeBytes),
       status: UploadStatus.fromValue(row.status),
+      processingStatus: ProcessingStatus.fromValue(row.processingStatus),
       storageKey: StorageKey.fromString(row.storageKey),
       uploadedBy: UploadedBy.fromUserId(row.uploadedBy),
       orgId: OrgId.fromString(row.orgId),
@@ -28,6 +30,7 @@ export class DocumentMapper {
       updatedAt: row.updatedAt,
       completedAt: row.completedAt,
       failureReason: row.failureReason,
+      userRetryCount: row.userRetryCount,
     });
   }
 
@@ -38,6 +41,8 @@ export class DocumentMapper {
       type: doc.type.value,
       sizeBytes: doc.size.bytes,
       status: doc.status.value,
+      processingStatus: doc.processingStatus.value,
+      userRetryCount: doc.userRetryCount,
       storageKey: doc.storageKey.value,
       uploadedBy: doc.uploadedBy.userId,
       orgId: doc.orgId.value,

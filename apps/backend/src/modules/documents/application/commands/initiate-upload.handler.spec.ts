@@ -15,12 +15,14 @@ function fakeStorage(): jest.Mocked<IStorageService> {
       method: 'PUT',
     }),
     writeStream: jest.fn().mockResolvedValue({ bytesWritten: 0 }),
+    openReadStream: jest.fn(),
   };
 }
 
 function fakeRepo(): jest.Mocked<IDocumentRepository> {
   return {
     findByIdForOrg: jest.fn(),
+    findById: jest.fn(),
     save: jest.fn().mockResolvedValue(undefined),
   };
 }

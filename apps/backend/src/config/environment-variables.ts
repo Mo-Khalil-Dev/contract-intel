@@ -123,6 +123,35 @@ export class EnvironmentVariables {
   @IsEnum(OcrDriver)
   OCR_DRIVER: OcrDriver = OcrDriver.Mock;
 
+  // Pipeline guards — values from ocr-design.md §6 + §11 locked decisions.
+  @IsInt()
+  @Min(1)
+  OCR_PAGE_LIMIT: number = 200;
+
+  /** Per-page native textQualityScore below which we demote to cloud OCR. */
+  OCR_TEXT_QUALITY_THRESHOLD: number = 0.5;
+
+  /** Gap (top vs second franc score) above which we trust a language verdict. */
+  OCR_LANGUAGE_CONFIDENCE_THRESHOLD: number = 0.1;
+
+  // Document AI — required when OCR_DRIVER=google-document-ai.
+  @IsString()
+  @IsOptional()
+  OCR_GCP_PROJECT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  OCR_GCP_LOCATION?: string;
+
+  @IsString()
+  @IsOptional()
+  OCR_GCP_PROCESSOR_ID?: string;
+
+  /** Bucket prefix where the batch API writes per-shard JSON results. */
+  @IsString()
+  @IsOptional()
+  OCR_GCP_BATCH_OUTPUT_PREFIX?: string;
+
   // AI
   @IsString()
   @IsOptional()

@@ -142,4 +142,65 @@ The bucket's CORS allows `http://localhost:5173` only by default. If you're test
 
 ---
 
+## Phase 7 — Document AI for OCR
+
+Once GCS is working (Phase 5), Phase 7's OCR pipeline can optionally use **Google Document AI** for scanned PDFs. Born-digital PDFs (Word → Save as PDF, etc.) still go through pdfjs locally and cost nothing. Only scanned/image-only pages route through Document AI.
+
+### Cost
+
+- Document OCR processor: **$1.50 / 1,000 pages** for the first 1M pages/month, $0.60/k after.
+- Realistic mix at 1,000 docs/day (70 % born-digital, 25 % hybrid w/ 5 scanned pages, 5 % fully scanned 100 pages) ≈ **$10/day ≈ $285/month**.
+- Worst case (every doc is 200 scanned pages) ≈ $300/day. The pipeline's 200-page cap is the cost ceiling.
+
+### One-shot provisioning
+
+```bash
+BUCKET_NAME=<your-bucket-from-setup-gcs.sh> ./scripts/setup-document-ai.sh
+```
+
+The script:
+1. Enables the Document AI API on your project.
+2. Grants `roles/documentai.apiUser` to the existing `contractintel-uploads-sa` service account.
+3. Creates an OCR processor named `contractintel-ocr` in `eu`.
+4. Prints the four env vars you need.
+
+The processor and the GCS bucket reuse one service account — same JSON key.
+
+### Env vars
+
+Paste into `apps/backend/.env.local` (and Railway):
+
+```
+OCR_DRIVER=google-document-ai
+OCR_GCP_PROJECT_ID=your-project-id
+OCR_GCP_LOCATION=eu
+OCR_GCP_PROCESSOR_ID=abc123xyz                  # printed by the script
+OCR_GCP_BATCH_OUTPUT_PREFIX=gs://your-bucket/ocr  # reuses your existing bucket
+```
+
+Leave `OCR_DRIVER=mock` (the default) for local dev without OCR costs; the pipeline still runs end-to-end, just with fixture text for scanned pages.
+
+### Sync vs batch
+
+- **Sync** (`processDocument`): ≤15 pages and ≤20 MB. Used automatically when the page hint + byte hint fit. Single call, response in 1–3 s/page.
+- **Batch** (`batchProcessDocuments`): everything else. Driver uploads the source PDF to `gs://{bucket}/ocr/input/{documentId}.pdf`, kicks off a long-running operation, polls until complete, then reads per-shard JSON results back from `gs://{bucket}/ocr/output/{documentId}/{timestamp}/`. Slower (10–30 s startup + 0.5–2 s/page) but no hard page cap below our 200 limit.
+
+The driver picks automatically using the `pageCountHint` and `byteSizeHint` the orchestrator passes through. No env knob.
+
+### Troubleshooting
+
+**`PERMISSION_DENIED` from Document AI:**
+The service account is missing `roles/documentai.apiUser`. Re-run `setup-document-ai.sh`.
+
+**`RESOURCE_EXHAUSTED` (quota):**
+Default Document AI quota is 1,800 pages/min. Above that the pipeline retries with the 1s/4s/16s backoff. Sustained bursts need a quota bump from the Cloud Console.
+
+**Batch job finishes but the pipeline says `empty_batch_output`:**
+The output prefix is wrong. `OCR_GCP_BATCH_OUTPUT_PREFIX` must be a `gs://bucket/prefix` URI the service account can write *and* list. Test with `gcloud storage ls gs://your-bucket/ocr/`.
+
+**`unsupported_language:fr`:**
+A non-English contract was detected up front. v1 is English-only; the language allowlist lives in `LanguageDetector` (extending it means appending to `SUPPORTED_LANGUAGES` and seeding a wordlist).
+
+---
+
 Next: see [`railway.md`](./railway.md) for deploying with these credentials.

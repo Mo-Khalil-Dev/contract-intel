@@ -16,6 +16,16 @@ export interface IDocumentRepository {
    *  document doesn't exist OR exists in a different org. */
   findByIdForOrg(id: DocumentId, orgId: OrgId): Promise<Document | null>;
 
+  /**
+   * Find a document by id without an org filter. **System-only.**
+   *
+   * Reserved for pipelines triggered by domain events (no user session),
+   * such as the Phase 7 OCR pipeline reading documents in response to
+   * `DocumentUploadCompletedEvent`. HTTP handlers must use
+   * `findByIdForOrg`.
+   */
+  findById(id: DocumentId): Promise<Document | null>;
+
   /** Persist a new or updated Document. */
   save(document: Document): Promise<void>;
 }

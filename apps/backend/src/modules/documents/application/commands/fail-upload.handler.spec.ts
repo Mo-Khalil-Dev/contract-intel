@@ -41,6 +41,7 @@ describe('FailUploadHandler', () => {
 
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(doc),
+      findById: jest.fn(),
       save: jest.fn().mockResolvedValue(undefined),
     };
     const bus = fakeBus();
@@ -57,6 +58,7 @@ describe('FailUploadHandler', () => {
   it('throws DOCUMENT_NOT_FOUND when the document does not exist in this org', async () => {
     const repo: jest.Mocked<IDocumentRepository> = {
       findByIdForOrg: jest.fn().mockResolvedValue(null),
+      findById: jest.fn(),
       save: jest.fn(),
     };
     const handler = new FailUploadHandler(repo, fakeBus());

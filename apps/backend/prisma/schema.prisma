@@ -67,12 +67,47 @@ model Document {
   uploadedBy     String    // UserId UUID (the requester)
   orgId          String    // v1: orgId == uploadedBy. Will become a real Org FK later.
   failureReason  String?
+
+  // Phase 7 — OCR pipeline state. Distinct from `status` (upload lifecycle).
+  // See ProcessingStatus VO for the state machine.
+  processingStatus String  @default("not_started") // not_started | processing | ocr_complete | ocr_failed
+  userRetryCount   Int     @default(0)              // capped at 3 in the aggregate
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   completedAt   DateTime?
+
+  documentText DocumentText?
 
   // Every read is scoped by orgId, so the index drives every list query.
   @@index([orgId])
   @@index([uploadedBy])
   @@index([orgId, status])
+  @@index([processingStatus])
+}
+
+// -----------------------------------------------------------------------------
+// OCR output (Phase 7)
+// -----------------------------------------------------------------------------
+
+// One DocumentText per Document. The text + per-page detail lives in
+// IStorageService at `{documentId}.text.json`; this row carries the
+// metadata needed to query, list, and triage without fetching the blob.
+model DocumentText {
+  documentId        String   @id
+  document          Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  storageKey        String   @unique // Opaque '{documentId}.text.json'
+  textLength        Int      // chars; cheap signal for "did we extract anything"
+  confidence        Float    // 0..1, char-length-weighted mean across pages
+  minPageConfidence Float    // 0..1, smallest per-page confidence
+  language          String   // ISO 639-1, or 'und' if detection bypassed
+  driver            String   // native_pdf | google_document_ai | mock | hybrid
+  pageCount         Int
+
+  extractedAt       DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([driver])
 }

@@ -3,18 +3,60 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { AuthModule } from '../auth/auth.module';
 import { AppConfigModule } from '../../config/app-config.module';
 import { AppConfigService } from '../../config/app-config.service';
-import { StorageDriver } from '../../config/environment-variables';
+import {
+  OcrDriver as OcrDriverEnum,
+  StorageDriver,
+} from '../../config/environment-variables';
 import { PrismaModule } from '../../shared/infrastructure/prisma/prisma.module';
+
+// Application layer — Phase 5
 import { InitiateUploadHandler } from './application/commands/initiate-upload.handler';
 import { CompleteUploadHandler } from './application/commands/complete-upload.handler';
 import { FailUploadHandler } from './application/commands/fail-upload.handler';
 import { GetUploadStatusHandler } from './application/queries/get-upload-status.handler';
+
+// Application layer — Phase 7 (OCR)
+import { StartOcrProcessingHandler } from './application/commands/start-ocr-processing.handler';
+import { FailOcrProcessingHandler } from './application/commands/fail-ocr-processing.handler';
+import { RetryOcrProcessingHandler } from './application/commands/retry-ocr-processing.handler';
+import { GetDocumentTextHandler } from './application/queries/get-document-text.handler';
+import { GetProcessingStatusHandler } from './application/queries/get-processing-status.handler';
+import { DocumentUploadCompletedHandler } from './application/event-handlers/document-upload-completed.handler';
+
+// Ports
 import { DOCUMENT_REPOSITORY } from './domain/document.repository';
+import { DOCUMENT_TEXT_REPOSITORY } from './domain/document-text.repository';
 import { STORAGE_SERVICE, IStorageService } from './domain/ports/storage-service.port';
+import { OCR_SERVICE, IOcrService } from './domain/ports/ocr-service.port';
+
+// Infrastructure — Phase 5
 import { DocumentController } from './infrastructure/document.controller';
 import { PrismaDocumentRepository } from './infrastructure/prisma-document.repository';
 import { LocalStorageDriver } from './infrastructure/storage/local-storage.driver';
 import { GcsStorageDriver } from './infrastructure/storage/gcs-storage.driver';
+
+// Infrastructure — Phase 7 (OCR)
+import { MockOcrDriver } from './infrastructure/ocr/mock-ocr.driver';
+import { LanguageDetector } from './infrastructure/ocr/language-detector';
+import { NativePdfExtractor } from './infrastructure/ocr/native-pdf-extractor';
+import { PdfClassifier } from './infrastructure/ocr/pdf-classifier';
+import {
+  ClassifierThenRouter,
+  OCR_CLOUD_DRIVER,
+  OCR_LANGUAGE_CONFIDENCE_THRESHOLD,
+  OCR_PAGE_LIMIT,
+  OCR_TEXT_QUALITY_THRESHOLD,
+} from './infrastructure/ocr/classifier-then-router';
+import {
+  DOC_AI_CLIENT,
+  DOC_AI_GCS_HELPERS,
+  GoogleDocAiDriver,
+} from './infrastructure/ocr/google-doc-ai.driver';
+import {
+  GoogleDocAiGcsHelpers,
+  GoogleDocAiSdkClient,
+} from './infrastructure/ocr/google-doc-ai.adapters';
+import { PrismaDocumentTextRepository } from './infrastructure/prisma-document-text.repository';
 
 /**
  * Documents module — Phase 5.
@@ -35,13 +77,13 @@ import { GcsStorageDriver } from './infrastructure/storage/gcs-storage.driver';
   imports: [CqrsModule, AuthModule, AppConfigModule, PrismaModule],
   controllers: [DocumentController],
   providers: [
-    // Application
+    // ── Phase 5 application
     InitiateUploadHandler,
     CompleteUploadHandler,
     FailUploadHandler,
     GetUploadStatusHandler,
 
-    // Infrastructure
+    // ── Phase 5 infrastructure
     LocalStorageDriver,
     GcsStorageDriver,
     { provide: DOCUMENT_REPOSITORY, useClass: PrismaDocumentRepository },
@@ -54,6 +96,69 @@ import { GcsStorageDriver } from './infrastructure/storage/gcs-storage.driver';
         gcs: GcsStorageDriver,
       ): IStorageService =>
         config.storageDriver === StorageDriver.Gcs ? gcs : local,
+    },
+
+    // ── Phase 7 application (OCR)
+    StartOcrProcessingHandler,
+    FailOcrProcessingHandler,
+    RetryOcrProcessingHandler,
+    GetDocumentTextHandler,
+    GetProcessingStatusHandler,
+    DocumentUploadCompletedHandler,
+
+    // ── Phase 7 infrastructure (OCR)
+    PdfClassifier,
+    LanguageDetector,
+    NativePdfExtractor,
+    MockOcrDriver,
+
+    // Document AI driver + its SDK adapters. Adapters are registered
+    // unconditionally so they can be DI-overridden in tests; the cloud
+    // factory below decides which driver is actually used at boot.
+    { provide: DOC_AI_CLIENT, useClass: GoogleDocAiSdkClient },
+    { provide: DOC_AI_GCS_HELPERS, useClass: GoogleDocAiGcsHelpers },
+    GoogleDocAiDriver,
+
+    ClassifierThenRouter,
+    { provide: DOCUMENT_TEXT_REPOSITORY, useClass: PrismaDocumentTextRepository },
+    { provide: OCR_SERVICE, useExisting: ClassifierThenRouter },
+
+    // Cloud-track driver — env-driven. `mock` for tests/local-dev,
+    // `google-document-ai` for prod. Adding a third driver later means
+    // registering it as a provider and adding a case below.
+    {
+      provide: OCR_CLOUD_DRIVER,
+      inject: [AppConfigService, MockOcrDriver, GoogleDocAiDriver],
+      useFactory: (
+        config: AppConfigService,
+        mock: MockOcrDriver,
+        docAi: GoogleDocAiDriver,
+      ): IOcrService => {
+        switch (config.ocrDriver) {
+          case OcrDriverEnum.GoogleDocumentAi:
+            return docAi;
+          case OcrDriverEnum.Mock:
+          default:
+            return mock;
+        }
+      },
+    },
+
+    // Pipeline tuning knobs.
+    {
+      provide: OCR_PAGE_LIMIT,
+      inject: [AppConfigService],
+      useFactory: (c: AppConfigService) => c.ocrPageLimit,
+    },
+    {
+      provide: OCR_TEXT_QUALITY_THRESHOLD,
+      inject: [AppConfigService],
+      useFactory: (c: AppConfigService) => c.ocrTextQualityThreshold,
+    },
+    {
+      provide: OCR_LANGUAGE_CONFIDENCE_THRESHOLD,
+      inject: [AppConfigService],
+      useFactory: (c: AppConfigService) => c.ocrLanguageConfidenceThreshold,
     },
   ],
 })
