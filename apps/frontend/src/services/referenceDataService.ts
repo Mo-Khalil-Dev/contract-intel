@@ -104,7 +104,19 @@ export const referenceDataService = {
     }
 
     try {
-      return await httpService.get<DashboardViewModel>(API.REFERENCE_DATA).then(unwrap);
+      // Backend returns a HATEOAS-ish envelope: { data: DashboardViewModel,
+      // actions: {...}, ui: {...} } wrapped in the standard ApiResponse.
+      // unwrap() peels off the outer ApiResponse; we then pluck `.data` to
+      // get the flat DashboardViewModel the UI expects.
+      type ReferenceDataEnvelope = {
+        data: DashboardViewModel;
+        actions: Record<string, boolean>;
+        ui: { orgBannerText: string; systemStatus: string; systemStatusColor: string };
+      };
+      const envelope = await httpService
+        .get<ReferenceDataEnvelope>(API.REFERENCE_DATA)
+        .then(unwrap);
+      return envelope.data;
     } catch (error) {
       console.error('Failed to fetch dashboard:', error);
       throw error;
