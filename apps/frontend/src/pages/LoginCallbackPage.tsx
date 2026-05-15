@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { apiClient } from '@/api/client';
 import { API } from '@/api/endpoints';
 import { track } from '@/analytics';
 
@@ -21,25 +22,15 @@ export function LoginCallbackPage() {
       }
 
       try {
-        const response = await fetch(API.AUTH_CALLBACK, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ code, state }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          track('auth_login_failed', { reason: data.error || 'backend_error' });
-          setError(data.error || 'Authentication failed');
-          return;
-        }
+        // Use apiClient so the request goes to the absolute backend origin
+        // (VITE_API_URL) with credentials. A raw fetch() against API.AUTH_CALLBACK
+        // is a relative URL and resolves against the frontend host, which on
+        // Railway returns the SPA's index.html — causing JSON.parse to choke
+        // on `<`.
+        const { data } = await apiClient.post(API.AUTH_CALLBACK, { code, state });
 
         track('auth_login_succeeded');
-        const returnUrl = data.data?.returnUrl || '/';
+        const returnUrl = data?.data?.returnUrl || '/';
         window.location.href = returnUrl;
       } catch (err) {
         track('auth_login_failed', {
