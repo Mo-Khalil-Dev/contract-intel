@@ -8,6 +8,7 @@ import { HomePageContainer } from '@/pages/HomePage/HomePageContainer';
 import { HomePageV2Container } from '@/pages/HomePageV2';
 import { UploadPageContainer } from '@/pages/UploadPage';
 import { ProcessingPage } from '@/pages/ProcessingPage/ProcessingPage';
+import { ResultsPage } from '@/pages/ResultsPage/ResultsPage';
 
 function App() {
   return (
@@ -47,6 +48,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProcessingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/results/:documentId"
+              element={
+                <ProtectedRoute>
+                  <ResultsPage />
                 </ProtectedRoute>
               }
             />

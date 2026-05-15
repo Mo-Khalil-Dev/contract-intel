@@ -6,6 +6,19 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:frontend"],
       "port": 5173
+    },
+    {
+      "name": "fullstack",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "storybook",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "storybook", "--workspace=apps/frontend"],
+      "port": 6006,
+      "autoPort": false
     }
   ]
 }

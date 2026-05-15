@@ -9,4 +9,8 @@ export const API = {
   INITIATE_UPLOAD: '/api/v1/documents/upload/initiate',
   COMPLETE_UPLOAD: '/api/v1/documents/upload/complete',
   UPLOAD_STATUS: (id: string) => `/api/v1/documents/${id}/status`,
+
+  // ── Documents (Phase 7 — OCR pipeline) ─────────────────────────
+  PROCESSING_STATUS: (id: string) => `/api/v1/documents/${id}/processing-status`,
+  RETRY_OCR: (id: string) => `/api/v1/documents/${id}/retry-ocr`,
 };

@@ -27,6 +27,11 @@ import {
   GetUploadStatusQuery,
   GetUploadStatusResult,
 } from '../application/queries/get-upload-status.query';
+import {
+  GetProcessingStatusQuery,
+  GetProcessingStatusResult,
+} from '../application/queries/get-processing-status.query';
+import { RetryOcrProcessingCommand } from '../application/commands/retry-ocr-processing.command';
 import { StorageKey } from '../domain/value-objects/storage-key.vo';
 import { IStorageService, STORAGE_SERVICE } from '../domain/ports/storage-service.port';
 import { InitiateUploadDto, UploadResponseDto } from './dtos/initiate-upload.dto';
@@ -131,5 +136,28 @@ export class DocumentController {
       uploadedAt: result.uploadedAt,
       failureReason: result.failureReason,
     };
+  }
+
+  // ── Phase 7: OCR processing status + retry ────────────────────────
+
+  @Get(':documentId/processing-status')
+  async processingStatus(
+    @CurrentUser() user: RequestUser,
+    @Param('documentId') documentId: string,
+  ): Promise<GetProcessingStatusResult> {
+    return this.queryBus.execute(
+      new GetProcessingStatusQuery(documentId, user.userId),
+    );
+  }
+
+  @Post(':documentId/retry-ocr')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async retryOcr(
+    @CurrentUser() user: RequestUser,
+    @Param('documentId') documentId: string,
+  ): Promise<void> {
+    await this.commandBus.execute(
+      new RetryOcrProcessingCommand(documentId, user.userId),
+    );
   }
 }

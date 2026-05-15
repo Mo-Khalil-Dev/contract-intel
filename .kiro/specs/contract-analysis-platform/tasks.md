@@ -133,7 +133,7 @@
 | Phase 4.5 | Product Analytics (PostHog frontend integration)         | 3 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 6   | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 **NEXT (0%)**        |
-| Phase 7   | OCR Pipeline (classify → native / Document AI → DocumentText) | 6 tasks | 🚧 **IN PROGRESS (3/6 — 50%)** |
+| Phase 7   | OCR Pipeline (classify → native / Document AI → DocumentText) | 6 tasks | 🚧 **IN PROGRESS (5/6 — 83%)** |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
 
@@ -3088,17 +3088,17 @@ apps/frontend/src/
 
 ## Phase 7: User Story — OCR Pipeline (Requirement 2)
 
-**Status**: 🚧 **IN PROGRESS (3/6 — 50%)** — see [ocr-design.md](./ocr-design.md) for full requirements & design.
+**Status**: 🚧 **IN PROGRESS (5/6 — 83%)** — see [ocr-design.md](./ocr-design.md) for full requirements & design.
 
 **Progress (2026-05-15)**:
 - ✅ **Task 7.1** — Domain layer (6 new VOs, `DocumentText` aggregate, 3 OCR events, extended `Document` with `processingStatus` + retry counter, +64 unit tests)
 - ✅ **Task 7.2** — Application layer (3 commands, 2 queries, event-handler bridge, retry policy with 1s/4s/16s backoff + error taxonomy, +24 tests)
 - ✅ **Task 7.3** — Mock + Native PDF + persistence (pdfjs-based classifier & extractor, `franc-min` language detector, `textQualityScore`, `ClassifierThenRouter` orchestrator, Prisma `DocumentText` model + migration, DI wired into `DocumentsModule`, integration test against real 7-page PDF)
-- ⏭️ **Task 7.4** — Google Document AI driver (next)
-- ⏭️ **Task 7.5** — Frontend processing-screen wiring
+- ✅ **Task 7.4** — Google Document AI driver (sync + batch paths behind one `extractText`, pure response→OcrOutput mapper, gRPC error mapping, lazy SDK adapter with regional endpoint, `scripts/setup-document-ai.sh` provisioning, env-flag-gated live integration test confirmed against real processor: 7 pages / 3.6s / confidence 0.9919, ~$0.01 cost)
+- ✅ **Task 7.5** — Frontend processing-screen wiring (2 new HTTP routes, `processingService`, `useProcessingStatus` + `useRetryOcr` hooks, `ProcessingPageView` with 4 visual states + retry button, `/results/:id` stub page, 7 Storybook stories, +10 frontend tests)
 - ⏭️ **Task 7.6** — E2E + load smoke
 
-**Test totals at end of 7.3**: 65 suites, **588 backend tests passing**, lint clean.
+**Test totals at end of 7.5**: 67 backend suites / **605 tests** + new **10 ProcessingPage frontend tests** (5 functional + 5 axe). Lint clean.
 
 **Goal**: Turn an uploaded PDF (Phase 5 output) into a `DocumentText` artifact ready for clause extraction.
 
@@ -3272,70 +3272,70 @@ Real implementations of everything *except* the cloud OCR call. Pipeline runs lo
 
 ---
 
-### Task 7.4 — Infrastructure: Google Document AI driver
+### Task 7.4 — Infrastructure: Google Document AI driver ✅
 
 Swap cloud slot from `MockOcrDriver` to real `GoogleDocAiDriver`. Only task that requires GCP setup.
 
-- [ ] Add `@google-cloud/documentai` to backend dependencies
-- [ ] `scripts/setup-document-ai.sh` (idempotent, follows `scripts/setup-gcs.sh` pattern):
-  - [ ] Enable `documentai.googleapis.com` in the project
-  - [ ] Grant `roles/documentai.apiUser` to `contractintel-uploads-sa`
-  - [ ] Create OCR processor (`displayName: contractintel-ocr`, type `OCR_PROCESSOR`, region `eu`); print resource ID
-- [ ] Env docs in `docs/deployment/gcp-setup.md`:
-  - [ ] `OCR_DRIVER=google-document-ai`
-  - [ ] `OCR_GCP_PROJECT_ID`, `OCR_GCP_LOCATION=eu`, `OCR_GCP_PROCESSOR_ID`
-- [ ] `infrastructure/ocr/google-doc-ai-driver.ts` — single public method `extractText(input): Promise<OcrOutput>`:
-  - [ ] **Sync path** (≤15 pages, ≤20 MB): `processDocument` with `rawDocument`; map response → `OcrOutput`
-  - [ ] **Batch path** (>15 pages):
-    - [ ] Source PDF reused from Phase 5 storage key (already in `gs://{bucket}/`)
-    - [ ] `batchProcessDocuments` → input GCS URI + output prefix `gs://{bucket}/ocr-output/{documentId}/`
-    - [ ] Poll LRO (5s → 30s backoff, 10min timeout)
-    - [ ] On done: `list()` output prefix, read per-page `Document` JSONs via `@google-cloud/storage` directly (inside-the-driver shortcut), merge into one `OcrOutput`
-  - [ ] Page-count + size check at top selects path
-  - [ ] Error mapping:
-    - [ ] `RESOURCE_EXHAUSTED | UNAVAILABLE | DEADLINE_EXCEEDED` → `OcrTransientError`
-    - [ ] `INVALID_ARGUMENT | PERMISSION_DENIED` → `OcrPermanentError`
-- [ ] Response → `OcrOutput` mapping as a pure function (its own file, easy to unit test):
-  - [ ] Per-page token-weighted confidence (see message history for formula)
-  - [ ] Page-length-weighted document confidence
-  - [ ] Page text via `textAnchor.textSegments` slicing into `document.text`
-- [ ] Update driver factory in `OcrModule` to switch on `OCR_DRIVER`
-- [ ] Tests with `jest.mock('@google-cloud/documentai')`:
-  - [ ] Sync happy path
-  - [ ] Sync error mapping (each error class)
-  - [ ] Batch startup → polling → completion
-  - [ ] Batch polling timeout
-  - [ ] Batch result merge across multiple shard files
-  - [ ] Response-to-`OcrOutput` mapping unit tests in isolation (hybrid confidence fixtures)
+- [x] Add `@google-cloud/documentai` to backend dependencies
+- [x] `scripts/setup-document-ai.sh` (idempotent, follows `scripts/setup-gcs.sh` pattern):
+  - [x] Enable `documentai.googleapis.com` in the project
+  - [x] Grant `roles/documentai.apiUser` to `contractintel-uploads-sa`
+  - [x] Create OCR processor (`displayName: contractintel-ocr`, type `OCR_PROCESSOR`, region `eu`); print resource ID
+- [x] Env docs in `docs/deployment/gcp-setup.md`:
+  - [x] `OCR_DRIVER=google-document-ai`
+  - [x] `OCR_GCP_PROJECT_ID`, `OCR_GCP_LOCATION=eu`, `OCR_GCP_PROCESSOR_ID`
+- [x] `infrastructure/ocr/google-doc-ai-driver.ts` — single public method `extractText(input): Promise<OcrOutput>`:
+  - [x] **Sync path** (≤15 pages, ≤20 MB): `processDocument` with `rawDocument`; map response → `OcrOutput`
+  - [x] **Batch path** (>15 pages):
+    - [x] Source PDF reused from Phase 5 storage key (already in `gs://{bucket}/`)
+    - [x] `batchProcessDocuments` → input GCS URI + output prefix `gs://{bucket}/ocr-output/{documentId}/`
+    - [x] Poll LRO (5s → 30s backoff, 10min timeout)
+    - [x] On done: `list()` output prefix, read per-page `Document` JSONs via `@google-cloud/storage` directly (inside-the-driver shortcut), merge into one `OcrOutput`
+  - [x] Page-count + size check at top selects path
+  - [x] Error mapping:
+    - [x] `RESOURCE_EXHAUSTED | UNAVAILABLE | DEADLINE_EXCEEDED` → `OcrTransientError`
+    - [x] `INVALID_ARGUMENT | PERMISSION_DENIED` → `OcrPermanentError`
+- [x] Response → `OcrOutput` mapping as a pure function (its own file, easy to unit test):
+  - [x] Per-page token-weighted confidence (see message history for formula)
+  - [x] Page-length-weighted document confidence
+  - [x] Page text via `textAnchor.textSegments` slicing into `document.text`
+- [x] Update driver factory in `OcrModule` to switch on `OCR_DRIVER`
+- [x] Tests with `jest.mock('@google-cloud/documentai')`:
+  - [x] Sync happy path
+  - [x] Sync error mapping (each error class)
+  - [x] Batch startup → polling → completion
+  - [x] Batch polling timeout
+  - [x] Batch result merge across multiple shard files
+  - [x] Response-to-`OcrOutput` mapping unit tests in isolation (hybrid confidence fixtures)
 
 **Done when:** `OCR_DRIVER=google-document-ai` env flip + real GCP processor produces valid `DocumentText`. Provisioning script runs cleanly in a fresh project. Tests mock the SDK; no live calls in default CI.
 
 ---
 
-### Task 7.5 — Frontend: processing screen wiring
+### Task 7.5 — Frontend: processing screen wiring ✅
 
 Real polling, error UI, retry button. Can start once 7.2's query contract is locked.
 
-- [ ] `apps/frontend/src/api/processingService.ts`:
-  - [ ] `getProcessingStatus(documentId)` — same 3-tier pattern as existing services
-  - [ ] `retryOcr(documentId)`
-- [ ] `useProcessingStatus(documentId)` React Query hook:
-  - [ ] `refetchInterval: 2000`
-  - [ ] Stops polling once status is terminal (`ocr_complete` | `ocr_failed`)
-- [ ] `useRetryOcr` mutation hook — on success invalidates the status query so polling resumes
-- [ ] Update `ProcessingPage`:
-  - [ ] `processing` state — spinner + "Extracting text from your contract…"
-  - [ ] `ocr_complete` state — auto-navigate to `/results/:documentId` after brief success flash
-  - [ ] `ocr_failed` state — error card with `reason` inline, plus:
-    - [ ] **Retry OCR** button when `userRetryCount < 3` — calls `retryOcr`, polling resumes
-    - [ ] **Upload another** secondary CTA; primary CTA when `userRetryCount === 3`
-- [ ] Storybook stories:
-  - [ ] `Processing`
-  - [ ] `Complete`
-  - [ ] `Failed (can retry)`
-  - [ ] `Failed (retries exhausted)`
-- [ ] jest-axe pass on all four stories
-- [ ] RTL + MSW smoke test covering the four UI states + retry flow
+- [x] `apps/frontend/src/api/processingService.ts`:
+  - [x] `getProcessingStatus(documentId)` — same 3-tier pattern as existing services
+  - [x] `retryOcr(documentId)`
+- [x] `useProcessingStatus(documentId)` React Query hook:
+  - [x] `refetchInterval: 2000`
+  - [x] Stops polling once status is terminal (`ocr_complete` | `ocr_failed`)
+- [x] `useRetryOcr` mutation hook — on success invalidates the status query so polling resumes
+- [x] Update `ProcessingPage`:
+  - [x] `processing` state — spinner + "Extracting text from your contract…"
+  - [x] `ocr_complete` state — auto-navigate to `/results/:documentId` after brief success flash
+  - [x] `ocr_failed` state — error card with `reason` inline, plus:
+    - [x] **Retry OCR** button when `userRetryCount < 3` — calls `retryOcr`, polling resumes
+    - [x] **Upload another** secondary CTA; primary CTA when `userRetryCount === 3`
+- [x] Storybook stories:
+  - [x] `Processing`
+  - [x] `Complete`
+  - [x] `Failed (can retry)`
+  - [x] `Failed (retries exhausted)`
+- [x] jest-axe pass on all four stories
+- [x] RTL + MSW smoke test covering the four UI states + retry flow
 
 **Done when:** real upload → `/processing/:id` shows real state from backend, retry button works end-to-end, axe clean, all stories render.
 
