@@ -40,10 +40,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the installed node_modules + built artifact + prisma assets
+# In an npm workspace install, deps are hoisted to the root node_modules,
+# so there's no separate apps/backend/node_modules to copy.
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/package-lock.json ./package-lock.json
-COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
 COPY --from=builder /app/apps/backend/prisma ./apps/backend/prisma
