@@ -8,8 +8,10 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-// Helper: a component that throws on render
-function Bomb({ error }: { error: Error }) {
+// Helper: a component that throws on render. The explicit `never` return
+// type is needed so TS doesn't infer the throwing function as returning
+// `void`, which fails the JSX element type check.
+function Bomb({ error }: { error: Error }): never {
   throw error;
 }
 

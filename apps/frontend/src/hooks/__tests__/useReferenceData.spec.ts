@@ -63,15 +63,9 @@ describe('useReferenceData', () => {
     expect(result.current.isError).toBe(false);
   });
 
-  it('should have correct queryKey', () => {
-    (referenceDataService.getDashboard as jest.Mock).mockResolvedValue(mockData);
-
-    const { result } = renderHook(() => useReferenceData(), {
-      wrapper: createWrapper(),
-    });
-
-    expect(result.current.queryKey).toEqual(['reference-data']);
-  });
+  // Note: a former "should have correct queryKey" test was removed — react-query's
+  // UseQueryResult doesn't expose `queryKey`. The key is exercised indirectly by
+  // the cache-behaviour tests below.
 
   it('should call getDashboard service', async () => {
     (referenceDataService.getDashboard as jest.Mock).mockResolvedValue(mockData);

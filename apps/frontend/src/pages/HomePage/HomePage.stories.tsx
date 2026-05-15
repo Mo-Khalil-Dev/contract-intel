@@ -4,7 +4,7 @@ import { DashboardViewModel } from '@/types/referenceData';
 
 const baseData: DashboardViewModel = {
   user: {
-    id: 'user-1',
+    userId: 'user-1',
     displayName: 'Sarah Johnson',
     email: 'sarah.johnson@example.com',
   },
@@ -139,7 +139,7 @@ export const HighRiskPortfolio: Story = {
         {
           id: '2',
           name: 'Complex Partnership Agreement',
-          type: 'Partnership',
+          type: 'partnership',
           party: 'Global Partners LLC',
           flagCount: 5,
           riskScore: 82,

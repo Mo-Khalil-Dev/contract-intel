@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import { QueryClientProvider, QueryClient } from 'react-query';
 import { HomePageContainer } from '../HomePageContainer';
 import { DashboardViewModel } from '@/types/referenceData';
 
 const mockDashboardData: DashboardViewModel = {
   user: {
-    id: 'user-1',
+    userId: 'user-1',
     displayName: 'Sarah Johnson',
     email: 'sarah.johnson@example.com',
   },

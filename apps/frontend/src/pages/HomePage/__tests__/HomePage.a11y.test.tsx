@@ -7,7 +7,7 @@ expect.extend(toHaveNoViolations);
 
 const mockData: DashboardViewModel = {
   user: {
-    id: 'user-1',
+    userId: 'user-1',
     displayName: 'Sarah Johnson',
     email: 'sarah.johnson@example.com',
   },
@@ -22,7 +22,7 @@ const mockData: DashboardViewModel = {
     {
       id: '1',
       name: 'AWS Services Agreement',
-      type: 'Vendor',
+      type: 'vendor',
       party: 'Amazon Web Services Inc.',
       flagCount: 2,
       riskScore: 72,
@@ -42,7 +42,7 @@ const mockData: DashboardViewModel = {
   lastOpenedContract: {
     id: '1',
     name: 'AWS Services Agreement',
-    type: 'Vendor',
+    type: 'vendor',
     party: 'Amazon Web Services Inc.',
     flagCount: 2,
     riskScore: 72,

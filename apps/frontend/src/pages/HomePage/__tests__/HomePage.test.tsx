@@ -5,7 +5,7 @@ import { DashboardViewModel } from '@/types/referenceData';
 
 const mockDashboardData: DashboardViewModel = {
   user: {
-    id: 'user-1',
+    userId: 'user-1',
     displayName: 'John Doe',
     email: 'john@example.com',
   },
