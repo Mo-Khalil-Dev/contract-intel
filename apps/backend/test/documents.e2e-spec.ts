@@ -15,6 +15,8 @@ import { AppConfigService } from '../src/config/app-config.service';
 import { InitiateUploadCommand } from '../src/modules/documents/application/commands/initiate-upload.command';
 import { CompleteUploadCommand } from '../src/modules/documents/application/commands/complete-upload.command';
 import { GetUploadStatusQuery } from '../src/modules/documents/application/queries/get-upload-status.query';
+import { GetProcessingStatusQuery } from '../src/modules/documents/application/queries/get-processing-status.query';
+import { RetryOcrProcessingCommand } from '../src/modules/documents/application/commands/retry-ocr-processing.command';
 
 /**
  * E2E for the full upload flow against the LocalStorageDriver.
@@ -153,6 +155,63 @@ describe('Documents E2E (upload flow)', () => {
         failureReason: null,
       });
       expect(queryBus.execute).toHaveBeenCalledWith(expect.any(GetUploadStatusQuery));
+    });
+  });
+
+  // ── Phase 7 routes (controller-level) ─────────────────────────────
+  // The pipeline itself is exercised end-to-end in ocr-pipeline.e2e-spec.ts.
+  // These tests cover only the HTTP layer: route mapping, parameter
+  // passing, and DTO shape.
+  describe('Phase 7 — OCR routes', () => {
+    const documentId = '11111111-2222-4333-8444-555555555556';
+
+    it('GET /:documentId/processing-status passes through GetProcessingStatusQuery', async () => {
+      queryBus.execute.mockResolvedValueOnce({
+        documentId,
+        status: 'processing',
+        failureReason: null,
+        userRetryCount: 0,
+        canRetry: false,
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(`/documents/${documentId}/processing-status`)
+        .expect(200);
+
+      expect(response.body.data).toEqual(
+        expect.objectContaining({ status: 'processing', userRetryCount: 0, canRetry: false }),
+      );
+      expect(queryBus.execute).toHaveBeenCalledWith(expect.any(GetProcessingStatusQuery));
+    });
+
+    it('GET /:documentId/processing-status surfaces failure reason + canRetry', async () => {
+      queryBus.execute.mockResolvedValueOnce({
+        documentId,
+        status: 'ocr_failed',
+        failureReason: 'transient_exhausted',
+        userRetryCount: 2,
+        canRetry: true,
+      });
+
+      const response = await request(app.getHttpServer())
+        .get(`/documents/${documentId}/processing-status`)
+        .expect(200);
+
+      expect(response.body.data.status).toBe('ocr_failed');
+      expect(response.body.data.failureReason).toBe('transient_exhausted');
+      expect(response.body.data.canRetry).toBe(true);
+    });
+
+    it('POST /:documentId/retry-ocr dispatches RetryOcrProcessingCommand and returns 204', async () => {
+      commandBus.execute.mockResolvedValueOnce(undefined);
+
+      await request(app.getHttpServer())
+        .post(`/documents/${documentId}/retry-ocr`)
+        .expect(204);
+
+      expect(commandBus.execute).toHaveBeenCalledWith(
+        expect.any(RetryOcrProcessingCommand),
+      );
     });
   });
 

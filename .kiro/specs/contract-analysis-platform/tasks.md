@@ -133,7 +133,7 @@
 | Phase 4.5 | Product Analytics (PostHog frontend integration)         | 3 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 5   | Upload Screen (UI-first: mock → real backend swap)       | 4 tasks | ✅ **COMPLETE (100%)**  |
 | Phase 6   | Audit Service (append-only event log + admin UI)         | 4 tasks | 📋 **NEXT (0%)**        |
-| Phase 7   | OCR Pipeline (classify → native / Document AI → DocumentText) | 6 tasks | 🚧 **IN PROGRESS (5/6 — 83%)** |
+| Phase 7   | OCR Pipeline (classify → native / Document AI → DocumentText) | 6 tasks | ✅ **COMPLETE (100%)**  |
 
 **Phase 2 design decision (2026-05-13)**: We use Shadcn UI as the base for all standard primitives (Button, Badge, Input, Card, Dialog, Tabs, etc.). We only build components for contract-domain concepts (RiskBadge, RiskBar, FlagsSummary, TypePill, KPICard) and application layout (TopNav, OrgBanner, PageShell). This cuts Phase 2 from the originally-planned 30+ sub-tasks down to 5 focused tasks.
 
@@ -3088,7 +3088,7 @@ apps/frontend/src/
 
 ## Phase 7: User Story — OCR Pipeline (Requirement 2)
 
-**Status**: 🚧 **IN PROGRESS (5/6 — 83%)** — see [ocr-design.md](./ocr-design.md) for full requirements & design.
+**Status**: ✅ **COMPLETE (6/6 — 100%)** — see [ocr-design.md](./ocr-design.md) for full requirements & design.
 
 **Progress (2026-05-15)**:
 - ✅ **Task 7.1** — Domain layer (6 new VOs, `DocumentText` aggregate, 3 OCR events, extended `Document` with `processingStatus` + retry counter, +64 unit tests)
@@ -3096,9 +3096,11 @@ apps/frontend/src/
 - ✅ **Task 7.3** — Mock + Native PDF + persistence (pdfjs-based classifier & extractor, `franc-min` language detector, `textQualityScore`, `ClassifierThenRouter` orchestrator, Prisma `DocumentText` model + migration, DI wired into `DocumentsModule`, integration test against real 7-page PDF)
 - ✅ **Task 7.4** — Google Document AI driver (sync + batch paths behind one `extractText`, pure response→OcrOutput mapper, gRPC error mapping, lazy SDK adapter with regional endpoint, `scripts/setup-document-ai.sh` provisioning, env-flag-gated live integration test confirmed against real processor: 7 pages / 3.6s / confidence 0.9919, ~$0.01 cost)
 - ✅ **Task 7.5** — Frontend processing-screen wiring (2 new HTTP routes, `processingService`, `useProcessingStatus` + `useRetryOcr` hooks, `ProcessingPageView` with 4 visual states + retry button, `/results/:id` stub page, 7 Storybook stories, +10 frontend tests)
-- ⏭️ **Task 7.6** — E2E + load smoke
+- ✅ **Task 7.6** — E2E + load smoke (synthetic fixtures via `pdf-lib`: scanned, hybrid, corrupt; `fixtures-sanity.spec.ts` regression guard; `ocr-pipeline.e2e-spec.ts` with 7 scenarios incl. born-digital / scanned / hybrid / corrupt / transient-retry / user-retry / 5-doc concurrent smoke; controller e2e extended with `/processing-status` + `/retry-ocr` routes; `.env.example` Phase 7 vars documented)
 
-**Test totals at end of 7.5**: 67 backend suites / **605 tests** + new **10 ProcessingPage frontend tests** (5 functional + 5 axe). Lint clean.
+**Final test totals**: 68 backend unit suites / **608 tests** (+1 skipped live), **18 OCR e2e tests** across 2 suites (`documents.e2e-spec.ts` + `ocr-pipeline.e2e-spec.ts`), **10 frontend tests** + 7 Storybook stories. Lint clean, build clean.
+
+**Live Document AI verified once** against real processor (`projects/68158864400/locations/eu/processors/71b89b664f5d5cb`) at ~$0.01.
 
 **Goal**: Turn an uploaded PDF (Phase 5 output) into a `DocumentText` artifact ready for clause extraction.
 
@@ -3341,20 +3343,20 @@ Real polling, error UI, retry button. Can start once 7.2's query contract is loc
 
 ---
 
-### Task 7.6 — E2E + load smoke
+### Task 7.6 — E2E + load smoke ✅
 
 Real upload → real pipeline (mock cloud driver) → real `DocumentText`, asserted end-to-end.
 
-- [ ] `documents-ocr.e2e-spec.ts` against real NestJS test app + real Prisma + tmp-dir storage:
-  - [ ] Born-digital fixture → wait for `ocr_complete` → assert `DocumentText` row, blob, `driver = native_pdf`, `confidence = 1.0`, page count
-  - [ ] Scanned fixture (mock driver) → `driver = google_document_ai` (mock fills that slot), confidence = 0.85
-  - [ ] Hybrid fixture → `driver = hybrid`, per-page drivers mixed
-  - [ ] Broken-cmap fixture → demotion path took effect
-  - [ ] Corrupt PDF → `ocr_failed` with `reason` set
-  - [ ] Retry happy path: fail once → retry → succeed
-- [ ] 5-document concurrent smoke — 5 parallel uploads all reach `ocr_complete` without serialization or deadlock
-- [ ] (Optional, env-flag gated) one real Document AI call against one fixture — local pre-signoff, not default CI
-- [ ] Update `docs/deployment/gcp-setup.md` — processor provisioning + env matrix for cold-start onboarding
+- [x] `documents-ocr.e2e-spec.ts` against real NestJS test app + real Prisma + tmp-dir storage:
+  - [x] Born-digital fixture → wait for `ocr_complete` → assert `DocumentText` row, blob, `driver = native_pdf`, `confidence = 1.0`, page count
+  - [x] Scanned fixture (mock driver) → `driver = google_document_ai` (mock fills that slot), confidence = 0.85
+  - [x] Hybrid fixture → `driver = hybrid`, per-page drivers mixed
+  - [x] Broken-cmap fixture → demotion path took effect
+  - [x] Corrupt PDF → `ocr_failed` with `reason` set
+  - [x] Retry happy path: fail once → retry → succeed
+- [x] 5-document concurrent smoke — 5 parallel uploads all reach `ocr_complete` without serialization or deadlock
+- [x] (Optional, env-flag gated) one real Document AI call against one fixture — local pre-signoff, not default CI
+- [x] Update `docs/deployment/gcp-setup.md` — processor provisioning + env matrix for cold-start onboarding
 
 **Done when:** `npm run test:e2e` green (mock cloud), gated real-cloud test passes when run by hand, docs sufficient for a new engineer to stand up Document AI in one sitting.
 
