@@ -30,10 +30,16 @@ interface RawSdkClient {
   batchProcessDocuments(req: unknown): Promise<[BatchOperation]>;
 }
 
+interface ServiceAccountCredentials {
+  client_email?: string;
+  private_key?: string;
+}
+
 interface SdkModule {
   DocumentProcessorServiceClient: new (opts: {
     projectId?: string;
     keyFilename?: string;
+    credentials?: ServiceAccountCredentials;
     apiEndpoint?: string;
   }) => RawSdkClient;
 }
@@ -66,12 +72,49 @@ export class GoogleDocAiSdkClient implements DocAiClient, OnModuleInit {
         ? `${location}-documentai.googleapis.com`
         : undefined;
 
+    const credConfig = this.resolveCredentials();
+
     this.sdkClient = new docai.DocumentProcessorServiceClient({
       projectId: this.config.ocrGcpProjectId,
-      keyFilename: this.config.gcsServiceAccountKey,
       apiEndpoint,
+      ...credConfig,
     });
     return this.sdkClient;
+  }
+
+  /**
+   * Mirrors `GcsStorageDriver.resolveCredentials` — `GCS_SERVICE_ACCOUNT_KEY`
+   * (shared with Document AI) can be either:
+   *   1. Base64-encoded JSON of the service account key (Railway env var) —
+   *      decode, parse, pass via `credentials`.
+   *   2. A filesystem path to the JSON file (local dev) — pass `keyFilename`.
+   *   3. Unset — fall back to Application Default Credentials.
+   *
+   * Without this, the SDK takes whatever string we pass as `keyFilename`
+   * and tries to `open()` it, which on Railway crashes the process with
+   * ENAMETOOLONG because the value is the entire base64 blob.
+   */
+  private resolveCredentials():
+    | { credentials: ServiceAccountCredentials }
+    | { keyFilename: string }
+    | Record<string, never> {
+    const raw = this.config.gcsServiceAccountKey;
+    if (!raw) {
+      this.logger.log('[DocAI] no service account key set; using ADC');
+      return {};
+    }
+    try {
+      const decoded = Buffer.from(raw, 'base64').toString('utf8');
+      const parsed = JSON.parse(decoded) as ServiceAccountCredentials;
+      if (parsed && typeof parsed.client_email === 'string') {
+        this.logger.log('[DocAI] using inline base64 service account key');
+        return { credentials: parsed };
+      }
+    } catch {
+      // Not base64 JSON; fall through to path.
+    }
+    this.logger.log(`[DocAI] using service account file at ${raw}`);
+    return { keyFilename: raw };
   }
 
   processorPath(project: string, location: string, processor: string): string {

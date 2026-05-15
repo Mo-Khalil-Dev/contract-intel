@@ -1,0 +1,32 @@
+# Local infrastructure for dev. Brings up Postgres so dev mirrors
+# Railway's production database. Start with:
+#
+#   docker compose up -d
+#
+# Stop with `docker compose down`. Data persists in the `pg-data` named
+# volume — destroy with `docker compose down -v` to start fresh.
+#
+# Test runner uses a separate database (`contract_intel_test`) on the
+# same instance — created lazily by `npm run db:reset` on first run.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: contract-intel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: contract_intel
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d contract_intel']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg-data:

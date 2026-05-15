@@ -4,16 +4,16 @@
 // This schema currently holds only Auth models (Phase 3). Future feature
 // modules append their own models to this file.
 //
-// Local dev uses SQLite (single file) for ease. Production target is
-// PostgreSQL (Cloud SQL) — switch the datasource provider when the
-// production env is wired up.
+// Local dev runs Postgres via docker-compose at the repo root so dev
+// mirrors production. Railway provides a managed Postgres in prod; the
+// plugin auto-populates DATABASE_URL on the backend service.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
