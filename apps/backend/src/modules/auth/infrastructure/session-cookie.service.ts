@@ -8,7 +8,7 @@ export const SESSION_COOKIE_NAME = 'ContractIntel';
 interface CookieAttrs {
   httpOnly: true;
   secure: boolean;
-  sameSite: 'strict';
+  sameSite: 'strict' | 'none';
   path: '/';
   maxAge?: number;
 }
@@ -53,10 +53,16 @@ export class SessionCookieService {
   }
 
   private attrs(maxAgeSeconds?: number): CookieAttrs {
+    // In production the frontend and backend are on separate origins
+    // (e.g. *.up.railway.app entries are different sites per the Public
+    // Suffix List), so the cookie must be SameSite=None + Secure for the
+    // browser to send it on cross-site XHR. Locally we keep SameSite=Strict
+    // since dev runs same-origin via the Vite proxy.
+    const crossSite = this.config.isProduction;
     return {
       httpOnly: true,
       secure: this.config.isProduction,
-      sameSite: 'strict',
+      sameSite: crossSite ? 'none' : 'strict',
       path: '/',
       ...(maxAgeSeconds !== undefined ? { maxAge: maxAgeSeconds * 1000 } : {}),
     };
