@@ -13,13 +13,22 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
+// Helper: build the backend login URL with a returnUrl. We must include the
+// absolute backend origin because the login route lives on the backend, not
+// the SPA — using a relative path would resolve against the frontend origin
+// (works locally via Vite's proxy, breaks on Railway where each service is a
+// separate domain).
+export function loginRedirectUrl(returnUrl?: string): string {
+  const target = returnUrl ?? window.location.pathname + window.location.search;
+  return `${API_BASE_URL}${API.AUTH_LOGIN}?returnUrl=${encodeURIComponent(target)}`;
+}
+
 // 401 response interceptor: redirect to login with returnUrl
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.href = `${API.AUTH_LOGIN}?returnUrl=${returnUrl}`;
+      window.location.href = loginRedirectUrl();
     }
     return Promise.reject(error);
   },

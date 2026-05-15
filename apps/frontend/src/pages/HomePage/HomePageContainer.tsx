@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useReferenceData } from '@/hooks/useReferenceData';
 import { authService } from '@/services/authService';
-import { API } from '@/api/endpoints';
+import { loginRedirectUrl } from '@/api/client';
 import { HomePage } from './HomePage';
 import { Skeleton } from '@/components/ui/skeleton';
 import styles from './HomePageContainer.module.css';
@@ -41,8 +41,9 @@ export function HomePageContainer() {
     } catch {
       // Ignore — session may already be invalid. We still want to redirect.
     }
-    // Backend clears the session cookie; bounce to login flow.
-    window.location.href = API.AUTH_LOGIN;
+    // Backend clears the session cookie; bounce to login flow on the backend
+    // origin (absolute URL — the login route doesn't exist on the SPA host).
+    window.location.href = loginRedirectUrl('/');
   };
 
   if (isLoading) {
