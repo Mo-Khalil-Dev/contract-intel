@@ -18,25 +18,14 @@ import { UploadedBy } from '../domain/value-objects/uploaded-by.vo';
  */
 export class DocumentMapper {
   static toDomain(row: DocumentRow): Document {
-    // Phase 8 fields (extractionStatus, currentExtractionRunId) are persisted
-    // in Task 8.3's migration. Until then, rehydrate from row when present,
-    // defaulting to not_started so existing rows keep loading cleanly.
-    const rowWithExtraction = row as DocumentRow & {
-      extractionStatus?: string | null;
-      currentExtractionRunId?: string | null;
-    };
-    const extractionStatus = rowWithExtraction.extractionStatus
-      ? DocumentExtractionStatus.fromValue(rowWithExtraction.extractionStatus)
-      : DocumentExtractionStatus.notStarted();
-
     return Document.rehydrate(DocumentId.fromString(row.id), {
       name: DocumentName.create(row.name),
       type: DocumentType.fromValue(row.type),
       size: FileSize.fromBytes(row.sizeBytes),
       status: UploadStatus.fromValue(row.status),
       processingStatus: ProcessingStatus.fromValue(row.processingStatus),
-      extractionStatus,
-      currentExtractionRunId: rowWithExtraction.currentExtractionRunId ?? null,
+      extractionStatus: DocumentExtractionStatus.fromValue(row.extractionStatus),
+      currentExtractionRunId: row.currentExtractionRunId,
       storageKey: StorageKey.fromString(row.storageKey),
       uploadedBy: UploadedBy.fromUserId(row.uploadedBy),
       orgId: OrgId.fromString(row.orgId),
@@ -57,6 +46,8 @@ export class DocumentMapper {
       status: doc.status.value,
       processingStatus: doc.processingStatus.value,
       userRetryCount: doc.userRetryCount,
+      extractionStatus: doc.extractionStatus.value,
+      currentExtractionRunId: doc.currentExtractionRunId,
       storageKey: doc.storageKey.value,
       uploadedBy: doc.uploadedBy.userId,
       orgId: doc.orgId.value,

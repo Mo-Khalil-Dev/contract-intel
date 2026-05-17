@@ -8,6 +8,7 @@ import { ResponseInterceptor } from './shared/infrastructure/interceptors/respon
 import { AuthModule } from './modules/auth/auth.module';
 import { ReferenceDataModule } from './modules/reference-data/reference-data.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { ClausesModule } from './modules/clauses/clauses.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
     AuthModule,
     ReferenceDataModule,
     DocumentsModule,
+    ClausesModule,
   ],
   providers: [
     {

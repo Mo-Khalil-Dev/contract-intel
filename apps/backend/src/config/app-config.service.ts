@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  ClauseExtractorDriver,
+  EmbeddingDriver,
   EnvironmentVariables,
   LogLevel,
   NodeEnv,
@@ -131,6 +133,15 @@ export class AppConfigService {
 
   get ocrGcpBatchOutputPrefix(): string | undefined {
     return this.configService.get('OCR_GCP_BATCH_OUTPUT_PREFIX', { infer: true });
+  }
+
+  // Clause extraction (Phase 8)
+  get clauseExtractor(): ClauseExtractorDriver {
+    return this.configService.get('CLAUSE_EXTRACTOR', { infer: true });
+  }
+
+  get embeddingDriver(): EmbeddingDriver {
+    return this.configService.get('EMBEDDING_DRIVER', { infer: true });
   }
 
   // AI

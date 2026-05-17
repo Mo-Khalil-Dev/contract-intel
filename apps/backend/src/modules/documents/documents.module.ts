@@ -161,5 +161,10 @@ import { PrismaDocumentTextRepository } from './infrastructure/prisma-document-t
       useFactory: (c: AppConfigService) => c.ocrLanguageConfidenceThreshold,
     },
   ],
+  // ClausesModule (Phase 8) subscribes to DocumentOcrCompletedEvent and
+  // reads documents + document texts through the application-layer ports.
+  // Re-exporting CqrsModule lets the events propagate; exporting the two
+  // repository symbols gives the clauses application layer a typed handle.
+  exports: [CqrsModule, DOCUMENT_REPOSITORY, DOCUMENT_TEXT_REPOSITORY],
 })
 export class DocumentsModule {}

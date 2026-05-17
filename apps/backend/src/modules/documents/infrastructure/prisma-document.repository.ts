@@ -30,6 +30,8 @@ export class PrismaDocumentRepository implements IDocumentRepository {
         status: data.status,
         processingStatus: data.processingStatus,
         userRetryCount: data.userRetryCount,
+        extractionStatus: data.extractionStatus,
+        currentExtractionRunId: data.currentExtractionRunId,
         completedAt: data.completedAt,
         failureReason: data.failureReason,
         updatedAt: data.updatedAt,

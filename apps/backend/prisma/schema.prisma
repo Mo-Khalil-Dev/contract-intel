@@ -9,12 +9,17 @@
 // plugin auto-populates DATABASE_URL on the backend service.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // Phase 8: required to declare the `vector` extension. Prisma still
+  // can't natively type `vector(N)` columns — we use `Unsupported(...)`
+  // and write/read via `$queryRaw` with explicit ::vector casts.
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 // -----------------------------------------------------------------------------
@@ -43,8 +48,8 @@ model Session {
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   encryptedAccessToken  String
   encryptedRefreshToken String
-  encryptionSalt        String   // PBKDF2 salt (per-session)
-  keyName               String   // rotating key identifier
+  encryptionSalt        String // PBKDF2 salt (per-session)
+  keyName               String // rotating key identifier
   expiresAt             DateTime
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -58,32 +63,40 @@ model Session {
 // -----------------------------------------------------------------------------
 
 model Document {
-  id             String    @id // UUID, supplied by the application (DocumentId VO)
-  name           String    // Original filename — never used as storage key
-  type           String    // DocumentType enum (PDF in v1)
-  sizeBytes      Int       // Validated ≤50 MB at the VO layer
-  status         String    // pending | uploading | complete | failed
-  storageKey     String    @unique // Opaque '{documentId}.{ext}' — addresses the blob
-  uploadedBy     String    // UserId UUID (the requester)
-  orgId          String    // v1: orgId == uploadedBy. Will become a real Org FK later.
-  failureReason  String?
+  id            String  @id // UUID, supplied by the application (DocumentId VO)
+  name          String // Original filename — never used as storage key
+  type          String // DocumentType enum (PDF in v1)
+  sizeBytes     Int // Validated ≤50 MB at the VO layer
+  status        String // pending | uploading | complete | failed
+  storageKey    String  @unique // Opaque '{documentId}.{ext}' — addresses the blob
+  uploadedBy    String // UserId UUID (the requester)
+  orgId         String // v1: orgId == uploadedBy. Will become a real Org FK later.
+  failureReason String?
 
   // Phase 7 — OCR pipeline state. Distinct from `status` (upload lifecycle).
   // See ProcessingStatus VO for the state machine.
-  processingStatus String  @default("not_started") // not_started | processing | ocr_complete | ocr_failed
-  userRetryCount   Int     @default(0)              // capped at 3 in the aggregate
+  processingStatus String @default("not_started") // not_started | processing | ocr_complete | ocr_failed
+  userRetryCount   Int    @default(0) // capped at 3 in the aggregate
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  completedAt   DateTime?
+  // Phase 8 — clause-extraction lifecycle. Document-level view; the
+  // ExtractionRun aggregate owns the detail (model versions, counts).
+  extractionStatus       String  @default("not_started") // not_started | extracting | extraction_complete | extraction_failed
+  currentExtractionRunId String?
 
-  documentText DocumentText?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  documentText   DocumentText?
+  extractionRuns ExtractionRun[]
+  clauses        Clause[]
 
   // Every read is scoped by orgId, so the index drives every list query.
   @@index([orgId])
   @@index([uploadedBy])
   @@index([orgId, status])
   @@index([processingStatus])
+  @@index([extractionStatus])
 }
 
 // -----------------------------------------------------------------------------
@@ -94,20 +107,90 @@ model Document {
 // IStorageService at `{documentId}.text.json`; this row carries the
 // metadata needed to query, list, and triage without fetching the blob.
 model DocumentText {
-  documentId        String   @id
-  document          Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId String   @id
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  storageKey        String   @unique // Opaque '{documentId}.text.json'
-  textLength        Int      // chars; cheap signal for "did we extract anything"
-  confidence        Float    // 0..1, char-length-weighted mean across pages
-  minPageConfidence Float    // 0..1, smallest per-page confidence
-  language          String   // ISO 639-1, or 'und' if detection bypassed
-  driver            String   // native_pdf | google_document_ai | mock | hybrid
+  storageKey        String @unique // Opaque '{documentId}.text.json'
+  textLength        Int // chars; cheap signal for "did we extract anything"
+  confidence        Float // 0..1, char-length-weighted mean across pages
+  minPageConfidence Float // 0..1, smallest per-page confidence
+  language          String // ISO 639-1, or 'und' if detection bypassed
+  driver            String // native_pdf | google_document_ai | mock | hybrid
   pageCount         Int
 
-  extractedAt       DateTime
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  extractedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([driver])
+}
+
+// -----------------------------------------------------------------------------
+// Clause extraction (Phase 8)
+// -----------------------------------------------------------------------------
+
+// One run per extraction attempt. Re-extraction creates a new row; old runs
+// are retained for audit (`Document.currentExtractionRunId` points at the
+// newest). See clause-extraction-design.md §3.1.
+model ExtractionRun {
+  id         String   @id // UUID, supplied by the application (ExtractionRunId VO)
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  classifierModelVersion String // <vendor>/<name>@<version>
+  embeddingModelVersion  String
+
+  status             String // running | complete | failed
+  failureReason      String?
+  clauseCount        Int     @default(0)
+  droppedClauseCount Int     @default(0) // hallucinated-text drops
+
+  startedAt   DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  clauses Clause[]
+
+  @@index([documentId])
+  @@index([status])
+}
+
+// Position-anchored, classified, embedding-equipped clause. Embedding is
+// nullable so a Voyage outage doesn't kill the extraction run — clauses
+// land with `embedding = NULL` and a backfill job (deferred) can re-embed.
+// Vector column uses pgvector; Prisma can't type it natively so we use
+// `Unsupported("vector(1024)")` plus raw SQL for insert/select.
+model Clause {
+  id              String  @id // UUID (ClauseId VO)
+  extractionRunId String
+  documentId      String // denormalised for fast doc-scoped queries
+  parentClauseId  String? // self-FK, max 2 levels deep, SET NULL on parent delete
+
+  type                  String // ClauseType (15 values)
+  confidence            Float
+  pageNumber            Int
+  startOffset           Int
+  endOffset             Int
+  text                  String                       @db.Text
+  embedding             Unsupported("vector(1024)")?
+  embeddingModelVersion String?
+
+  // Phase 8 persists, Phase 8 UI ignores. Phase 9 wires risk into the UI
+  // and event flow once the rubric is SME-validated.
+  riskScore       Int?
+  riskLevel       String? // low | medium | high | critical
+  riskFlags       String[] @default([])
+  riskExplanation String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  extractionRun ExtractionRun @relation(fields: [extractionRunId], references: [id], onDelete: Cascade)
+  document      Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  parent        Clause?       @relation("ClauseHierarchy", fields: [parentClauseId], references: [id], onDelete: SetNull)
+  children      Clause[]      @relation("ClauseHierarchy")
+
+  @@index([documentId])
+  @@index([extractionRunId])
+  @@index([type])
+  @@index([parentClauseId])
 }

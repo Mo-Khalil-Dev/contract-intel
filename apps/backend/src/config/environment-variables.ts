@@ -27,6 +27,16 @@ export enum OcrDriver {
   GoogleDocumentAi = 'google-document-ai',
 }
 
+export enum ClauseExtractorDriver {
+  Mock = 'mock',
+  Anthropic = 'anthropic',
+}
+
+export enum EmbeddingDriver {
+  Mock = 'mock',
+  Voyage = 'voyage',
+}
+
 export enum QueueDriver {
   Memory = 'memory',
   PgBoss = 'pg-boss',
@@ -151,6 +161,17 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   OCR_GCP_BATCH_OUTPUT_PREFIX?: string;
+
+  // Clause extraction (Phase 8) — driver chosen at boot. `mock` for tests
+  // and local dev; `anthropic` swaps in the real Claude driver (Task 8.4).
+  @IsEnum(ClauseExtractorDriver)
+  CLAUSE_EXTRACTOR: ClauseExtractorDriver = ClauseExtractorDriver.Mock;
+
+  // Embedding driver (Phase 8). `mock` produces deterministic hash-based
+  // vectors; `voyage` swaps in voyage-law-2 (Task 8.5). Vector dim is
+  // locked at 1024 in the schema — switching providers requires migration.
+  @IsEnum(EmbeddingDriver)
+  EMBEDDING_DRIVER: EmbeddingDriver = EmbeddingDriver.Mock;
 
   // AI
   @IsString()
