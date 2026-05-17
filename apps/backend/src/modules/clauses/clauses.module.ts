@@ -37,6 +37,12 @@ import {
   CLAUDE_MODEL,
   ClaudeClauseExtractor,
 } from './infrastructure/extraction/claude-clause-extractor';
+import { VoyageAIClient } from 'voyageai';
+import {
+  VOYAGE_CLIENT,
+  VOYAGE_MODEL,
+  VoyageEmbeddingService,
+} from './infrastructure/embeddings/voyage-embedding-service';
 
 // Infrastructure — persistence
 import { PrismaClauseRepository } from './infrastructure/persistence/prisma-clause.repository';
@@ -72,6 +78,7 @@ import { PrismaExtractionRunRepository } from './infrastructure/persistence/pris
     MockClauseExtractor,
     MockEmbeddingService,
     ClaudeClauseExtractor,
+    VoyageEmbeddingService,
 
     // Anthropic SDK client — instantiated once, shared across calls.
     // Lives behind ANTHROPIC_CLIENT so tests can override with a stub.
@@ -105,17 +112,31 @@ import { PrismaExtractionRunRepository } from './infrastructure/persistence/pris
       },
     },
 
+    // Voyage SDK client — shared across calls. Behind VOYAGE_CLIENT so
+    // tests can override with a stub.
+    {
+      provide: VOYAGE_CLIENT,
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService): VoyageAIClient =>
+        new VoyageAIClient({ apiKey: config.voyageApiKey ?? '' }),
+    },
+    {
+      provide: VOYAGE_MODEL,
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService) => config.voyageModel,
+    },
+
     {
       provide: EMBEDDING_SERVICE,
-      inject: [AppConfigService, MockEmbeddingService],
+      inject: [AppConfigService, MockEmbeddingService, VoyageEmbeddingService],
       useFactory: (
         config: AppConfigService,
         mock: MockEmbeddingService,
+        voyage: VoyageEmbeddingService,
       ): IEmbeddingService => {
         switch (config.embeddingDriver) {
           case EmbeddingDriver.Voyage:
-            // Wired in Task 8.5.
-            return mock;
+            return voyage;
           case EmbeddingDriver.Mock:
           default:
             return mock;

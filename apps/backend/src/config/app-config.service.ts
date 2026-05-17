@@ -153,6 +153,15 @@ export class AppConfigService {
     return this.configService.get('CLAUDE_MODEL', { infer: true });
   }
 
+  // Voyage embeddings (Phase 8, Task 8.5)
+  get voyageApiKey(): string | undefined {
+    return this.configService.get('VOYAGE_API_KEY', { infer: true });
+  }
+
+  get voyageModel(): string {
+    return this.configService.get('VOYAGE_MODEL', { infer: true });
+  }
+
   // Queue
   get queueDriver(): QueueDriver {
     return this.configService.get('QUEUE_DRIVER', { infer: true });

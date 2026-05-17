@@ -48,8 +48,13 @@ State of Delaware, without regard to its conflicts of law principles.
 thirty (30) days of receipt.
 `.trim();
 
+const SHOULD_RUN =
+  process.env.CLAUSE_EXTRACTOR_LIVE_TEST === '1' && !!process.env.CLAUDE_API_KEY;
+
+const itOrSkip = SHOULD_RUN ? it : it.skip;
+
 describe('ClaudeClauseExtractor (live)', () => {
-  it(
+  itOrSkip(
     'extracts clauses from a real contract',
     async () => {
       const model = process.env.CLAUDE_MODEL ?? 'claude-opus-4-7';

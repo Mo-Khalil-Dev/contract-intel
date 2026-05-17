@@ -186,6 +186,16 @@ export class EnvironmentVariables {
   @IsString()
   CLAUDE_MODEL: string = 'claude-opus-4-7';
 
+  // Voyage embeddings (Phase 8, Task 8.5). Required when
+  // EMBEDDING_DRIVER=voyage. Vector dim is locked at 1024 in the
+  // schema — switching to a different-dim model requires a migration.
+  @IsString()
+  @IsOptional()
+  VOYAGE_API_KEY?: string;
+
+  @IsString()
+  VOYAGE_MODEL: string = 'voyage-law-2';
+
   // Queue
   @IsEnum(QueueDriver)
   QUEUE_DRIVER: QueueDriver = QueueDriver.Memory;
