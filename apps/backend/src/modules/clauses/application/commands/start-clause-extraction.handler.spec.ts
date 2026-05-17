@@ -137,6 +137,22 @@ function fakeClauseRepo(): jest.Mocked<IClauseRepository> {
   };
 }
 
+function emptyMetadata() {
+  return {
+    contractType: null,
+    parties: [],
+    effectiveDate: null,
+    terminationDate: null,
+    noticePeriod: null,
+    autoRenewal: null,
+    paymentAmount: null,
+    currency: null,
+    paymentSchedule: null,
+    priceEscalation: null,
+    paymentTerms: null,
+  };
+}
+
 function fakeExtractor(
   impl: ExtractedClause[] | jest.Mock,
   modelVersion = 'anthropic/claude-opus-4-7@2026-05',
@@ -145,7 +161,9 @@ function fakeExtractor(
     extract:
       typeof impl === 'function'
         ? (impl)
-        : jest.fn().mockResolvedValue(impl),
+        : jest
+            .fn()
+            .mockResolvedValue({ clauses: impl, metadata: emptyMetadata() }),
     getModelVersion: jest.fn().mockReturnValue(modelVersion),
   };
 }
@@ -386,7 +404,10 @@ describe('StartClauseExtractionHandler', () => {
     const extract = jest
       .fn()
       .mockRejectedValueOnce(new ExtractionTransientError('429'))
-      .mockResolvedValueOnce([fakeExtracted(text)]);
+      .mockResolvedValueOnce({
+        clauses: [fakeExtracted(text)],
+        metadata: emptyMetadata(),
+      });
     const { handler, clauseRepo } = build({ doc, extracted: extract });
 
     await handler.execute(new StartClauseExtractionCommand(doc.id.value));

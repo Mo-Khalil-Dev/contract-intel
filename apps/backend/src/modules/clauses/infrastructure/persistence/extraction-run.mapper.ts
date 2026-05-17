@@ -1,6 +1,7 @@
-import type { ExtractionRun as ExtractionRunRow } from '@prisma/client';
+import type { ExtractionRun as ExtractionRunRow, Prisma } from '@prisma/client';
 import { ExtractionRun } from '../../domain/aggregates/extraction-run.aggregate';
 import { DocumentId } from '../../../documents/domain/value-objects/document-id.vo';
+import { ContractMetadata } from '../../domain/value-objects/contract-metadata.vo';
 import { ExtractionRunId } from '../../domain/value-objects/extraction-run-id.vo';
 import { ExtractionStatus } from '../../domain/value-objects/extraction-status.vo';
 import { ModelVersion } from '../../domain/value-objects/model-version.vo';
@@ -17,6 +18,11 @@ export class ExtractionRunMapper {
       failureReason: row.failureReason,
       clauseCount: row.clauseCount,
       droppedClauseCount: row.droppedClauseCount,
+      // JSON column → VO. Defensive: a malformed payload shouldn't kill
+      // rehydration; we fall back to empty metadata in that case.
+      metadata: row.metadata
+        ? safeMetadataFromJson(row.metadata as Prisma.JsonValue)
+        : null,
     });
   }
 
@@ -32,6 +38,18 @@ export class ExtractionRunMapper {
       droppedClauseCount: run.droppedClauseCount,
       startedAt: run.startedAt,
       completedAt: run.completedAt,
+      metadata: run.metadata
+        ? (JSON.parse(JSON.stringify(run.metadata.toJSON())) as Prisma.JsonValue)
+        : null,
     };
+  }
+}
+
+function safeMetadataFromJson(raw: Prisma.JsonValue): ContractMetadata | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  try {
+    return ContractMetadata.create(raw as Record<string, unknown>);
+  } catch {
+    return null;
   }
 }

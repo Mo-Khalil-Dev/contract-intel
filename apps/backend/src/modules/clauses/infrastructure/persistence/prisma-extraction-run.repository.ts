@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { IExtractionRunRepository } from '../../domain/extraction-run.repository';
 import { ExtractionRun } from '../../domain/aggregates/extraction-run.aggregate';
@@ -12,6 +13,13 @@ export class PrismaExtractionRunRepository implements IExtractionRunRepository {
 
   async save(run: ExtractionRun): Promise<void> {
     const data = ExtractionRunMapper.toPersistence(run);
+    // Prisma's `Json | null` accepts a JsonValue or the literal
+    // `Prisma.DbNull`; map our `null` to `DbNull` so we can actually
+    // clear the column when needed.
+    const metadataValue =
+      data.metadata === null
+        ? Prisma.DbNull
+        : (data.metadata as Prisma.InputJsonValue);
     await this.prisma.extractionRun.upsert({
       where: { id: data.id },
       // Identity (documentId, model versions, startedAt) is immutable post-
@@ -22,8 +30,12 @@ export class PrismaExtractionRunRepository implements IExtractionRunRepository {
         clauseCount: data.clauseCount,
         droppedClauseCount: data.droppedClauseCount,
         completedAt: data.completedAt,
+        metadata: metadataValue,
       },
-      create: data,
+      create: {
+        ...data,
+        metadata: metadataValue,
+      },
     });
   }
 

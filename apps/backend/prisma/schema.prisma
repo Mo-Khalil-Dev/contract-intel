@@ -149,6 +149,12 @@ model ExtractionRun {
   completedAt DateTime?
   createdAt   DateTime  @default(now())
 
+  // Document-level metadata captured by the same Claude call that
+  // produced the clauses. Stored as JSON for Phase 8 (no field-level
+  // queries yet). Phase 10+ may promote to columns if filter use cases
+  // emerge ("contracts expiring in 60 days", "all NDAs with Acme").
+  metadata Json?
+
   clauses Clause[]
 
   @@index([documentId])

@@ -20,12 +20,27 @@ import { RiskLevelValue } from '../../domain/value-objects/risk-level.vo';
 export const CLAUSE_TYPE_VALUES = Object.values(ClauseTypeValue) as string[];
 export const RISK_LEVEL_VALUES = Object.values(RiskLevelValue) as string[];
 
-export const CLAUDE_SYSTEM_PROMPT = `You are a senior contracts attorney extracting and classifying clauses from
-commercial agreements. For each meaningful clause in the document, return a
-JSON object via the extract_clauses tool. Be exhaustive — every distinct
-clause, including nested sub-clauses (numbered sub-paragraphs).
+export const CLAUDE_SYSTEM_PROMPT = `You are a senior contracts attorney analysing commercial agreements. For
+every contract, return TWO artefacts via the extract_clauses tool:
 
-Rules:
+  (A) Document-level metadata — parties, key dates, financial terms.
+      Required for the reviewer's at-a-glance summary.
+
+  (B) An exhaustive list of clauses (including nested sub-clauses), each
+      classified by type and scored for risk.
+
+METADATA rules:
+- "contractType": short label like "Vendor", "Client", "Service",
+  "NDA", "SaaS", "Employment". Null if undeterminable.
+- "parties": each entry has "role" (Provider | Client | Vendor | Buyer
+  | Licensor | Licensee | etc., as the document names them) and "name"
+  (legal name verbatim). Empty array if undeterminable.
+- All other metadata fields: copy the text VERBATIM from the document
+  (e.g. "£50,000", "Net 30 days", "thirty (30) days' written notice").
+  Do not paraphrase, do not parse into structured types — the reviewer
+  wants the document's own words. Use null when the document is silent.
+
+CLAUSE rules:
 - Pick exactly one type from the 15-value taxonomy. If a clause genuinely
   doesn't fit any specific type, use "other" with low confidence rather
   than forcing a match.
@@ -77,10 +92,49 @@ Return via the extract_clauses tool. Do not produce prose outside the tool call.
 export const EXTRACT_CLAUSES_TOOL = {
   name: 'extract_clauses',
   description:
-    'Submit the extracted, classified, and risk-scored clauses for a contract.',
+    'Submit the extracted document metadata, classified clauses, and risk scores.',
   input_schema: {
     type: 'object',
     properties: {
+      metadata: {
+        type: 'object',
+        required: [
+          'contractType',
+          'parties',
+          'effectiveDate',
+          'terminationDate',
+          'noticePeriod',
+          'autoRenewal',
+          'paymentAmount',
+          'currency',
+          'paymentSchedule',
+          'priceEscalation',
+          'paymentTerms',
+        ],
+        properties: {
+          contractType: { type: ['string', 'null'] },
+          parties: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['role', 'name'],
+              properties: {
+                role: { type: 'string' },
+                name: { type: 'string' },
+              },
+            },
+          },
+          effectiveDate: { type: ['string', 'null'] },
+          terminationDate: { type: ['string', 'null'] },
+          noticePeriod: { type: ['string', 'null'] },
+          autoRenewal: { type: ['string', 'null'] },
+          paymentAmount: { type: ['string', 'null'] },
+          currency: { type: ['string', 'null'] },
+          paymentSchedule: { type: ['string', 'null'] },
+          priceEscalation: { type: ['string', 'null'] },
+          paymentTerms: { type: ['string', 'null'] },
+        },
+      },
       clauses: {
         type: 'array',
         items: {
@@ -109,7 +163,7 @@ export const EXTRACT_CLAUSES_TOOL = {
         },
       },
     },
-    required: ['clauses'],
+    required: ['metadata', 'clauses'],
   },
 } as const satisfies {
   name: string;

@@ -76,18 +76,20 @@ describe('ClaudeClauseExtractor (live)', () => {
 
       // eslint-disable-next-line no-console
       console.log(
-        `[live test] received ${out.length} clauses from ${model}:`,
-        out.map((c) => ({
+        `[live test] received ${out.clauses.length} clauses from ${model}:`,
+        out.clauses.map((c) => ({
           type: c.type,
           conf: c.confidence,
           riskLevel: c.riskLevel,
         })),
       );
+      // eslint-disable-next-line no-console
+      console.log(`[live test] metadata:`, out.metadata);
 
-      expect(out.length).toBeGreaterThan(0);
+      expect(out.clauses.length).toBeGreaterThan(0);
 
       const allowedTypes = Object.values(ClauseTypeValue) as string[];
-      for (const c of out) {
+      for (const c of out.clauses) {
         expect(allowedTypes).toContain(c.type);
         expect(c.confidence).toBeGreaterThanOrEqual(0);
         expect(c.confidence).toBeLessThanOrEqual(1);
@@ -95,6 +97,9 @@ describe('ClaudeClauseExtractor (live)', () => {
         expect(c.riskScore).toBeGreaterThanOrEqual(0);
         expect(c.riskScore).toBeLessThanOrEqual(100);
       }
+
+      // Metadata structural assertions — exact values vary by model run.
+      expect(Array.isArray(out.metadata.parties)).toBe(true);
     },
     60_000, // generous timeout; Opus can take 10–30s on a small contract
   );

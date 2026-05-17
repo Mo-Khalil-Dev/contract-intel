@@ -4,6 +4,7 @@ import { IExtractionRunRepository } from '../../domain/extraction-run.repository
 import { ExtractionRun } from '../../domain/aggregates/extraction-run.aggregate';
 import { DocumentId } from '../../../documents/domain/value-objects/document-id.vo';
 import { ModelVersion } from '../../domain/value-objects/model-version.vo';
+import { ContractMetadata } from '../../domain/value-objects/contract-metadata.vo';
 
 function makeRun(documentId: DocumentId): ExtractionRun {
   return ExtractionRun.start({
@@ -56,6 +57,26 @@ describe('GetExtractionRunStatusHandler', () => {
     expect(result.clauseCount).toBe(3);
     expect(result.droppedClauseCount).toBe(1);
     expect(result.completedAt).not.toBeNull();
+    expect(result.metadata).toBeNull();
+  });
+
+  it('exposes metadata in the DTO when present', async () => {
+    const docId = DocumentId.create();
+    const run = makeRun(docId);
+    const metadata = ContractMetadata.create({
+      contractType: 'Vendor',
+      parties: [{ role: 'Provider', name: 'Acme' }],
+      paymentAmount: '£50,000',
+    });
+    run.complete({ clauseCount: 1, droppedClauseCount: 0, metadata });
+    const handler = new GetExtractionRunStatusHandler(fakeRepo(run));
+    const result = await handler.execute(
+      new GetExtractionRunStatusQuery(docId.value),
+    );
+    expect(result.metadata).not.toBeNull();
+    expect(result.metadata?.contractType).toBe('Vendor');
+    expect(result.metadata?.parties).toEqual([{ role: 'Provider', name: 'Acme' }]);
+    expect(result.metadata?.paymentAmount).toBe('£50,000');
   });
 
   it('returns failed run state with reason', async () => {

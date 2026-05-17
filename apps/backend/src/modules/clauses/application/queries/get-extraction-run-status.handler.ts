@@ -33,6 +33,7 @@ export class GetExtractionRunStatusHandler
         failureReason: null,
         startedAt: null,
         completedAt: null,
+        metadata: null,
       };
     }
     return {
@@ -43,6 +44,21 @@ export class GetExtractionRunStatusHandler
       failureReason: run.failureReason,
       startedAt: run.startedAt.toISOString(),
       completedAt: run.completedAt?.toISOString() ?? null,
+      metadata: run.metadata
+        ? {
+            contractType: run.metadata.contractType,
+            parties: run.metadata.parties,
+            effectiveDate: run.metadata.effectiveDate,
+            terminationDate: run.metadata.terminationDate,
+            noticePeriod: run.metadata.noticePeriod,
+            autoRenewal: run.metadata.autoRenewal,
+            paymentAmount: run.metadata.paymentAmount,
+            currency: run.metadata.currency,
+            paymentSchedule: run.metadata.paymentSchedule,
+            priceEscalation: run.metadata.priceEscalation,
+            paymentTerms: run.metadata.paymentTerms,
+          }
+        : null,
     };
   }
 }

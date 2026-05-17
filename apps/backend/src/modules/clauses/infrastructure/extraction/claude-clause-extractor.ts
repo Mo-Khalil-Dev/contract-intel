@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   ExtractInput,
-  ExtractedClause,
+  ExtractedContract,
   IClauseExtractor,
 } from '../../application/ports/clause-extractor.port';
 import {
@@ -55,7 +55,7 @@ export class ClaudeClauseExtractor implements IClauseExtractor {
     @Inject(CLAUDE_MODEL) private readonly model: string,
   ) {}
 
-  async extract(input: ExtractInput): Promise<ExtractedClause[]> {
+  async extract(input: ExtractInput): Promise<ExtractedContract> {
     const chunks = this.chunkInput(input);
 
     if (chunks.length === 1) {
@@ -66,23 +66,31 @@ export class ClaudeClauseExtractor implements IClauseExtractor {
       `Splitting document ${input.documentId} into ${chunks.length} chunks for parallel extraction`,
     );
 
-    // Run chunks in parallel; ensure every chunk has a unique clientRef
-    // namespace so the handler's parent-resolution pass doesn't collapse
-    // refs from different chunks together.
+    // Run chunks in parallel. clientRefs are namespaced per chunk so
+    // the handler's parent resolver doesn't collapse refs across chunks.
+    //
+    // Metadata is a document-level artifact, so we take the FIRST chunk's
+    // metadata as authoritative — the first chunk typically contains the
+    // preamble (parties, dates, term, financials). Per-chunk metadata
+    // would need merge rules we don't have a use case for in Phase 8.
     const results = await Promise.all(
       chunks.map((chunk, idx) =>
-        this.callOnce(chunk).then((clauses) =>
-          clauses.map((c) => ({
+        this.callOnce(chunk).then((res) => ({
+          ...res,
+          clauses: res.clauses.map((c) => ({
             ...c,
             clientRef: `chunk${idx}:${c.clientRef}`,
             parentClientRef: c.parentClientRef
               ? `chunk${idx}:${c.parentClientRef}`
               : null,
           })),
-        ),
+        })),
       ),
     );
-    return results.flat();
+    return {
+      metadata: results[0].metadata,
+      clauses: results.flatMap((r) => r.clauses),
+    };
   }
 
   getModelVersion(): string {
@@ -91,7 +99,7 @@ export class ClaudeClauseExtractor implements IClauseExtractor {
 
   // ── Transport ─────────────────────────────────────────────────────
 
-  private async callOnce(chunkText: string): Promise<ExtractedClause[]> {
+  private async callOnce(chunkText: string): Promise<ExtractedContract> {
     let response: Anthropic.Messages.Message;
     try {
       response = await this.client.messages.create({

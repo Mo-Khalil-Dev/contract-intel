@@ -22,7 +22,7 @@ Turn a `DocumentText` artifact (Phase 7 output) into a versioned set of classifi
 | # | Decision | Rationale |
 |---|---|---|
 | D1 | **LLM-driven segmentation + classification** (Claude single call returns clauses[]) | Heuristic segmenters miss ~30% of contract structures. design.md commits to combined call. |
-| D2 | **Combined call**: extract + classify + risk score in one Claude invocation | Honors design.md §"Document Processing Pipeline". 50% cheaper than splitting; latency win. |
+| D2 | **Combined call**: extract + classify + risk score + **document metadata** in one Claude invocation | Honors design.md §"Document Processing Pipeline". 50% cheaper than splitting; latency win. Metadata (parties, key dates, financial terms) added Task 8.4.1 — same Claude call, ~$0.003 extra. |
 | D3 | **Global char offsets** into `DocumentText.text`, with derived `pageNumber` | Blob is single source of truth; offsets round-trip cleanly across page breaks. |
 | D4 | **Nesting via self-FK `parentClauseId`**, max 2 levels | Matches design.md §API design `:280`. Two-pass insert resolves `clientRef → id`. |
 | D5 | **ON DELETE SET NULL** for parent FK | Orphaned children become roots; preserves data on accidental parent delete. |
@@ -56,8 +56,28 @@ ExtractionRun
 ├── failureReason: string?
 ├── clauseCount: int (default 0)
 ├── droppedClauseCount: int                // hallucinated-text drops
+├── metadata: ContractMetadata?            // Task 8.4.1 — document-level snapshot
 └── clauses: Clause[]                      // owned children
 ```
+
+**Metadata snapshot** (Task 8.4.1) — populated by the same Claude call that
+produces clauses. Persisted as `jsonb` on `ExtractionRun` (no field-level
+queries yet — promotion to columns deferred to Phase 10 if needed). All
+fields freeform strings; Claude returns text verbatim from the document:
+
+| Field | Example |
+|---|---|
+| `contractType` | "Vendor", "NDA", "SaaS" |
+| `parties[]` | `[{role: "Provider", name: "Acme Corp"}, {role: "Client", name: "Our Ltd"}]` |
+| `effectiveDate` | "2024-01-15" |
+| `terminationDate` | "2025-01-14" |
+| `noticePeriod` | "60 days" |
+| `autoRenewal` | "Yes, 1-year terms" |
+| `paymentAmount` | "£50,000" |
+| `currency` | "GBP" |
+| `paymentSchedule` | "Quarterly" |
+| `priceEscalation` | "2% annual" |
+| `paymentTerms` | "Net 30 days" |
 
 **Transitions**: `running → complete | failed`. `failed` is terminal — retry creates a new `ExtractionRun`.
 

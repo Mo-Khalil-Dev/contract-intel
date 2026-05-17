@@ -1,6 +1,7 @@
 import { ExtractionRun } from './extraction-run.aggregate';
 import { DocumentId } from '../../../documents/domain/value-objects/document-id.vo';
 import { ModelVersion } from '../value-objects/model-version.vo';
+import { ContractMetadata } from '../value-objects/contract-metadata.vo';
 import {
   ClauseExtractionCompletedEvent,
   ClauseExtractionFailedEvent,
@@ -71,6 +72,23 @@ describe('ExtractionRun', () => {
       expect(() =>
         run.complete({ clauseCount: 0, droppedClauseCount: 0 }),
       ).not.toThrow();
+    });
+
+    it('persists metadata snapshot when provided', () => {
+      const run = startRun();
+      const metadata = ContractMetadata.create({
+        contractType: 'NDA',
+        parties: [{ role: 'Discloser', name: 'X' }],
+      });
+      run.complete({ clauseCount: 0, droppedClauseCount: 0, metadata });
+      expect(run.metadata).not.toBeNull();
+      expect(run.metadata?.contractType).toBe('NDA');
+    });
+
+    it('defaults metadata to null when omitted', () => {
+      const run = startRun();
+      run.complete({ clauseCount: 0, droppedClauseCount: 0 });
+      expect(run.metadata).toBeNull();
     });
 
     it('cannot complete twice', () => {

@@ -1,5 +1,9 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import { ExtractedClause } from '../../application/ports/clause-extractor.port';
+import {
+  ExtractedClause,
+  ExtractedContract,
+  ExtractedMetadata,
+} from '../../application/ports/clause-extractor.port';
 import { ExtractionPermanentError } from '../../application/errors/clause-extraction-errors';
 import {
   CLAUSE_TYPE_VALUES,
@@ -23,7 +27,7 @@ import {
  */
 export function mapClaudeResponseToClauses(
   content: Anthropic.Messages.ContentBlock[],
-): ExtractedClause[] {
+): ExtractedContract {
   const toolUse = content.find(
     (b): b is Anthropic.Messages.ToolUseBlock =>
       b.type === 'tool_use' && b.name === EXTRACT_CLAUSES_TOOL.name,
@@ -49,7 +53,92 @@ export function mapClaudeResponseToClauses(
   }
 
   const rawClauses = (input as { clauses: unknown[] }).clauses;
-  return rawClauses.map((c, idx) => coerceClause(c, idx));
+  const clauses = rawClauses.map((c, idx) => coerceClause(c, idx));
+  const metadata = coerceMetadata(
+    (input as { metadata?: unknown }).metadata,
+  );
+  return { clauses, metadata };
+}
+
+function coerceMetadata(raw: unknown): ExtractedMetadata {
+  // Tolerate Claude omitting the metadata key entirely — degrade to an
+  // empty-shaped object rather than fail the whole run.
+  if (raw == null) return emptyMetadata();
+  if (typeof raw !== 'object') {
+    throw new ExtractionPermanentError(
+      'corrupt_response',
+      'metadata must be an object',
+    );
+  }
+  const r = raw as Record<string, unknown>;
+
+  const stringOrNull = (key: string): string | null => {
+    const v = r[key];
+    if (v === null || v === undefined) return null;
+    if (typeof v !== 'string') {
+      throw new ExtractionPermanentError(
+        'corrupt_response',
+        `metadata.${key} must be string or null (got ${typeof v})`,
+      );
+    }
+    return v;
+  };
+
+  const parties: ExtractedMetadata['parties'] = [];
+  if (r.parties !== undefined && r.parties !== null) {
+    if (!Array.isArray(r.parties)) {
+      throw new ExtractionPermanentError(
+        'corrupt_response',
+        'metadata.parties must be an array',
+      );
+    }
+    for (const [i, p] of r.parties.entries()) {
+      if (!p || typeof p !== 'object') {
+        throw new ExtractionPermanentError(
+          'corrupt_response',
+          `metadata.parties[${i}] must be an object`,
+        );
+      }
+      const obj = p as Record<string, unknown>;
+      if (typeof obj.role !== 'string' || typeof obj.name !== 'string') {
+        throw new ExtractionPermanentError(
+          'corrupt_response',
+          `metadata.parties[${i}] must have string 'role' and 'name'`,
+        );
+      }
+      parties.push({ role: obj.role, name: obj.name });
+    }
+  }
+
+  return {
+    contractType: stringOrNull('contractType'),
+    parties,
+    effectiveDate: stringOrNull('effectiveDate'),
+    terminationDate: stringOrNull('terminationDate'),
+    noticePeriod: stringOrNull('noticePeriod'),
+    autoRenewal: stringOrNull('autoRenewal'),
+    paymentAmount: stringOrNull('paymentAmount'),
+    currency: stringOrNull('currency'),
+    paymentSchedule: stringOrNull('paymentSchedule'),
+    priceEscalation: stringOrNull('priceEscalation'),
+    paymentTerms: stringOrNull('paymentTerms'),
+  };
+}
+
+function emptyMetadata(): ExtractedMetadata {
+  return {
+    contractType: null,
+    parties: [],
+    effectiveDate: null,
+    terminationDate: null,
+    noticePeriod: null,
+    autoRenewal: null,
+    paymentAmount: null,
+    currency: null,
+    paymentSchedule: null,
+    priceEscalation: null,
+    paymentTerms: null,
+  };
 }
 
 function coerceClause(raw: unknown, idx: number): ExtractedClause {

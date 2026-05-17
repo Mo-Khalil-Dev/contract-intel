@@ -10,7 +10,26 @@ import {
 } from './claude-prompt';
 import type { ExtractInput } from '../../application/ports/clause-extractor.port';
 
-function toolUseResponse(clauses: Record<string, unknown>[]): Anthropic.Messages.Message {
+function emptyMetadataRaw() {
+  return {
+    contractType: null,
+    parties: [],
+    effectiveDate: null,
+    terminationDate: null,
+    noticePeriod: null,
+    autoRenewal: null,
+    paymentAmount: null,
+    currency: null,
+    paymentSchedule: null,
+    priceEscalation: null,
+    paymentTerms: null,
+  };
+}
+
+function toolUseResponse(
+  clauses: Record<string, unknown>[],
+  metadata: Record<string, unknown> = emptyMetadataRaw(),
+): Anthropic.Messages.Message {
   return {
     id: 'msg_1',
     type: 'message',
@@ -24,7 +43,7 @@ function toolUseResponse(clauses: Record<string, unknown>[]): Anthropic.Messages
         type: 'tool_use',
         id: 'tool_1',
         name: EXTRACT_CLAUSES_TOOL.name,
-        input: { clauses },
+        input: { clauses, metadata },
       },
     ],
   } as Anthropic.Messages.Message;
@@ -70,8 +89,8 @@ describe('ClaudeClauseExtractor', () => {
 
       const out = await ext.extract(input('Indemnification text.'));
 
-      expect(out).toHaveLength(1);
-      expect(out[0].clientRef).toBe('c1');
+      expect(out.clauses).toHaveLength(1);
+      expect(out.clauses[0].clientRef).toBe('c1');
       expect(create).toHaveBeenCalledTimes(1);
     });
 
@@ -199,10 +218,10 @@ describe('ClaudeClauseExtractor', () => {
       const out = await ext.extract(input(text, pages));
 
       expect(create).toHaveBeenCalledTimes(2);
-      expect(out).toHaveLength(2);
+      expect(out.clauses).toHaveLength(2);
       // Each chunk's clientRef is namespaced so the handler's parent
       // resolver doesn't conflate them.
-      expect(out.map((c) => c.clientRef).sort()).toEqual([
+      expect(out.clauses.map((c) => c.clientRef).sort()).toEqual([
         'chunk0:c1',
         'chunk1:c1',
       ]);

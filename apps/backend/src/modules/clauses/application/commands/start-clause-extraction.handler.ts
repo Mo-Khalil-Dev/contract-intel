@@ -26,8 +26,11 @@ import {
 import {
   CLAUSE_EXTRACTOR,
   ExtractedClause,
+  ExtractedContract,
+  ExtractedMetadata,
   IClauseExtractor,
 } from '../ports/clause-extractor.port';
+import { ContractMetadata } from '../../domain/value-objects/contract-metadata.vo';
 import {
   EMBEDDING_SERVICE,
   IEmbeddingService,
@@ -145,7 +148,7 @@ export class StartClauseExtractionHandler
       };
     });
 
-    let extracted: ExtractedClause[];
+    let extracted: ExtractedContract;
     try {
       extracted = await this.runExtractionWithRetry({
         documentId: command.documentId,
@@ -158,8 +161,10 @@ export class StartClauseExtractionHandler
       return;
     }
 
+    const metadata = this.buildMetadata(extracted.metadata, document.id.value);
+
     const { clauses, droppedCount } = this.resolveAndBuildClauses(
-      extracted,
+      extracted.clauses,
       run,
       document,
       documentText.text,
@@ -173,7 +178,11 @@ export class StartClauseExtractionHandler
 
     await this.clauses.saveForRun(run.id, clauses);
 
-    run.complete({ clauseCount: clauses.length, droppedClauseCount: droppedCount });
+    run.complete({
+      clauseCount: clauses.length,
+      droppedClauseCount: droppedCount,
+      metadata,
+    });
     if (embedFailureReason) {
       // Surface as a soft note on the run — extraction itself succeeded.
       this.logger.warn(
@@ -196,7 +205,7 @@ export class StartClauseExtractionHandler
     text: string;
     pages: { pageNumber: number; startOffset: number; endOffset: number }[];
     language: string;
-  }): Promise<ExtractedClause[]> {
+  }): Promise<ExtractedContract> {
     let lastTransient: ExtractionTransientError | undefined;
     for (
       let attempt = 0;
@@ -368,6 +377,24 @@ export class StartClauseExtractionHandler
       }
     }
     return `embedding_failed:transient_exhausted:${lastTransient?.message ?? 'unknown'}`;
+  }
+
+  // ── Metadata materialisation ──────────────────────────────────────
+
+  /**
+   * Promote the driver's loosely-typed metadata into the validated VO.
+   * Validation failures degrade gracefully to empty metadata (logged) —
+   * we don't kill an extraction run over a metadata hiccup.
+   */
+  private buildMetadata(raw: ExtractedMetadata, docId: string): ContractMetadata {
+    try {
+      return ContractMetadata.create(raw);
+    } catch (err) {
+      this.logger.warn(
+        `Metadata validation failed for document ${docId}, falling back to empty: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
+      return ContractMetadata.empty();
+    }
   }
 
   // ── Failure helpers ───────────────────────────────────────────────

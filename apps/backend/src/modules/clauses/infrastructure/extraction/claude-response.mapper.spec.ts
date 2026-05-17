@@ -36,13 +36,59 @@ describe('mapClaudeResponseToClauses', () => {
       textBlock('preamble'),
       toolUseBlock({ clauses: [validClause()] }),
     ]);
-    expect(out).toHaveLength(1);
-    expect(out[0]).toMatchObject({
+    expect(out.clauses).toHaveLength(1);
+    expect(out.clauses[0]).toMatchObject({
       clientRef: 'c1',
       type: 'indemnification',
       confidence: 0.9,
       riskLevel: 'medium',
     });
+  });
+
+  it('extracts metadata from the tool_use input', () => {
+    const out = mapClaudeResponseToClauses([
+      toolUseBlock({
+        clauses: [validClause()],
+        metadata: {
+          contractType: 'Vendor',
+          parties: [
+            { role: 'Provider', name: 'Acme Corporation' },
+            { role: 'Client', name: 'Our Company Ltd' },
+          ],
+          effectiveDate: '2024-01-15',
+          terminationDate: '2025-01-14',
+          noticePeriod: '60 days',
+          autoRenewal: 'Yes, 1-year terms',
+          paymentAmount: '£50,000',
+          currency: 'GBP',
+          paymentSchedule: 'Quarterly',
+          priceEscalation: '2% annual',
+          paymentTerms: 'Net 30 days',
+        },
+      }),
+    ]);
+    expect(out.metadata.contractType).toBe('Vendor');
+    expect(out.metadata.parties).toHaveLength(2);
+    expect(out.metadata.paymentAmount).toBe('£50,000');
+  });
+
+  it('returns empty metadata when omitted', () => {
+    const out = mapClaudeResponseToClauses([
+      toolUseBlock({ clauses: [validClause()] }),
+    ]);
+    expect(out.metadata.contractType).toBeNull();
+    expect(out.metadata.parties).toEqual([]);
+  });
+
+  it('rejects malformed metadata.parties', () => {
+    expect(() =>
+      mapClaudeResponseToClauses([
+        toolUseBlock({
+          clauses: [validClause()],
+          metadata: { parties: 'oops' },
+        }),
+      ]),
+    ).toThrow();
   });
 
   it('throws corrupt_response when no tool_use is present', () => {
@@ -98,14 +144,14 @@ describe('mapClaudeResponseToClauses', () => {
         ],
       }),
     ]);
-    expect(out).toHaveLength(2);
-    expect(out[1].parentClientRef).toBe('p');
+    expect(out.clauses).toHaveLength(2);
+    expect(out.clauses[1].parentClientRef).toBe('p');
   });
 
   it('normalises undefined parentClientRef to null', () => {
     const clause = validClause();
     delete (clause as Record<string, unknown>).parentClientRef;
     const out = mapClaudeResponseToClauses([toolUseBlock({ clauses: [clause] })]);
-    expect(out[0].parentClientRef).toBeNull();
+    expect(out.clauses[0].parentClientRef).toBeNull();
   });
 });

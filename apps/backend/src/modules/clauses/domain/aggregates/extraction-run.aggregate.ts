@@ -7,6 +7,7 @@ import {
   ClauseExtractionStartedEvent,
   ClausesExtractedEvent,
 } from '../events/clause.events';
+import { ContractMetadata } from '../value-objects/contract-metadata.vo';
 import { ExtractionRunId } from '../value-objects/extraction-run-id.vo';
 import {
   ExtractionStatus,
@@ -24,6 +25,10 @@ interface ExtractionRunProps {
   failureReason: string | null;
   clauseCount: number;
   droppedClauseCount: number;
+  // Document-level metadata captured by the same Claude call that
+  // produces clauses. Null until the run completes; persisted as a
+  // snapshot so re-extraction never mutates a prior run's metadata.
+  metadata: ContractMetadata | null;
 }
 
 export class ExtractionRun extends AggregateRoot<ExtractionRunId> {
@@ -53,6 +58,7 @@ export class ExtractionRun extends AggregateRoot<ExtractionRunId> {
       failureReason: null,
       clauseCount: 0,
       droppedClauseCount: 0,
+      metadata: null,
     });
 
     run.addDomainEvent(
@@ -74,6 +80,7 @@ export class ExtractionRun extends AggregateRoot<ExtractionRunId> {
   complete(params: {
     clauseCount: number;
     droppedClauseCount: number;
+    metadata?: ContractMetadata | null;
     now?: Date;
   }): void {
     if (!Number.isInteger(params.clauseCount) || params.clauseCount < 0) {
@@ -97,6 +104,7 @@ export class ExtractionRun extends AggregateRoot<ExtractionRunId> {
     );
     this.props.clauseCount = params.clauseCount;
     this.props.droppedClauseCount = params.droppedClauseCount;
+    this.props.metadata = params.metadata ?? null;
     this.props.completedAt = at;
 
     this.addDomainEvent(
@@ -177,5 +185,8 @@ export class ExtractionRun extends AggregateRoot<ExtractionRunId> {
   }
   get droppedClauseCount(): number {
     return this.props.droppedClauseCount;
+  }
+  get metadata(): ContractMetadata | null {
+    return this.props.metadata;
   }
 }

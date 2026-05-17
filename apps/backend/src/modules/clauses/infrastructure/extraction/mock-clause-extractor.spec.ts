@@ -16,8 +16,8 @@ describe('MockClauseExtractor', () => {
       language: 'en',
     });
 
-    expect(out).toHaveLength(5);
-    const child = out.find((c) => c.parentClientRef === 'c3');
+    expect(out.clauses).toHaveLength(5);
+    const child = out.clauses.find((c) => c.parentClientRef === 'c3');
     expect(child).toBeDefined();
     expect(child!.type).toBe('termination');
   });
@@ -30,7 +30,7 @@ describe('MockClauseExtractor', () => {
       pages: [{ pageNumber: 1, startOffset: 0, endOffset: SAMPLE_TEXT.length }],
       language: 'en',
     });
-    for (const c of out) {
+    for (const c of out.clauses) {
       expect(SAMPLE_TEXT.indexOf(c.text)).toBeGreaterThanOrEqual(0);
     }
   });
@@ -60,7 +60,20 @@ describe('MockClauseExtractor', () => {
       pages: [],
       language: 'en',
     });
-    expect(out).toEqual([]);
+    expect(out.clauses).toEqual([]);
+  });
+
+  it('returns fixed mock metadata', async () => {
+    const extractor = new MockClauseExtractor();
+    const out = await extractor.extract({
+      documentId: 'doc-1',
+      text: SAMPLE_TEXT,
+      pages: [],
+      language: 'en',
+    });
+    expect(out.metadata.contractType).toBe('Vendor');
+    expect(out.metadata.parties).toHaveLength(2);
+    expect(out.metadata.paymentAmount).toBe('£50,000');
   });
 
   it('reports a stable model version', () => {

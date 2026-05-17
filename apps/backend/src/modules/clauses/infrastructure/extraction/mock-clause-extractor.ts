@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import {
   ExtractInput,
   ExtractedClause,
+  ExtractedContract,
+  ExtractedMetadata,
   IClauseExtractor,
 } from '../../application/ports/clause-extractor.port';
 
@@ -92,7 +94,7 @@ export class MockClauseExtractor implements IClauseExtractor {
   // Phrase fragments → verbatim sentence ranges. Walks the rule's match
   // to the next sentence-ending punctuation (. ! ?), giving the handler a
   // realistic clause-sized slice to resolve.
-  extract(input: ExtractInput): Promise<ExtractedClause[]> {
+  extract(input: ExtractInput): Promise<ExtractedContract> {
     const text = input.text;
     const out: ExtractedClause[] = [];
     for (const rule of MockClauseExtractor.RULES) {
@@ -113,7 +115,28 @@ export class MockClauseExtractor implements IClauseExtractor {
         riskExplanation: rule.riskExplanation,
       });
     }
-    return Promise.resolve(out);
+    return Promise.resolve({ clauses: out, metadata: this.mockMetadata() });
+  }
+
+  // Deterministic fixed metadata so the mock pipeline is reproducible.
+  // Matches the wireframe screenshot's example data shape.
+  private mockMetadata(): ExtractedMetadata {
+    return {
+      contractType: 'Vendor',
+      parties: [
+        { role: 'Provider', name: 'Acme Corporation' },
+        { role: 'Client', name: 'Our Company Ltd' },
+      ],
+      effectiveDate: '2024-01-15',
+      terminationDate: '2025-01-14',
+      noticePeriod: '60 days',
+      autoRenewal: 'Yes, 1-year terms',
+      paymentAmount: '£50,000',
+      currency: 'GBP',
+      paymentSchedule: 'Quarterly',
+      priceEscalation: '2% annual',
+      paymentTerms: 'Net 30 days',
+    };
   }
 
   getModelVersion(): string {
