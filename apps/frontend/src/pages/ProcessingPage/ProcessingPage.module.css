@@ -1,140 +1,266 @@
+/*
+ * ProcessingPage — Phase 8 redesign matching the v2 wireframe
+ * (wirframes/version_02/.../screens/processing.html).
+ *
+ * Single centered card: spinner + % → title → filename → progress bar →
+ * step list (6 items) → rotating tip. Three visual modes share the same
+ * shell:
+ *   - Running  : spinner active, blue progress bar, animated step pulse
+ *   - Complete : 100% bar, all checkmarks, success heading
+ *   - Failed   : red icon, error card with reason + actions
+ *
+ * Uses design tokens declared in src/index.css.
+ */
+
 .root {
   min-height: 100vh;
-  background: #fafaf9;
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'DM Sans', sans-serif;
-  color: #0f172a;
-  padding: 32px;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  padding: 40px 32px;
 }
 
-.main {
-  max-width: 460px;
+.card {
+  max-width: 480px;
   width: 100%;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
 }
 
-.iconWrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+/* ── Spinner ──────────────────────────────────────────────────────── */
+
+.spinnerWrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 28px;
+}
+
+.spinnerSvg {
+  animation: ciSpin 1.8s linear infinite;
+}
+
+.spinnerPercent {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-ink);
+  font-family: var(--font-mono);
 }
 
-.iconWrapProcessing {
-  background: #eff6ff;
-  color: #2563eb;
-}
-
-.iconWrapSuccess {
-  background: #ecfdf5;
-  color: #10b981;
-}
-
-.iconWrapFailed {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-@keyframes spin {
+@keyframes ciSpin {
+  from {
+    transform: rotate(-90deg);
+  }
   to {
-    transform: rotate(360deg);
+    transform: rotate(270deg);
   }
 }
 
-.spinner {
-  animation: spin 0.9s linear infinite;
+/* Success / failed icons replace the spinner in terminal states. */
+.successIcon,
+.failedIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+.successIcon {
+  background: var(--color-green-bg);
+  color: var(--color-green);
+}
+.failedIcon {
+  background: var(--color-red-bg);
+  color: var(--color-red);
+}
+
+/* ── Heading ──────────────────────────────────────────────────────── */
 
 .title {
-  font-size: 24px;
+  margin: 0 0 8px;
+  font-size: var(--text-3xl);
   font-weight: 800;
-  letter-spacing: -0.6px;
-  margin: 4px 0 0;
+  color: var(--color-ink);
+  letter-spacing: var(--tracking-tighter);
 }
 
-.subtitle {
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.5;
-  margin: 0;
-  max-width: 380px;
-}
-
-.idRow {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: center;
-  margin: 12px 0 4px;
-}
-
-.idLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.idValue {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  color: #334155;
-  background: #f4f3f1;
-  padding: 4px 10px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-}
-
-/* Failure-state error card. */
-.errorCard {
-  width: 100%;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 12px;
-  padding: 16px 18px;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.errorHeading {
-  font-size: 13px;
-  font-weight: 700;
-  color: #991b1b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0;
-}
-
-.errorReason {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  color: #7f1d1d;
-  margin: 0;
+.filename {
+  margin: 0 0 24px;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
   word-break: break-all;
 }
 
-.retryCount {
-  font-size: 11px;
-  color: #b91c1c;
+/* ── Progress bar ─────────────────────────────────────────────────── */
+
+.progressTrack {
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--color-blue);
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.progressFillSuccess {
+  background: var(--color-green);
+}
+
+/* ── Step list ────────────────────────────────────────────────────── */
+
+.steps {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  padding: 11px 16px;
+  align-items: center;
+  transition: opacity 0.3s;
+}
+
+.step + .step {
+  border-top: 1px solid var(--color-border);
+}
+
+.stepPending {
+  opacity: 0.35;
+}
+
+.stepIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-border);
+}
+
+.stepIconDone {
+  background: var(--color-green);
+}
+
+.stepIconActive {
+  background: var(--color-blue);
+}
+
+.stepPulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: ciPulse 1s infinite;
+}
+
+@keyframes ciPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.stepBody {
+  flex: 1;
+}
+
+.stepLabel {
+  font-size: var(--text-sm);
+  color: var(--color-ink-mute);
+  font-weight: 400;
+}
+
+.stepLabelReached {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.stepDesc {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  margin-top: 1px;
+}
+
+/* ── Tip banner ───────────────────────────────────────────────────── */
+
+.tip {
+  background: var(--color-blue-light);
+  border: 1px solid color-mix(in srgb, var(--color-blue-mid) 33%, transparent);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: var(--text-sm);
+  color: var(--color-blue);
+  line-height: 1.5;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s;
+}
+
+/* ── Error states ─────────────────────────────────────────────────── */
+
+.errorCard {
+  background: var(--color-red-bg);
+  border: 1px solid var(--color-red-border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.errorHeading {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  color: var(--color-red-dark);
+  margin: 0 0 4px;
+}
+
+.errorReason {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
   margin: 0;
+  word-break: break-word;
+}
+
+.retryCount {
+  margin-top: 8px;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
   margin-top: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
 }

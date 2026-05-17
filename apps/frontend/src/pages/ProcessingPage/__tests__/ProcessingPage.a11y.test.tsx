@@ -13,6 +13,9 @@ const baseProps = {
   isLoading: false,
   isError: false,
   isRetrying: false,
+  displayedStep: 0,
+  tipIndex: 0,
+  progressPercent: 12,
   onRetry: noop,
   onUploadAnother: noop,
   onBackToDashboard: noop,
@@ -39,9 +42,17 @@ describe('ProcessingPage — Accessibility', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
-  it('complete state has no axe violations', async () => {
+  it('extraction-complete state has no axe violations', async () => {
     const { container } = render(
-      <ProcessingPageView {...baseProps} status={status({ status: 'ocr_complete' })} />,
+      <ProcessingPageView
+        {...baseProps}
+        displayedStep={5}
+        progressPercent={100}
+        status={status({
+          status: 'ocr_complete',
+          extractionStatus: 'extraction_complete',
+        })}
+      />,
     );
     expect(await axe(container)).toHaveNoViolations();
   });

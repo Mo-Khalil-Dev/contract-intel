@@ -11,6 +11,9 @@ const baseArgs = {
   isLoading: false,
   isError: false,
   isRetrying: false,
+  displayedStep: 0,
+  tipIndex: 0,
+  progressPercent: 12,
   onRetry: noop,
   onUploadAnother: noop,
   onBackToDashboard: noop,
@@ -43,14 +46,56 @@ export const InitialLoad: Story = {
   args: { ...baseArgs, isLoading: true, status: undefined },
 };
 
-/** Active polling — OCR pipeline is running. */
-export const Processing: Story = {
-  args: { ...baseArgs, status: status({ status: 'processing' }) },
+/** OCR pipeline running — step 0 highlighted. */
+export const ProcessingOcr: Story = {
+  args: {
+    ...baseArgs,
+    displayedStep: 0,
+    progressPercent: 18,
+    status: status({ status: 'processing' }),
+  },
 };
 
-/** Terminal success — container will auto-redirect after ~1.2s. */
+/** Extraction running — step 3 highlighted (Analyzing risk clauses). */
+export const ProcessingExtracting: Story = {
+  args: {
+    ...baseArgs,
+    displayedStep: 3,
+    progressPercent: 66,
+    status: status({
+      status: 'ocr_complete',
+      extractionStatus: 'extracting',
+      currentExtractionRunId: 'run-123',
+    }),
+  },
+};
+
+/** Terminal success — container will auto-redirect after ~5s. */
 export const Complete: Story = {
-  args: { ...baseArgs, status: status({ status: 'ocr_complete' }) },
+  args: {
+    ...baseArgs,
+    displayedStep: 5,
+    progressPercent: 100,
+    status: status({
+      status: 'ocr_complete',
+      extractionStatus: 'extraction_complete',
+      currentExtractionRunId: 'run-123',
+    }),
+  },
+};
+
+/** Extraction failed — terminal error after OCR succeeded. */
+export const ExtractionFailed: Story = {
+  args: {
+    ...baseArgs,
+    displayedStep: 3,
+    progressPercent: 60,
+    status: status({
+      status: 'ocr_complete',
+      extractionStatus: 'extraction_failed',
+      failureReason: 'context_overflow',
+    }),
+  },
 };
 
 /** Failed first run — retry available (count < 3). */
