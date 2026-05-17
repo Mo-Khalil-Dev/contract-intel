@@ -31,6 +31,10 @@ import {
   GetProcessingStatusQuery,
   GetProcessingStatusResult,
 } from '../application/queries/get-processing-status.query';
+import {
+  GetDocumentTextQuery,
+  GetDocumentTextResult,
+} from '../application/queries/get-document-text.query';
 import { RetryOcrProcessingCommand } from '../application/commands/retry-ocr-processing.command';
 import { GetClausesForDocumentQuery } from '../../clauses/application/queries/get-clauses-for-document.query';
 import type { ClauseDto } from '../../clauses/application/queries/clause.dto';
@@ -189,6 +193,23 @@ export class DocumentController {
   ): Promise<ExtractionRunStatusDto> {
     return this.queryBus.execute(
       new GetExtractionRunStatusQuery(documentId),
+    );
+  }
+
+  /**
+   * Returns the full extracted text + per-page metadata. Used by the
+   * Phase 8 ResultsPage Document tab to render the inline contract
+   * with offset-based clause highlights.
+   *
+   * Scoped to the requesting user via the underlying query handler.
+   */
+  @Get(':documentId/text')
+  async documentText(
+    @CurrentUser() user: RequestUser,
+    @Param('documentId') documentId: string,
+  ): Promise<GetDocumentTextResult> {
+    return this.queryBus.execute(
+      new GetDocumentTextQuery(documentId, user.userId),
     );
   }
 }

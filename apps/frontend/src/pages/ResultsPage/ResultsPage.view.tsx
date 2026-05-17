@@ -5,6 +5,7 @@ import { Tabs } from './components/Tabs';
 import { RightSidebar } from './components/RightSidebar';
 import { OverviewTab } from './tabs/OverviewTab';
 import { RiskFlagsTab } from './tabs/RiskFlagsTab';
+import { DocumentTab } from './tabs/DocumentTab';
 import type {
   ClauseResponse,
   ContractMetadata,
@@ -114,9 +115,11 @@ export function ResultsPageView({
             )}
             {activeTab === 'risks' && <RiskFlagsTab clauses={clauses} />}
             {activeTab === 'document' && (
-              <ComingSoon
-                title="Document"
-                body="Inline contract view with extracted-clause highlights ships in the next pass (Task 8.6.g)."
+              <DocumentTab
+                documentId={documentId}
+                filename={filename}
+                clauses={clauses}
+                enabled={activeTab === 'document'}
               />
             )}
             {activeTab === 'history' && (

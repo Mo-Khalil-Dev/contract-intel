@@ -5,6 +5,7 @@ import type {
   ClauseResponse,
   ExtractionStatusResponse,
 } from '@/types/clauses';
+import type { DocumentTextResponse } from '@/types/documentText';
 
 /**
  * Fetches the list of clauses for a document. Returns whatever the
@@ -43,6 +44,29 @@ export function useExtractionStatus(
       enabled: Boolean(documentId) && enabled,
       refetchOnWindowFocus: false,
       staleTime: 60_000,
+    },
+  );
+}
+
+/**
+ * Fetches the full OCR-extracted text + per-page metadata. Powers the
+ * ResultsPage Document tab; only fetched when that tab is opened (the
+ * container passes `enabled` accordingly).
+ *
+ * `staleTime: Infinity` — the OCR output is immutable for a given run,
+ * so re-fetches would only burn bandwidth.
+ */
+export function useDocumentText(
+  documentId: DocumentId | undefined,
+  enabled = true,
+) {
+  return useQuery<DocumentTextResponse>(
+    ['document-text', documentId],
+    () => clausesService.getDocumentText(documentId as DocumentId),
+    {
+      enabled: Boolean(documentId) && enabled,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
     },
   );
 }

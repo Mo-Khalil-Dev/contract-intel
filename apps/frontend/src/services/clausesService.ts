@@ -15,6 +15,7 @@ import type {
   ClauseResponse,
   ExtractionStatusResponse,
 } from '@/types/clauses';
+import type { DocumentTextResponse } from '@/types/documentText';
 
 export const clausesService = {
   async getClauses(documentId: DocumentId): Promise<ClauseResponse[]> {
@@ -28,6 +29,14 @@ export const clausesService = {
   ): Promise<ExtractionStatusResponse> {
     return httpService
       .get<ExtractionStatusResponse>(API.EXTRACTION_STATUS(documentId))
+      .then((r) => r.data!);
+  },
+
+  async getDocumentText(
+    documentId: DocumentId,
+  ): Promise<DocumentTextResponse> {
+    return httpService
+      .get<DocumentTextResponse>(API.DOCUMENT_TEXT(documentId))
       .then((r) => r.data!);
   },
 };

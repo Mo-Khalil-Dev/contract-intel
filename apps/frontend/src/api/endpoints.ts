@@ -17,4 +17,5 @@ export const API = {
   // ── Documents (Phase 8 — clause extraction) ────────────────────
   CLAUSES: (id: string) => `/api/v1/documents/${id}/clauses`,
   EXTRACTION_STATUS: (id: string) => `/api/v1/documents/${id}/extraction-status`,
+  DOCUMENT_TEXT: (id: string) => `/api/v1/documents/${id}/text`,
 };

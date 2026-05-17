@@ -1,0 +1,177 @@
+/*
+ * Document tab — inline contract rendering with offset-based clause
+ * highlights. Layout matches the wireframe's "Document" tab: a
+ * surface-coloured card with a header (filename + zoom controls) and
+ * a paginated body in serif type.
+ */
+
+.column {
+  max-width: 860px;
+  font-family: var(--font-sans);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ── Header bar ─────────────────────────────────────────────────── */
+
+.header {
+  padding: 10px 16px;
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  gap: 8px;
+}
+
+.headerFilename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerActions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.headerBtn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  min-width: 28px;
+}
+
+.headerBtn:hover {
+  color: var(--color-ink);
+}
+
+.headerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Document body ──────────────────────────────────────────────── */
+
+.body {
+  padding: 28px 32px;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--color-ink-mid);
+  background: var(--color-surface);
+  white-space: pre-wrap;
+  word-break: break-word;
+  /* Zoom is applied via CSS variable to avoid re-renders. */
+  font-size: calc(13px * var(--doc-zoom, 1));
+}
+
+/* ── Page breaks ────────────────────────────────────────────────── */
+
+.pageBreak {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--color-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+}
+
+.pageBreak::before,
+.pageBreak::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* ── Highlight marks ────────────────────────────────────────────── */
+
+.mark {
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.mark:hover {
+  filter: brightness(0.96);
+}
+
+.markCritical {
+  background: color-mix(in srgb, var(--color-red) 18%, transparent);
+  border-bottom: 2px solid var(--color-red);
+}
+
+.markHigh {
+  background: color-mix(in srgb, var(--color-orange) 22%, transparent);
+  border-bottom: 2px solid var(--color-orange);
+}
+
+/* ── Legend ─────────────────────────────────────────────────────── */
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+
+.legendChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendSwatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.legendSwatchCritical {
+  background: color-mix(in srgb, var(--color-red) 18%, transparent);
+  border-bottom: 2px solid var(--color-red);
+}
+
+.legendSwatchHigh {
+  background: color-mix(in srgb, var(--color-orange) 22%, transparent);
+  border-bottom: 2px solid var(--color-orange);
+}
+
+.legendNote {
+  margin-left: auto;
+  font-style: italic;
+}
+
+/* ── Empty / loading / error ────────────────────────────────────── */
+
+.empty {
+  padding: 28px 24px;
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-mid);
+  border-radius: 10px;
+}
