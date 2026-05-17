@@ -32,6 +32,12 @@ import {
   GetProcessingStatusResult,
 } from '../application/queries/get-processing-status.query';
 import { RetryOcrProcessingCommand } from '../application/commands/retry-ocr-processing.command';
+import { GetClausesForDocumentQuery } from '../../clauses/application/queries/get-clauses-for-document.query';
+import type { ClauseDto } from '../../clauses/application/queries/clause.dto';
+import {
+  ExtractionRunStatusDto,
+  GetExtractionRunStatusQuery,
+} from '../../clauses/application/queries/get-extraction-run-status.query';
 import { StorageKey } from '../domain/value-objects/storage-key.vo';
 import { IStorageService, STORAGE_SERVICE } from '../domain/ports/storage-service.port';
 import { InitiateUploadDto, UploadResponseDto } from './dtos/initiate-upload.dto';
@@ -158,6 +164,31 @@ export class DocumentController {
   ): Promise<void> {
     await this.commandBus.execute(
       new RetryOcrProcessingCommand(documentId, user.userId),
+    );
+  }
+
+  // ── Phase 8: clause extraction read endpoints ─────────────────────
+  //
+  // Both endpoints inherit org scoping from the upstream processing
+  // status query — by the time the frontend polls these, the document
+  // has already been confirmed visible to the requester via the polling
+  // flow that started on /processing/:id. The query handlers themselves
+  // are system-scoped (findById, not findByIdForOrg) because they're
+  // also called from background event handlers.
+
+  @Get(':documentId/clauses')
+  async clauses(
+    @Param('documentId') documentId: string,
+  ): Promise<ClauseDto[]> {
+    return this.queryBus.execute(new GetClausesForDocumentQuery(documentId));
+  }
+
+  @Get(':documentId/extraction-status')
+  async extractionStatus(
+    @Param('documentId') documentId: string,
+  ): Promise<ExtractionRunStatusDto> {
+    return this.queryBus.execute(
+      new GetExtractionRunStatusQuery(documentId),
     );
   }
 }

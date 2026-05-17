@@ -10,9 +10,14 @@ import {
 const POLL_INTERVAL_MS = 2000;
 
 /**
- * Polls the OCR pipeline status every 2 s until it reaches a terminal
- * state (`ocr_complete` or `ocr_failed`). The query auto-disables itself
- * when there's no documentId.
+ * Polls the document processing pipeline every 2 s. Rolls through OCR →
+ * extraction → results on a single endpoint. Terminal states are:
+ *   - OCR failed → polling stops, retry CTA shown
+ *   - extraction_complete → polling stops, container redirects to /results
+ *   - extraction_failed → polling stops, error card shown
+ *
+ * We do NOT stop at `ocr_complete` alone — Phase 8 extraction is still
+ * pending and `extractionStatus` will flip forward within ~2 s.
  */
 export function useProcessingStatus(documentId: DocumentId | undefined) {
   return useQuery<ProcessingStatusResponse>(
@@ -22,10 +27,8 @@ export function useProcessingStatus(documentId: DocumentId | undefined) {
       enabled: Boolean(documentId),
       refetchOnWindowFocus: false,
       refetchInterval: (data) => {
-        // Stop polling once we hit a terminal state — the user is either
-        // about to be redirected (success) or sees the retry CTA (failed).
         if (!data) return POLL_INTERVAL_MS;
-        return isTerminalProcessingStatus(data.status) ? false : POLL_INTERVAL_MS;
+        return isTerminalProcessingStatus(data) ? false : POLL_INTERVAL_MS;
       },
     },
   );

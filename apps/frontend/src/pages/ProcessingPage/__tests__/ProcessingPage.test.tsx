@@ -25,6 +25,8 @@ function status(overrides: Partial<ProcessingStatusResponse> = {}): ProcessingSt
     failureReason: null,
     userRetryCount: 0,
     canRetry: false,
+    extractionStatus: 'not_started',
+    currentExtractionRunId: null,
     ...overrides,
   };
 }

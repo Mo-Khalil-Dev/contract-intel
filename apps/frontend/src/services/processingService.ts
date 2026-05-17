@@ -13,6 +13,7 @@ import { httpService } from '@/api/httpService';
 import { API } from '@/api/endpoints';
 import type { DocumentId } from '@/types/documents';
 import type {
+  DocumentExtractionStatus,
   ProcessingStatus,
   ProcessingStatusResponse,
 } from '@/types/processing';
@@ -23,6 +24,9 @@ interface ProcessingStatusBackendResponse {
   failureReason: string | null;
   userRetryCount: number;
   canRetry: boolean;
+  // Phase 8 — extraction lifecycle. Always present on every response.
+  extractionStatus: DocumentExtractionStatus;
+  currentExtractionRunId: string | null;
 }
 
 export const processingService = {
@@ -37,6 +41,8 @@ export const processingService = {
       failureReason: body.failureReason,
       userRetryCount: body.userRetryCount,
       canRetry: body.canRetry,
+      extractionStatus: body.extractionStatus,
+      currentExtractionRunId: body.currentExtractionRunId,
     };
   },
 

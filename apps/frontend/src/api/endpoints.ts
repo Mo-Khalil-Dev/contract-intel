@@ -13,4 +13,8 @@ export const API = {
   // ── Documents (Phase 7 — OCR pipeline) ─────────────────────────
   PROCESSING_STATUS: (id: string) => `/api/v1/documents/${id}/processing-status`,
   RETRY_OCR: (id: string) => `/api/v1/documents/${id}/retry-ocr`,
+
+  // ── Documents (Phase 8 — clause extraction) ────────────────────
+  CLAUSES: (id: string) => `/api/v1/documents/${id}/clauses`,
+  EXTRACTION_STATUS: (id: string) => `/api/v1/documents/${id}/extraction-status`,
 };
