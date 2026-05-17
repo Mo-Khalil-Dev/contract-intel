@@ -3740,70 +3740,99 @@ Real upload → real pipeline (mock LLM + mock embeddings) → real `Clause` row
 
 ## Phase 9: User Story — Risk Scoring (Requirement 4)
 
-**Status**: 📋 **PLANNED (0/?)**
+**Status**: 📋 **PLANNED (0/4)**
 
-**Goal**: Turn the per-clause risk fields produced by Phase 8 (already
-persisted on `Clause`) into a first-class platform capability: a
-validated rubric, a surfaced UI, threshold-driven workflow events, and
-admin tooling for re-running risk against new rubric versions.
+**Goal**: Complete the risk-scoring story by validating the rubric,
+shipping the per-flag Deep Dive view, wiring escalation events, and
+making the pipeline crash-safe.
 
-**Dependencies**:
-- Phase 8 ✅ — risk fields (`riskScore`, `riskLevel`, `riskFlags`,
-  `riskExplanation`) are already on `Clause` rows but hidden in the UI
-  per design D15.
-- **Prerequisite — SME rubric validation** (Task 9.0). Until a legal
-  SME confirms the draft rubric against ≥50 labelled ground-truth
-  clauses, the UI should not surface scores in language the customer
-  acts on.
+### What's already shipped in Phase 8 (not Phase 9 work)
 
-### Locked decisions
+Risk surfacing landed inside Phase 8.6 — these are **done**:
 
-1. **Risk lives on `Clause`, not on a separate aggregate.** Already
-   true in Phase 8 — Phase 9 just lights it up.
-2. **Document-level risk score** is computed from the per-clause
-   weighted average (helpers/algorithm already in
-   `apps/frontend/src/lib/riskHelpers.ts:documentRiskScore`).
-3. **Rubric versioning** — `classifierModelVersion` on `ExtractionRun`
-   already carries the prompt+rubric fingerprint. Re-running with a
-   new rubric creates a new `ExtractionRun` (Phase 8 retry path),
-   keeping the prior risk snapshot intact.
-4. **No new domain events for risk** — risk-driven workflow (e.g.
-   "auto-flag clauses to a senior reviewer") emits its own events
-   downstream of the existing `ClausesExtractedEvent`.
+- ✅ `Clause` rows persist `riskScore`, `riskLevel`, `riskFlags`,
+  `riskExplanation` (Phase 8.1 + 8.4).
+- ✅ Risk Assessment card on `/results/:id` Overview tab — big numeric
+  score + Critical/Caution/Info counters (Phase 8.6.d/e).
+- ✅ Right-sidebar mini risk card (Phase 8.6.d).
+- ✅ Risk Flags tab — accordion of clauses with `riskLevel >= medium`,
+  severity dots, resolve / dismiss state (Phase 8.6.f).
+- ✅ Document tab — critical + high clauses highlighted by offset
+  (Phase 8.6.g).
 
-### Tasks (provisional)
+The original locked decision D15 ("UI hides risk until SME validation")
+was relaxed during Phase 8.6 — the wireframe already surfaced risk on
+every screen, and we shipped that. **The rubric remains DRAFT.** Phase
+9.0 below catches up on the SME validation work that justifies what's
+already on screen.
+
+### Remaining Phase 9 tasks
 
 - **9.0 Rubric validation (SME workstream)** — assemble ≥50 ground-truth
   clauses (mix of severities + clause types), have a senior contracts
   lawyer label each, run the rubric over them, iterate the prompt
   until Cohen's κ ≥ 0.7 against the SME labels. Output: rubric v1
   signed off, calibration set checked into the spec repo for future
-  regression.
-- **9.1 Risk UI on Overview** — surface the Risk Assessment card's
-  contents (already rendering in the frontend) only after rubric
-  validation; otherwise hide behind a "Coming Soon" overlay.
-- **9.2 Risk-flag escalation rules** — domain events for clauses with
-  `riskLevel === critical`: configurable notification + reviewer
-  assignment. Probably routes through the Notification Service
-  (Requirement 9, T12 in design.md).
-- **9.3 Deep Dive screen** — full per-flag drill-down per the v2
-  wireframe (`screens/deepdive.html`): What it means / The actual
-  clause / Why it matters / Market standard / Suggested redline
-  language. Either canned content per clause-type (Phase 9 path) or
-  a second LLM call (Phase 9.x add-on).
-- **9.4 Crash recovery for the pipeline** — was deferred from Phase 8.
-  Now there are two consumers of `ClausesExtractedEvent` (risk
-  workflow + future search indexing), an in-process bus is too
-  fragile. Introduces either the outbox pattern or a real queue
-  (BullMQ / pg-boss). See design.md `:478-490`.
-- **9.5 Admin "re-run risk" command** — re-extract using a new
-  rubric/prompt version without re-OCR-ing. Wire to a CLI for v1; UI
-  for Phase 11.
+  regression. **No code changes required if the rubric ships green.**
+  If gaps surface, edit `claude-prompt.ts` and add a regression test
+  per identified failure mode.
 
-**Open questions**:
-- Do risk thresholds become customer-configurable? (Probably yes,
-  Phase 10+.)
-- Does the "Deep Dive" content need a knowledge base? (See "Suggested
-  redline language" sub-question — needs design before scoping.)
+- **9.1 Deep Dive screen** — the one risk UI piece still stubbed. The
+  "Deep dive →" button in the Risk Flags accordion is currently
+  disabled with a "Coming soon" tooltip; this task lights it up.
+  Wireframe target: `wirframes/version_02/design_handoff_ci_redesign/screens/deepdive.html`.
+
+  Sections per the wireframe:
+    - Severity header band
+    - "What this means" (use `risk.explanation` from Phase 8)
+    - "The actual clause" (verbatim text from `clause.text` + page/section ref)
+    - "Why it matters" (business-consequence callout)
+    - "Market standard" (bulleted list of reasonable alternatives)
+    - "What to ask for — copy & paste this" (suggested redline)
+    - Mark resolved / Dismiss / Back to flags
+
+  Open scoping question (decide before starting): is the
+  "Market standard" + "Suggested language" content **canned per
+  clause-type** (Phase 9 fast path, ~2 days) or **generated by a
+  second Claude call per flag** (Phase 9.x, ~3-5 days, ~$0.05 per
+  drill-down)? Wireframe shows hardcoded per-clause-type content,
+  which means Path A is the wireframe-faithful choice.
+
+- **9.2 Risk-flag escalation events** — domain events for clauses with
+  `riskLevel === 'critical'`: emit `ClauseEscalatedEvent`, route
+  through the Notification Service (Requirement 9, T12 in design.md).
+  Likely also adds reviewer-assignment plumbing if we want auto-route.
+
+- **9.3 Crash recovery for the pipeline** — deferred from Phase 8.
+  Once Phase 9.2 lands a second consumer of the extraction events
+  (notifications, alongside future search indexing in Phase 10), the
+  current in-process bus is too fragile. Introduce either the outbox
+  pattern (Postgres-only) or a real queue (BullMQ / pg-boss). See
+  design.md `:478-490` for the prior locked decision.
+
+- **9.4 Admin "re-run risk" command** — re-extract a document using a
+  newer rubric/prompt without re-OCR-ing. CLI for v1; UI for Phase 11.
+  Already most of the way there — `RetryClauseExtractionCommand`
+  exists from Phase 8.2; just needs a script wrapper.
+
+### Locked decisions (carrying through from Phase 8)
+
+1. **Risk lives on `Clause`**. Phase 9 doesn't introduce a Risk
+   aggregate.
+2. **Document-level score is a weighted average** of per-clause scores.
+   Helpers already in `apps/frontend/src/lib/riskHelpers.ts`.
+3. **Rubric versioning** rides on `classifierModelVersion` of
+   `ExtractionRun`. Re-runs create new runs; old runs retain their
+   risk snapshot.
+4. **Risk thresholds** stay hardcoded for v1. Customer-configurable
+   thresholds → Phase 10+ once we have multi-tenant data.
+
+### Open questions
+
+- "Suggested redline language" sourcing — canned (faithful to wireframe)
+  vs. LLM-generated (more flexible, costs $).
+- Do critical clauses auto-escalate via email/Slack, or just appear in
+  an "Action Required" inbox? (Probably both — phase the rollout.)
 - Does Phase 9 need its own spec doc (`risk-scoring-design.md`)?
-  Probably yes once 9.0 produces the validated rubric.
+  Probably yes once 9.0 produces the validated rubric; small ADR for
+  the canned-vs-LLM decision either way.
