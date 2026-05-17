@@ -19,4 +19,9 @@ export interface GetProcessingStatusResult {
   failureReason: string | null;
   userRetryCount: number;
   canRetry: boolean;
+  // Phase 8 — clause-extraction lifecycle. Surfaces on the same polling
+  // endpoint so the UI can roll forward through OCR → extracting →
+  // results on a single screen.
+  extractionStatus: string;
+  currentExtractionRunId: string | null;
 }

@@ -46,6 +46,8 @@ export class GetProcessingStatusHandler
       failureReason: document.failureReason,
       userRetryCount: document.userRetryCount,
       canRetry,
+      extractionStatus: document.extractionStatus.value,
+      currentExtractionRunId: document.currentExtractionRunId,
     };
   }
 }
