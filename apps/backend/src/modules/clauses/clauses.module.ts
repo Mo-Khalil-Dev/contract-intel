@@ -31,6 +31,12 @@ import { EXTRACTION_RUN_REPOSITORY } from './domain/extraction-run.repository';
 // Infrastructure — drivers
 import { MockClauseExtractor } from './infrastructure/extraction/mock-clause-extractor';
 import { MockEmbeddingService } from './infrastructure/embeddings/mock-embedding-service';
+import Anthropic from '@anthropic-ai/sdk';
+import {
+  ANTHROPIC_CLIENT,
+  CLAUDE_MODEL,
+  ClaudeClauseExtractor,
+} from './infrastructure/extraction/claude-clause-extractor';
 
 // Infrastructure — persistence
 import { PrismaClauseRepository } from './infrastructure/persistence/prisma-clause.repository';
@@ -65,19 +71,33 @@ import { PrismaExtractionRunRepository } from './infrastructure/persistence/pris
     // tests. The factories below select one at boot based on env.
     MockClauseExtractor,
     MockEmbeddingService,
+    ClaudeClauseExtractor,
+
+    // Anthropic SDK client — instantiated once, shared across calls.
+    // Lives behind ANTHROPIC_CLIENT so tests can override with a stub.
+    {
+      provide: ANTHROPIC_CLIENT,
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService): Anthropic =>
+        new Anthropic({ apiKey: config.claudeApiKey ?? '' }),
+    },
+    {
+      provide: CLAUDE_MODEL,
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService) => config.claudeModel,
+    },
 
     {
       provide: CLAUSE_EXTRACTOR,
-      inject: [AppConfigService, MockClauseExtractor],
+      inject: [AppConfigService, MockClauseExtractor, ClaudeClauseExtractor],
       useFactory: (
         config: AppConfigService,
         mock: MockClauseExtractor,
+        claude: ClaudeClauseExtractor,
       ): IClauseExtractor => {
         switch (config.clauseExtractor) {
           case ClauseExtractorDriver.Anthropic:
-            // Wired in Task 8.4. Until then, fall through to mock so a
-            // mis-set env never crashes the boot.
-            return mock;
+            return claude;
           case ClauseExtractorDriver.Mock:
           default:
             return mock;

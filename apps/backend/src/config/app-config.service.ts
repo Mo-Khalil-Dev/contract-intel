@@ -149,6 +149,10 @@ export class AppConfigService {
     return this.configService.get('CLAUDE_API_KEY', { infer: true });
   }
 
+  get claudeModel(): string {
+    return this.configService.get('CLAUDE_MODEL', { infer: true });
+  }
+
   // Queue
   get queueDriver(): QueueDriver {
     return this.configService.get('QUEUE_DRIVER', { infer: true });

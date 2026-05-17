@@ -178,6 +178,14 @@ export class EnvironmentVariables {
   @IsOptional()
   CLAUDE_API_KEY?: string;
 
+  /**
+   * Claude model id used by the clause extractor (Phase 8, Task 8.4).
+   * Defaults to claude-opus-4-7 — the design baseline. Switching to
+   * Sonnet for cost reduction is a one-env-flip operation.
+   */
+  @IsString()
+  CLAUDE_MODEL: string = 'claude-opus-4-7';
+
   // Queue
   @IsEnum(QueueDriver)
   QUEUE_DRIVER: QueueDriver = QueueDriver.Memory;
