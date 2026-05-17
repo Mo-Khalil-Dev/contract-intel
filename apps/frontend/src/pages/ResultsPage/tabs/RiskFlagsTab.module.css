@@ -1,0 +1,206 @@
+/*
+ * Risk Flags tab — counter row + accordion list of per-flag rows.
+ * Visual language follows the v2 wireframe.
+ */
+
+.column {
+  max-width: 660px;
+  font-family: var(--font-sans);
+}
+
+/* ── Counter bar ───────────────────────────────────────────────── */
+
+.counterBar {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: var(--text-sm);
+  color: var(--color-ink-mid);
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.counterBar strong {
+  color: var(--color-ink);
+}
+
+.counterDot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.counterDot::before {
+  content: '●';
+  font-size: 10px;
+}
+
+.counterDotCritical {
+  color: var(--color-red);
+}
+.counterDotCaution {
+  color: var(--color-orange);
+}
+.counterDotInfo {
+  color: var(--color-green);
+}
+
+/* ── Accordion list ────────────────────────────────────────────── */
+
+.list {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.flag {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.flag:last-child {
+  border-bottom: none;
+}
+
+.flagResolved {
+  opacity: 0.55;
+}
+
+.flagHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-sans);
+}
+
+.flagHeader:hover {
+  background: var(--color-surface-alt);
+}
+
+.flagHeader:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: -2px;
+}
+
+.severityDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.severityDotCritical {
+  background: var(--color-red);
+}
+
+.severityDotCaution {
+  background: var(--color-orange);
+}
+
+.flagTitle {
+  flex: 1;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.resolvedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-green-bg);
+  color: var(--color-green);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.flagSection {
+  font-size: 11px;
+  color: var(--color-ink-mute);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--color-ink-mute);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Expanded body ─────────────────────────────────────────────── */
+
+.flagBody {
+  padding: 0 16px 16px 36px;
+}
+
+.flagText {
+  margin: 0 0 12px;
+  font-size: var(--text-sm);
+  color: var(--color-ink-mid);
+  line-height: 1.7;
+}
+
+.flagClauseExcerpt {
+  margin: 0 0 12px;
+  font-size: var(--text-sm);
+  color: var(--color-ink-mid);
+  font-family: Georgia, serif;
+  font-style: italic;
+  line-height: 1.7;
+  padding: 12px 14px;
+  border-left: 3px solid var(--color-border-mid);
+  background: var(--color-bg-alt);
+  border-radius: 0 6px 6px 0;
+}
+
+.recommendation {
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-blue);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+  color: var(--color-ink-mid);
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+
+.recommendationLabel {
+  font-weight: 600;
+  color: var(--color-blue);
+  margin-right: 4px;
+}
+
+.flagActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Empty state ──────────────────────────────────────────────── */
+
+.empty {
+  padding: 28px 24px;
+  text-align: center;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-mid);
+  border-radius: 10px;
+}

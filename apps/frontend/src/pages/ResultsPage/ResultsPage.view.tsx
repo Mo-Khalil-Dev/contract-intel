@@ -4,6 +4,7 @@ import styles from './ResultsPage.module.css';
 import { Tabs } from './components/Tabs';
 import { RightSidebar } from './components/RightSidebar';
 import { OverviewTab } from './tabs/OverviewTab';
+import { RiskFlagsTab } from './tabs/RiskFlagsTab';
 import type {
   ClauseResponse,
   ContractMetadata,
@@ -49,7 +50,9 @@ export function ResultsPageView({
   const metadata: ContractMetadata | null = extraction?.metadata ?? null;
   const riskScore = useMemo(() => documentRiskScore(clauses), [clauses]);
   const counts = useMemo(() => flagCounts(clauses), [clauses]);
-  const riskFlagCount = counts.critical + counts.caution + counts.info;
+  // The Risk Flags tab badge shows only critical + caution counts —
+  // informational (low) clauses surface on Overview but aren't flags.
+  const riskFlagCount = counts.critical + counts.caution;
 
   if (isLoading) {
     return (
@@ -109,12 +112,7 @@ export function ResultsPageView({
                 documentRiskScore={riskScore}
               />
             )}
-            {activeTab === 'risks' && (
-              <ComingSoon
-                title="Risk Flags"
-                body="The per-flag accordion with severity, recommendation, and resolve/dismiss actions ships in the next pass (Task 8.6.f)."
-              />
-            )}
+            {activeTab === 'risks' && <RiskFlagsTab clauses={clauses} />}
             {activeTab === 'document' && (
               <ComingSoon
                 title="Document"

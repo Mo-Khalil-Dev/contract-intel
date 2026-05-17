@@ -181,6 +181,52 @@ export const NetworkError: Story = {
   },
 };
 
+/**
+ * Risk Flags tab — drive the view's internal tab state via a play
+ * function (clicks the second tab on mount). Verifies the accordion
+ * renders alongside populated metadata in the sidebar.
+ */
+export const RiskFlagsTabView: Story = {
+  name: 'Risk Flags (tab)',
+  args: {
+    ...baseArgs,
+    clauses: fullClauses,
+    extraction: makeExtraction(),
+  },
+  play: async ({ canvasElement }) => {
+    const tab = canvasElement.querySelector<HTMLButtonElement>(
+      '[role="tab"]:nth-of-type(2)',
+    );
+    tab?.click();
+  },
+};
+
+/** All-low-risk corpus — Risk Flags tab shows the "no flags raised"
+ *  empty state. */
+export const RiskFlagsTabAllLow: Story = {
+  name: 'Risk Flags (all low)',
+  args: {
+    ...baseArgs,
+    clauses: [
+      makeClause({
+        type: 'payment_terms',
+        risk: { score: 10, level: 'low', flags: [], explanation: '' },
+      }),
+      makeClause({
+        type: 'governing_law',
+        risk: { score: 15, level: 'low', flags: [], explanation: '' },
+      }),
+    ],
+    extraction: makeExtraction(),
+  },
+  play: async ({ canvasElement }) => {
+    const tab = canvasElement.querySelector<HTMLButtonElement>(
+      '[role="tab"]:nth-of-type(2)',
+    );
+    tab?.click();
+  },
+};
+
 /** No metadata yet (extraction still in flight on the backend, but
  *  the read endpoint returned an empty snapshot). */
 export const NoMetadata: Story = {
