@@ -1131,7 +1131,7 @@ UI Hook (useAuth.ts)
 
 **API Layer**:
 
-- [ ] Add to **src/api/endpoints.ts**:
+- [~] Add to **src/api/endpoints.ts**:
 
   ```typescript
   export const API = {
@@ -1143,7 +1143,7 @@ UI Hook (useAuth.ts)
   };
   ```
 
-- [ ] Add **axios response interceptor** to handle 401:
+- [~] Add **axios response interceptor** to handle 401:
   ```typescript
   // src/api/client.ts
   apiClient.interceptors.response.use(
@@ -1161,7 +1161,7 @@ UI Hook (useAuth.ts)
 
 **Service Layer**:
 
-- [ ] **src/services/authService.ts**
+- [~] **src/services/authService.ts**
   - Calls httpService for auth endpoints
   - Unwraps ApiResponse<T>
   - No axios imports
@@ -1181,7 +1181,7 @@ UI Hook (useAuth.ts)
 
 **Hook Layer**:
 
-- [ ] **useAuth.ts**: React Query hook
+- [~] **useAuth.ts**: React Query hook
   - Calls authService methods
   - No httpService or axios imports
   - Returns { user, isLoading, isAuthenticated, logout }
@@ -1216,13 +1216,13 @@ UI Hook (useAuth.ts)
 
 **UI Components**:
 
-- [ ] **ProtectedRoute** component
+- [~] **ProtectedRoute** component
   - Wraps routes requiring authentication
   - Uses useAuth hook
   - Shows loading state while checking authentication
   - If not authenticated, axios interceptor handles redirect automatically
   - No manual redirect needed (401 triggers interceptor)
-- [ ] **LogoutButton** component
+- [~] **LogoutButton** component
   - Button.tsx (JSX only, max 15 lines)
   - useLogoutButton.ts (calls useAuth hook)
   - LogoutButton.module.css
@@ -1231,11 +1231,11 @@ UI Hook (useAuth.ts)
   - Touch target ≥44px
   - Focus indicator visible
   - ARIA label
-- [ ] **LoginCallbackPage** component (optional, for loading state)
+- [~] **LoginCallbackPage** component (optional, for loading state)
   - Shows loading spinner while backend processes callback
   - Backend does all the work (exchange tokens, set cookie, redirect)
   - This page is only shown briefly during redirect
-- [ ] **SessionRefresh** component
+- [~] **SessionRefresh** component
   - Silent token refresh before expiry (handled by backend SessionAuthGuard)
   - No UI (background process)
   - Backend automatically refreshes tokens on expired access token
@@ -1281,18 +1281,18 @@ frontend/src/
 
 **Accessibility Requirements**:
 
-- [ ] Focus indicators visible on logout button
-- [ ] Touch target ≥44px
-- [ ] ARIA label on logout button
-- [ ] Keyboard navigation (Tab, Enter)
-- [ ] Screen reader announces logout action
+- [~] Focus indicators visible on logout button
+- [~] Touch target ≥44px
+- [~] ARIA label on logout button
+- [~] Keyboard navigation (Tab, Enter)
+- [~] Screen reader announces logout action
 
 **Testing Requirements**:
 
-- [ ] Mock at service boundary (not axios)
-- [ ] Test hooks against mocked authService
-- [ ] Test components with mocked useAuth hook
-- [ ] Integration test: full auth flow
+- [~] Mock at service boundary (not axios)
+- [~] Test hooks against mocked authService
+- [~] Test components with mocked useAuth hook
+- [~] Integration test: full auth flow
 
 **Requirements**: 0.1-0.12
 
@@ -1373,18 +1373,18 @@ Read Model: DashboardViewModel
 
 **Deliverables**:
 
-- [ ] GET /api/v1/reference-data endpoint
-- [ ] Query handler to compute dashboard metrics
-- [ ] Business logic for KPI calculations:
+- [~] GET /api/v1/reference-data endpoint
+- [~] Query handler to compute dashboard metrics
+- [~] Business logic for KPI calculations:
   - Active contracts = status 'complete'
   - Avg risk score = mean of complete contracts
   - Critical flags = sum of red flags across portfolio
   - Urgent renewals = renewals with daysRemaining < 60
-- [ ] Sorting logic:
+- [~] Sorting logic:
   - Recent contracts: sort by uploadDate DESC, take 4
   - Urgent renewals: sort by daysRemaining ASC, take 3
-- [ ] Response DTO matching wireframe data structure
-- [ ] **Backend-Driven UI**: Include `actions` and `ui` fields in response
+- [~] Response DTO matching wireframe data structure
+- [~] **Backend-Driven UI**: Include `actions` and `ui` fields in response
   ```typescript
   {
     data: { /* dashboard data */ },
@@ -1400,8 +1400,8 @@ Read Model: DashboardViewModel
     }
   }
   ```
-- [ ] Unit tests for calculations
-- [ ] Integration tests
+- [~] Unit tests for calculations
+- [~] Integration tests
 
 **Files**:
 
@@ -1438,7 +1438,7 @@ Axios (src/api/client.ts)
 
 **Deliverables**:
 
-- [ ] **src/api/client.ts**: Axios instance configuration
+- [~] **src/api/client.ts**: Axios instance configuration
 
   ```typescript
   import axios from 'axios';
@@ -1450,7 +1450,7 @@ Axios (src/api/client.ts)
   });
   ```
 
-- [ ] **src/api/httpService.ts**: HTTP wrapper (ONLY file that imports axios)
+- [~] **src/api/httpService.ts**: HTTP wrapper (ONLY file that imports axios)
 
   ```typescript
   import { apiClient } from './client';
@@ -1464,7 +1464,7 @@ Axios (src/api/client.ts)
   };
   ```
 
-- [ ] **src/api/endpoints.ts**: All API URL constants
+- [~] **src/api/endpoints.ts**: All API URL constants
 
   ```typescript
   export const API = {
@@ -1476,7 +1476,7 @@ Axios (src/api/client.ts)
   };
   ```
 
-- [ ] **src/api/unwrap.ts**: ApiResponse<T> unwrapper utility
+- [~] **src/api/unwrap.ts**: ApiResponse<T> unwrapper utility
 
   ```typescript
   export interface ApiResponse<T> {
@@ -1493,7 +1493,7 @@ Axios (src/api/client.ts)
   }
   ```
 
-- [ ] **src/types/api.ts**: Shared API types
+- [~] **src/types/api.ts**: Shared API types
 
   ```typescript
   export interface ApiResponse<T> {
@@ -1526,18 +1526,18 @@ frontend/src/
 
 **Rules**:
 
-- [ ] ONLY httpService.ts imports axios
-- [ ] Services call httpService, never axios directly
-- [ ] Hooks call services, never httpService or axios
-- [ ] All API URLs defined in endpoints.ts
-- [ ] Every service method calls .then(unwrap)
-- [ ] No URL string literals outside endpoints.ts
+- [~] ONLY httpService.ts imports axios
+- [~] Services call httpService, never axios directly
+- [~] Hooks call services, never httpService or axios
+- [~] All API URLs defined in endpoints.ts
+- [~] Every service method calls .then(unwrap)
+- [~] No URL string literals outside endpoints.ts
 
 **Testing**:
 
 - [ ] Mock at service boundary (not axios)
-- [ ] Test services with mocked httpService
-- [ ] Test hooks with mocked services
+- [~] Test services with mocked httpService
+- [~] Test hooks with mocked services
 
 **Requirements**: Frontend architecture guidelines
 
@@ -1566,8 +1566,8 @@ UI Hook (useHomePage.ts)
 
 **API Layer Setup**:
 
-- [ ] **src/api/client.ts**: Axios instance only
-- [ ] **src/api/httpService.ts**: HTTP wrapper (only file that imports axios)
+- [~] **src/api/client.ts**: Axios instance only
+- [~] **src/api/httpService.ts**: HTTP wrapper (only file that imports axios)
 - [ ] **src/api/endpoints.ts**: All API URL constants
   ```typescript
   export const API = {
@@ -1587,7 +1587,7 @@ UI Hook (useHomePage.ts)
 
 **Service Layer**:
 
-- [ ] **src/services/referenceDataService.ts**
+- [~] **src/services/referenceDataService.ts**
   - Calls httpService.get(API.REFERENCE_DATA)
   - Unwraps ApiResponse<ReferenceDataResponse>
   - Returns typed domain data
@@ -1602,7 +1602,7 @@ UI Hook (useHomePage.ts)
 
 **Hook Layer**:
 
-- [ ] **useReferenceData.ts**: React Query hook
+- [~] **useReferenceData.ts**: React Query hook
   - Calls referenceDataService.getReferenceData()
   - No httpService or axios imports
   - Returns { data, isLoading, error, refetch }
@@ -1618,49 +1618,49 @@ UI Hook (useHomePage.ts)
 
 **UI Components**:
 
-- [ ] **HomePage** component (main container)
+- [~] **HomePage** component (main container)
   - Uses useReferenceData hook
   - Passes data to child components
   - No API calls directly
-- [ ] **OrgBanner** component
+- [~] **OrgBanner** component
   - Background: white, border-bottom
   - Padding: 14px 32px
   - Left: Icon + "Northwind Holdings Ltd" + description
   - Right: Status dot + "All systems operational"
   - Responsive: stack on mobile
-- [ ] **GreetingSection** component
+- [~] **GreetingSection** component
   - Heading: "Good morning, [name]" (32px weight 800)
   - Context paragraph with critical flags + urgent renewals
   - Action buttons: "View all contracts" + "+ Upload contract"
   - Responsive: stack buttons on mobile
-- [ ] **KPICards** component
+- [~] **KPICards** component
   - Grid: 4 columns (responsive: 2 cols on tablet, 1 col on mobile)
   - 4 cards: Active contracts, Avg risk score, Critical flags, Renewals <60d
   - StatCard component with dynamic colors
   - Mobile-first: 1 col → 2 col → 4 col
-- [ ] **WhereToStart** component
+- [~] **WhereToStart** component
   - Grid: 1.4fr 1fr (responsive: 1 col on mobile)
   - Left: Upload CTA card (dark background, blue accent circle)
   - Right column: Resume card + Browse register + Review renewals
   - Mobile-first: stack vertically
-- [ ] **RecentContracts** component
+- [~] **RecentContracts** component
   - Card with header + "See all →" button
   - 4 rows: TypePill, contract name, party, flags, risk badge
   - Hover state: background change
   - Click: navigate to portfolio
   - Responsive: horizontal scroll on mobile
-- [ ] **UrgentRenewals** component
+- [~] **UrgentRenewals** component
   - Card with header + "All →" button
   - 3 rows with left border colored by urgency (red/orange/green)
   - Days remaining display with color coding
   - Click: navigate to renewals
   - Responsive: horizontal scroll on mobile
-- [ ] **HowItWorks** component
+- [~] **HowItWorks** component
   - Section title + description
   - 4-step grid: numbered circles, labels, descriptions, owners
   - Arrow connectors between steps
   - Responsive: 2 cols on tablet, 1 col on mobile
-- [ ] **PlaybookExamples** component
+- [~] **PlaybookExamples** component
   - 2-column grid (responsive: 1 col on mobile)
   - Left: Playbook rules with severity indicators
   - Right: Team contacts with avatars
@@ -1738,20 +1738,20 @@ frontend/src/
 
 **Accessibility Requirements** (ALL components):
 
-- [ ] Focus indicators visible (3px outline)
-- [ ] Touch targets ≥44px on mobile
-- [ ] ARIA labels where needed
+- [~] Focus indicators visible (3px outline)
+- [~] Touch targets ≥44px on mobile
+- [~] ARIA labels where needed
 - [ ] Keyboard navigation (Tab, Enter)
-- [ ] Color contrast ≥4.5:1
-- [ ] Semantic HTML
-- [ ] Screen reader tested
+- [~] Color contrast ≥4.5:1
+- [~] Semantic HTML
+- [~] Screen reader tested
 
 **Testing Requirements**:
 
 - [ ] Mock at service boundary (not axios)
-- [ ] Test hooks against mocked services
-- [ ] Test components with mocked hooks
-- [ ] Integration test: full API flow
+- [~] Test hooks against mocked services
+- [~] Test components with mocked hooks
+- [~] Integration test: full API flow
 
 **Requirements**: US-008 (all acceptance criteria), wireframe pixel-perfect match
 
@@ -1780,16 +1780,16 @@ frontend/src/
 
 **Deliverables**:
 
-- [ ] Install `posthog-js` (single dep, vanilla SDK is enough — we'll write a thin provider ourselves)
-- [ ] Add `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` to `apps/frontend/.env.example` (committed) with placeholder values + a comment explaining each
-- [ ] Add the real key + host to `apps/frontend/.env.local` (gitignored)
-- [ ] Create `apps/frontend/src/analytics/posthog.ts`:
+- [~] Install `posthog-js` (single dep, vanilla SDK is enough — we'll write a thin provider ourselves)
+- [~] Add `VITE_POSTHOG_KEY` and `VITE_POSTHOG_HOST` to `apps/frontend/.env.example` (committed) with placeholder values + a comment explaining each
+- [~] Add the real key + host to `apps/frontend/.env.local` (gitignored)
+- [~] Create `apps/frontend/src/analytics/posthog.ts`:
   - Exports `initPostHog()` — idempotent init wired to env vars
   - No-ops if `VITE_POSTHOG_KEY` is missing (so dev can run without it)
   - Calls `posthog.init(...)` with `api_host: VITE_POSTHOG_HOST`, `capture_pageview: true`, `respect_dnt: true`
-- [ ] Call `initPostHog()` in `main.tsx` before React mounts
-- [ ] Verify in browser: PostHog network request to `https://eu.i.posthog.com/e/` succeeds on page load (pageview event)
-- [ ] Verify in PostHog dashboard: live events show up under "Activity"
+- [~] Call `initPostHog()` in `main.tsx` before React mounts
+- [~] Verify in browser: PostHog network request to `https://eu.i.posthog.com/e/` succeeds on page load (pageview event)
+- [~] Verify in PostHog dashboard: live events show up under "Activity"
 
 **Files**:
 
@@ -1805,9 +1805,9 @@ apps/frontend/
 
 **Definition of Done**:
 
-- [ ] Page loads without PostHog-related console errors
-- [ ] A pageview event appears in the PostHog EU dashboard for `/` within ~30s
-- [ ] App still runs cleanly when `VITE_POSTHOG_KEY` is unset (no init, no errors)
+- [~] Page loads without PostHog-related console errors
+- [~] A pageview event appears in the PostHog EU dashboard for `/` within ~30s
+- [~] App still runs cleanly when `VITE_POSTHOG_KEY` is unset (no init, no errors)
 
 ---
 
@@ -1817,13 +1817,13 @@ apps/frontend/
 
 **Deliverables**:
 
-- [ ] Create `useAnalyticsIdentity` hook (or inline into `useAuth`) that:
+- [~] Create `useAnalyticsIdentity` hook (or inline into `useAuth`) that:
   - Calls `posthog.identify(user.userId, { email: user.email })` when `useAuth()` user transitions from null → defined
   - Calls `posthog.reset()` on logout
   - Idempotent — doesn't re-identify on every render
-- [ ] Wire it in `App.tsx` (or wherever `useAuth` is consumed at the top of the tree)
-- [ ] Update `HomePageContainer.handleSignOut` to call `posthog.reset()` before redirecting
-- [ ] Privacy review:
+- [~] Wire it in `App.tsx` (or wherever `useAuth` is consumed at the top of the tree)
+- [~] Update `HomePageContainer.handleSignOut` to call `posthog.reset()` before redirecting
+- [~] Privacy review:
   - Confirm `respect_dnt: true` works (test by enabling DNT in browser)
   - Confirm only `userId` + `email` are attached (no name, no roles unless added intentionally)
   - Auto-capture remains ON but verify it isn't capturing input field values (`sanitize_input: true` if needed)
@@ -1841,9 +1841,9 @@ apps/frontend/src/
 
 **Definition of Done**:
 
-- [ ] After login, events in PostHog show the logged-in user's `distinct_id = userId`
-- [ ] After logout, subsequent events have a fresh anonymous `distinct_id`
-- [ ] With DNT enabled in browser, no events fire (verify in network tab)
+- [~] After login, events in PostHog show the logged-in user's `distinct_id = userId`
+- [~] After logout, subsequent events have a fresh anonymous `distinct_id`
+- [~] With DNT enabled in browser, no events fire (verify in network tab)
 
 ---
 
@@ -1853,25 +1853,25 @@ apps/frontend/src/
 
 **Deliverables**:
 
-- [ ] Create `apps/frontend/src/analytics/analytics.ts`:
+- [~] Create `apps/frontend/src/analytics/analytics.ts`:
   - Defines a union type of all event names (`AnalyticsEventName`)
   - Defines a typed payload map (`AnalyticsEventPayloads`) — strong types per event
   - Exports `track<E extends AnalyticsEventName>(event: E, payload: AnalyticsEventPayloads[E])` — typed wrapper around `posthog.capture`
   - No-ops if PostHog isn't initialized
-- [ ] Implement starter event set:
+- [~] Implement starter event set:
   - `auth_login_success` → `{}`
   - `auth_logout` → `{}`
   - `dashboard_viewed` → `{ kpis_critical_flag_count: number; kpis_urgent_renewal_count: number }`
   - `dashboard_kpi_clicked` → `{ kpi: 'active' | 'risk' | 'flags' | 'renewals' }` (groundwork — not all wired yet)
   - `dashboard_upload_cta_clicked` → `{ source: 'greeting' | 'where_to_start' }`
-- [ ] Wire the first three:
+- [~] Wire the first three:
   - `LoginCallbackPage` after successful exchange → `track('auth_login_success')`
   - `HomePageContainer.handleSignOut` → `track('auth_logout')` before reset
   - `HomePageV2Container` / `HomePageContainer` on mount with data → `track('dashboard_viewed', { ... })`
-- [ ] Add unit tests for `analytics.ts`:
+- [~] Add unit tests for `analytics.ts`:
   - `track` calls `posthog.capture` with the right args
   - `track` is a no-op when PostHog isn't initialized
-- [ ] Update `ACCESSIBILITY_AUDIT.md` or add `ANALYTICS.md` documenting the event taxonomy
+- [~] Update `ACCESSIBILITY_AUDIT.md` or add `ANALYTICS.md` documenting the event taxonomy
 
 **Files**:
 
@@ -1888,11 +1888,11 @@ apps/frontend/ANALYTICS.md             # event taxonomy reference
 
 **Definition of Done**:
 
-- [ ] All 5 starter events have typed signatures
-- [ ] 3 events fire in real flows and appear in PostHog
-- [ ] Tests pass
-- [ ] `track('some_event', { wrong: 'payload' })` is a TypeScript error
-- [ ] `ANALYTICS.md` lists every event, who fires it, and the payload schema
+- [~] All 5 starter events have typed signatures
+- [~] 3 events fire in real flows and appear in PostHog
+- [~] Tests pass
+- [~] `track('some_event', { wrong: 'payload' })` is a TypeScript error
+- [~] `ANALYTICS.md` lists every event, who fires it, and the payload schema
 
 ---
 
@@ -1985,7 +1985,7 @@ In Phase 5.1, `documentService.ts` returns mocked data directly. In Phase 5.4, o
 
 **Service Layer (mock)**:
 
-- [ ] **src/services/documentService.ts** — returns mock data in dev mode
+- [~] **src/services/documentService.ts** — returns mock data in dev mode
   - Same shape as the eventual real service
   - Simulated network delays
   - Simulated progress events
@@ -1993,25 +1993,25 @@ In Phase 5.1, `documentService.ts` returns mocked data directly. In Phase 5.4, o
 
 **Hook Layer**:
 
-- [ ] **useUpload.ts** — React Query mutation hook
+- [~] **useUpload.ts** — React Query mutation hook
   - Orchestrates initiate → upload → complete
   - Tracks progress (0-100%)
   - Returns `{ upload, isUploading, progress, error, documentId }`
 
 **UI Components** (all custom, inside `pages/UploadPage/components/`):
 
-- [ ] **UploadPage** — page shell, uses `useUpload`
-- [ ] **UploadDropzone** — drag-and-drop area
+- [~] **UploadPage** — page shell, uses `useUpload`
+- [~] **UploadDropzone** — drag-and-drop area
   - Dashed border, blue active state on drag-over
   - File input (hidden, click to open)
   - File validation feedback (size, type)
   - Shows selected file name + formatted size
-- [ ] **FileSelectedCard** — shows the chosen file with remove button
-- [ ] **ConsentCheckbox** — custom checkbox + label, required before upload
-- [ ] **UploadButton** — primary CTA, disabled until file + consent
-- [ ] **UploadProgress** — progress bar 0–100% with status text
-- [ ] **UploadStatusToast** (or inline panel) — success/error feedback
-- [ ] **HelperText** — "PDF · up to 50 MB · 60s analysis"
+- [~] **FileSelectedCard** — shows the chosen file with remove button
+- [~] **ConsentCheckbox** — custom checkbox + label, required before upload
+- [~] **UploadButton** — primary CTA, disabled until file + consent
+- [~] **UploadProgress** — progress bar 0–100% with status text
+- [~] **UploadStatusToast** (or inline panel) — success/error feedback
+- [~] **HelperText** — "PDF · up to 50 MB · 60s analysis"
 
 **Files**:
 
@@ -2042,15 +2042,15 @@ apps/frontend/src/
 
 **Definition of Done**:
 
-- [ ] `/upload` route renders the page
-- [ ] Drag-and-drop accepts PDF only, rejects everything else with a clear error
-- [ ] File size validation (≤50MB) with clear error
-- [ ] Consent checkbox blocks upload until checked
-- [ ] Mock upload flow completes end-to-end in ~3s
-- [ ] Progress bar animates 0→100%
-- [ ] Success state shows the document id (or navigates to results — TBD)
-- [ ] Failure states render appropriate error UI
-- [ ] Visually matches the wireframe pixel-for-pixel (verified by side-by-side)
+- [~] `/upload` route renders the page
+- [~] Drag-and-drop accepts PDF only, rejects everything else with a clear error
+- [~] File size validation (≤50MB) with clear error
+- [~] Consent checkbox blocks upload until checked
+- [~] Mock upload flow completes end-to-end in ~3s
+- [~] Progress bar animates 0→100%
+- [~] Success state shows the document id (or navigates to results — TBD)
+- [~] Failure states render appropriate error UI
+- [~] Visually matches the wireframe pixel-for-pixel (verified by side-by-side)
 
 **Requirements**: US-009 (Upload Screen), 1.1-1.5
 
@@ -2062,56 +2062,56 @@ apps/frontend/src/
 
 **Routing**:
 
-- [ ] `/upload` route in `App.tsx` (protected via `ProtectedRoute`)
-- [ ] Navigation from Home screen "+ Upload contract" button now routes to `/upload`
-- [ ] Successful upload navigates to `/results/:documentId` (placeholder for Phase 6/7)
-- [ ] Cancel button returns to `/`
+- [~] `/upload` route in `App.tsx` (protected via `ProtectedRoute`)
+- [~] Navigation from Home screen "+ Upload contract" button now routes to `/upload`
+- [~] Successful upload navigates to `/results/:documentId` (placeholder for Phase 6/7)
+- [~] Cancel button returns to `/`
 
 **Edge Cases**:
 
-- [ ] File too large (>50MB) — inline error + helpful message
-- [ ] Invalid file type — inline error listing supported types
-- [ ] Network failure mid-upload — retry button + error toast
-- [ ] User navigates away during upload — confirm dialog
-- [ ] Consent unchecked — upload button disabled with explanation
-- [ ] No file selected — upload button disabled
-- [ ] Successful upload — clear success state with next-action CTA
+- [~] File too large (>50MB) — inline error + helpful message
+- [~] Invalid file type — inline error listing supported types
+- [~] Network failure mid-upload — retry button + error toast
+- [~] User navigates away during upload — confirm dialog
+- [~] Consent unchecked — upload button disabled with explanation
+- [~] No file selected — upload button disabled
+- [~] Successful upload — clear success state with next-action CTA
 
 **Storybook Stories** (all states, like HomePage):
 
-- [ ] Empty / initial state
-- [ ] FileSelected (PDF, small) / FileSelected (PDF, near 50MB limit)
-- [ ] FileSelected with consent checked
-- [ ] Uploading at 25% / 50% / 75% / 100%
-- [ ] Processing state
-- [ ] Success state
-- [ ] Error: file too large
-- [ ] Error: invalid type
-- [ ] Error: network failure
+- [~] Empty / initial state
+- [~] FileSelected (PDF, small) / FileSelected (PDF, near 50MB limit)
+- [~] FileSelected with consent checked
+- [~] Uploading at 25% / 50% / 75% / 100%
+- [~] Processing state
+- [~] Success state
+- [~] Error: file too large
+- [~] Error: invalid type
+- [~] Error: network failure
 
 **Accessibility Audit** (WCAG 2.1 AA):
 
-- [ ] Focus indicators visible on all interactive elements
-- [ ] Touch targets ≥44px
-- [ ] ARIA labels on icon-only buttons
-- [ ] Dropzone keyboard-accessible (Enter/Space to open file picker)
-- [ ] Progress announced via `aria-live="polite"`
-- [ ] Errors announced via `aria-live="assertive"` (or role="alert")
-- [ ] File input properly labelled
-- [ ] Consent checkbox associates label correctly
+- [~] Focus indicators visible on all interactive elements
+- [~] Touch targets ≥44px
+- [~] ARIA labels on icon-only buttons
+- [~] Dropzone keyboard-accessible (Enter/Space to open file picker)
+- [~] Progress announced via `aria-live="polite"`
+- [~] Errors announced via `aria-live="assertive"` (or role="alert")
+- [~] File input properly labelled
+- [~] Consent checkbox associates label correctly
 - [ ] Color contrast ≥4.5:1
-- [ ] Run `jest-axe` test on UploadPage
-- [ ] Manual keyboard navigation test
-- [ ] Screen reader test (VoiceOver)
+- [~] Run `jest-axe` test on UploadPage
+- [~] Manual keyboard navigation test
+- [~] Screen reader test (VoiceOver)
 
 **Definition of Done**:
 
-- [ ] All routes work
-- [ ] All edge cases produce correct UI
-- [ ] All Storybook stories render
-- [ ] `jest-axe` test passes with 0 violations
-- [ ] Keyboard-only flow completable end-to-end
-- [ ] `ACCESSIBILITY_AUDIT_UPLOAD.md` checklist filled in
+- [~] All routes work
+- [~] All edge cases produce correct UI
+- [~] All Storybook stories render
+- [~] `jest-axe` test passes with 0 violations
+- [~] Keyboard-only flow completable end-to-end
+- [~] `ACCESSIBILITY_AUDIT_UPLOAD.md` checklist filled in
 
 **Requirements**: US-009 (acceptance criteria), accessibility
 
@@ -2171,14 +2171,14 @@ Queries:
 
 **Deliverables**:
 
-- [ ] Document aggregate + factory
-- [ ] All value objects with validation
-- [ ] All domain events
-- [ ] `IDocumentRepository` interface
-- [ ] `IStorageService` interface (real impl in Task 5.4)
-- [ ] All command and query handlers
-- [ ] Unit tests for aggregate, value objects, and handlers (mock repos + storage)
-- [ ] Property test: file size validation, status transitions
+- [~] Document aggregate + factory
+- [~] All value objects with validation
+- [~] All domain events
+- [~] `IDocumentRepository` interface
+- [~] `IStorageService` interface (real impl in Task 5.4)
+- [~] All command and query handlers
+- [~] Unit tests for aggregate, value objects, and handlers (mock repos + storage)
+- [~] Property test: file size validation, status transitions
 
 **Files**:
 
@@ -2211,9 +2211,9 @@ apps/backend/src/modules/documents/
 
 **Definition of Done**:
 
-- [ ] All domain and application tests pass
-- [ ] Coverage ≥90% on domain, ≥80% overall
-- [ ] No frontend changes in this task
+- [~] All domain and application tests pass
+- [~] Coverage ≥90% on domain, ≥80% overall
+- [~] No frontend changes in this task
 
 **Requirements**: 1.1-1.5
 
@@ -2225,26 +2225,26 @@ apps/backend/src/modules/documents/
 
 **Backend Deliverables**:
 
-- [ ] `PrismaDocumentRepository` implementing `IDocumentRepository`
-- [ ] `Document` Prisma model + migration
-- [ ] `StorageService` implementations:
+- [~] `PrismaDocumentRepository` implementing `IDocumentRepository`
+- [~] `Document` Prisma model + migration
+- [~] `StorageService` implementations:
   - **`LocalStorageDriver`** — fully working, writes to `apps/backend/uploads/`, serves PUT via a controller route
   - **`GcsStorageDriver`** — fully working (decision updated 2026-05-14). Streams body bytes through the backend to GCS via the SDK's `file.createWriteStream()`. Bytes pass through the backend perimeter (scannable/auditable). The original V4 presigned-URL minting code is retained as a private capability for a possible future direct-upload opt-in but is not used by the current architecture.
   - Both drivers registered as providers; a factory in `DocumentsModule` reads `STORAGE_DRIVER` env var (`local` | `gcs`) and binds one to the `IStorageService` port at boot.
   - Local-mode boot skips `GcsStorageDriver.onModuleInit` so missing GCS env vars are not a startup blocker in dev.
-- [ ] `DocumentController` with endpoints:
+- [~] `DocumentController` with endpoints:
   - `POST /api/v1/documents/upload/initiate` (auth-guarded) → returns presigned URL + documentId
   - `POST /api/v1/documents/upload/complete` (auth-guarded) → confirms upload
   - `GET /api/v1/documents/:id/status` (auth-guarded) → returns current status
-- [ ] DTOs: `InitiateUploadDto`, `UploadResponseDto`, `CompleteUploadDto`, `UploadStatusDto`
-- [ ] `DocumentMapper` (Aggregate ↔ Prisma ↔ DTO)
-- [ ] `DocumentModule` wiring (controller, handlers, repo, storage, mapper)
-- [ ] All endpoints protected by `SessionAuthGuard`
-- [ ] All requests/responses follow `ApiResponse<T>` envelope
+- [~] DTOs: `InitiateUploadDto`, `UploadResponseDto`, `CompleteUploadDto`, `UploadStatusDto`
+- [~] `DocumentMapper` (Aggregate ↔ Prisma ↔ DTO)
+- [~] `DocumentModule` wiring (controller, handlers, repo, storage, mapper)
+- [~] All endpoints protected by `SessionAuthGuard`
+- [~] All requests/responses follow `ApiResponse<T>` envelope
 
 **Frontend Swap (one file)**:
 
-- [ ] Edit `apps/frontend/src/services/documentService.ts` — replace mock implementation with real HTTP calls via `httpService`. Hook signature unchanged. Mock toggle (dev-flag) removed. No other frontend files change.
+- [~] Edit `apps/frontend/src/services/documentService.ts` — replace mock implementation with real HTTP calls via `httpService`. Hook signature unchanged. Mock toggle (dev-flag) removed. No other frontend files change.
 
 **Files**:
 
@@ -2272,19 +2272,19 @@ apps/backend/prisma/migrations/
 
 **Testing**:
 
-- [ ] Repository integration tests (against test DB)
-- [ ] StorageService unit tests (local driver) + smoke test (GCS, optional gated by env)
-- [ ] Controller E2E tests (full upload flow: initiate → PUT to storage → complete → status)
-- [ ] Auth guard enforcement test (401 without session cookie)
-- [ ] Frontend integration test verifying real `documentService` against a mocked backend (MSW or similar)
+- [~] Repository integration tests (against test DB)
+- [~] StorageService unit tests (local driver) + smoke test (GCS, optional gated by env)
+- [~] Controller E2E tests (full upload flow: initiate → PUT to storage → complete → status)
+- [~] Auth guard enforcement test (401 without session cookie)
+- [~] Frontend integration test verifying real `documentService` against a mocked backend (MSW or similar)
 
 **Definition of Done**:
 
-- [ ] Real upload works end-to-end in dev (local filesystem driver)
-- [ ] Auth-required: unauthenticated requests get 401
-- [ ] Frontend uses real service; `/upload` flow uploads a real file to disk
-- [ ] All tests pass (unit + integration + E2E)
-- [ ] No mock code remaining in `documentService.ts`
+- [~] Real upload works end-to-end in dev (local filesystem driver)
+- [~] Auth-required: unauthenticated requests get 401
+- [~] Frontend uses real service; `/upload` flow uploads a real file to disk
+- [~] All tests pass (unit + integration + E2E)
+- [~] No mock code remaining in `documentService.ts`
 
 **Requirements**: US-009, 1.1-1.5
 
@@ -2318,12 +2318,12 @@ Aggregate: AuditEvent
 
 **Deliverables**:
 
-- [ ] AuditEvent aggregate with factory
-- [ ] Value objects: AuditEventId, AuditAction, ActorId, ResourceId, Checksum, SequenceNumber
-- [ ] Domain event: AuditEventRecordedEvent
-- [ ] Repository interface: IAuditEventRepository
-- [ ] Unit tests for aggregate and value objects
-- [ ] Property test: Checksum verification
+- [~] AuditEvent aggregate with factory
+- [~] Value objects: AuditEventId, AuditAction, ActorId, ResourceId, Checksum, SequenceNumber
+- [~] Domain event: AuditEventRecordedEvent
+- [~] Repository interface: IAuditEventRepository
+- [~] Unit tests for aggregate and value objects
+- [~] Property test: Checksum verification
 
 **Files**:
 
@@ -2372,12 +2372,12 @@ Event Handlers:
 
 **Deliverables**:
 
-- [ ] RecordAuditEventCommand + RecordAuditEventHandler
-- [ ] QueryAuditEventsQuery + QueryAuditEventsHandler (pagination, filters)
-- [ ] ExportAuditLogQuery + ExportAuditLogHandler (JSON, CSV, PDF)
-- [ ] Event handlers for all domain events (user login, document upload, etc.)
-- [ ] Unit tests for all handlers
-- [ ] Property test: Sequence number monotonicity
+- [~] RecordAuditEventCommand + RecordAuditEventHandler
+- [~] QueryAuditEventsQuery + QueryAuditEventsHandler (pagination, filters)
+- [~] ExportAuditLogQuery + ExportAuditLogHandler (JSON, CSV, PDF)
+- [~] Event handlers for all domain events (user login, document upload, etc.)
+- [~] Unit tests for all handlers
+- [~] Property test: Sequence number monotonicity
 
 **Files**:
 
@@ -2407,14 +2407,14 @@ modules/audit/application/
 
 **Deliverables**:
 
-- [ ] PrismaAuditEventRepository (INSERT + SELECT only, no UPDATE/DELETE)
-- [ ] Database role configuration (no UPDATE/DELETE permissions)
-- [ ] AuditController (query endpoint, export endpoint)
-- [ ] DTOs: QueryAuditEventsDto, AuditEventResponseDto, ExportAuditLogDto
-- [ ] AuditMapper (AuditEvent aggregate ↔ Prisma ↔ DTO)
-- [ ] AuditModule wiring
-- [ ] Integration tests (verify immutability, sequence numbers)
-- [ ] Property test: Immutable audit log (attempt UPDATE/DELETE, verify rejection)
+- [~] PrismaAuditEventRepository (INSERT + SELECT only, no UPDATE/DELETE)
+- [~] Database role configuration (no UPDATE/DELETE permissions)
+- [~] AuditController (query endpoint, export endpoint)
+- [~] DTOs: QueryAuditEventsDto, AuditEventResponseDto, ExportAuditLogDto
+- [~] AuditMapper (AuditEvent aggregate ↔ Prisma ↔ DTO)
+- [~] AuditModule wiring
+- [~] Integration tests (verify immutability, sequence numbers)
+- [~] Property test: Immutable audit log (attempt UPDATE/DELETE, verify rejection)
 
 **Files**:
 
@@ -2440,12 +2440,12 @@ modules/audit/infrastructure/
 
 **Deliverables**:
 
-- [ ] AuditLogPage (admin only)
-- [ ] AuditLogTable component (filterable, paginated)
-- [ ] AuditEventDetail component (modal)
-- [ ] ExportAuditLogButton component
-- [ ] useAuditLog hook (React Query)
-- [ ] API client for /audit endpoints
+- [~] AuditLogPage (admin only)
+- [~] AuditLogTable component (filterable, paginated)
+- [~] AuditEventDetail component (modal)
+- [~] ExportAuditLogButton component
+- [~] useAuditLog hook (React Query)
+- [~] API client for /audit endpoints
 
 **Files**:
 
@@ -2486,60 +2486,60 @@ Every frontend task MUST follow these patterns. Use this checklist to verify com
 
 ### ✅ Component Structure (Every Component)
 
-- [ ] **ComponentName.tsx**: JSX only, max 15 lines, no logic
-- [ ] **useComponentName.ts**: All UI logic (hooks, state, handlers)
-- [ ] **ComponentName.module.css**: All styles
-- [ ] **ComponentName.test.tsx**: Unit tests
-- [ ] **ComponentName.stories.tsx**: Storybook story
+- [~] **ComponentName.tsx**: JSX only, max 15 lines, no logic
+- [~] **useComponentName.ts**: All UI logic (hooks, state, handlers)
+- [~] **ComponentName.module.css**: All styles
+- [~] **ComponentName.test.tsx**: Unit tests
+- [~] **ComponentName.stories.tsx**: Storybook story
 
 ### ✅ 3-Tier API Call Stack (Every API Call)
 
-- [ ] **Layer 1 - UI Hook (useX.ts)**: Calls service methods only
-- [ ] **Layer 2 - Service (src/services/)**: Calls httpService, unwraps ApiResponse<T>
-- [ ] **Layer 3 - httpService (src/api/httpService.ts)**: ONLY file that imports axios
-- [ ] **No axios imports** outside httpService.ts
-- [ ] **All API URLs** defined in src/api/endpoints.ts
+- [~] **Layer 1 - UI Hook (useX.ts)**: Calls service methods only
+- [~] **Layer 2 - Service (src/services/)**: Calls httpService, unwraps ApiResponse<T>
+- [~] **Layer 3 - httpService (src/api/httpService.ts)**: ONLY file that imports axios
+- [~] **No axios imports** outside httpService.ts
+- [~] **All API URLs** defined in src/api/endpoints.ts
 
 ### ✅ API Response Standard (Every Service Method)
 
-- [ ] Backend returns `{ success: boolean; data?: T; error?: string }`
-- [ ] Service calls `.then(unwrap)` to extract data
-- [ ] Never return raw ApiResponse to hooks
+- [~] Backend returns `{ success: boolean; data?: T; error?: string }`
+- [~] Service calls `.then(unwrap)` to extract data
+- [~] Never return raw ApiResponse to hooks
 
 ### ✅ Shadcn UI Integration (Every Component)
 
-- [ ] Use Shadcn UI components as base (Button, Dialog, Tabs, Checkbox, etc.)
-- [ ] Customize with design tokens
-- [ ] Never build from scratch if Shadcn has it
+- [~] Use Shadcn UI components as base (Button, Dialog, Tabs, Checkbox, etc.)
+- [~] Customize with design tokens
+- [~] Never build from scratch if Shadcn has it
 
 ### ✅ Centralized Icons (Every Icon)
 
-- [ ] All SVG icons in `src/components/core/icons.tsx`
-- [ ] No inline SVGs in components
-- [ ] Named exports (not default)
-- [ ] Consistent sizing (24×24 default)
+- [~] All SVG icons in `src/components/core/icons.tsx`
+- [~] No inline SVGs in components
+- [~] Named exports (not default)
+- [~] Consistent sizing (24×24 default)
 
 ### ✅ Accessibility (Every Component)
 
 - [ ] Focus indicators visible (3px outline)
 - [ ] Touch targets ≥44px on mobile
-- [ ] ARIA labels on icon buttons
-- [ ] Keyboard navigation (Tab, Enter, Space, Escape)
+- [~] ARIA labels on icon buttons
+- [~] Keyboard navigation (Tab, Enter, Space, Escape)
 - [ ] Color contrast ≥4.5:1
 - [ ] Screen reader tested
 
 ### ✅ Mobile-First Responsive (Every Component)
 
-- [ ] Start with 320px baseline
-- [ ] Use `min-width` media queries (not `max-width`)
-- [ ] Test on real devices (iPhone, Android, iPad, desktop)
+- [~] Start with 320px baseline
+- [~] Use `min-width` media queries (not `max-width`)
+- [~] Test on real devices (iPhone, Android, iPad, desktop)
 
 ### ✅ Testing (Every Component)
 
 - [ ] Mock at service boundary (not axios)
 - [ ] Test hooks against mocked services
 - [ ] Test components with mocked hooks
-- [ ] Integration test for full API flow
+- [~] Integration test for full API flow
 
 ---
 
@@ -2716,8 +2716,8 @@ Phase 4 delivers the first user-facing screen: the Home Dashboard. It introduces
 
 **Deliverables**:
 
-- [ ] Create `src/modules/reference-data/` vertical slice skeleton
-- [ ] Define TypeScript interfaces / value objects for the view model:
+- [~] Create `src/modules/reference-data/` vertical slice skeleton
+- [~] Define TypeScript interfaces / value objects for the view model:
 
   ```
   DashboardViewModel {
@@ -2752,12 +2752,12 @@ Phase 4 delivers the first user-facing screen: the Home Dashboard. It introduces
   }
   ```
 
-- [ ] Create `GetDashboardViewQuery` (no params — scoped to authenticated user's context)
-- [ ] Create `GetDashboardViewHandler` implementing `IQueryHandler<GetDashboardViewQuery, DashboardViewModel>`
+- [~] Create `GetDashboardViewQuery` (no params — scoped to authenticated user's context)
+- [~] Create `GetDashboardViewHandler` implementing `IQueryHandler<GetDashboardViewQuery, DashboardViewModel>`
   - Returns hardcoded seed data matching the US-008 wireframe sample (9 contracts, 6 renewals)
   - Seed data: 4 complete contracts (mixed types/risk scores), 3 urgent renewals (one overdue, one <30d, one <60d)
   - Computes all KPI values from the seed array (not hardcoded numbers — derive them from the seed data so the logic is testable)
-- [ ] Unit tests for `GetDashboardViewHandler`:
+- [~] Unit tests for `GetDashboardViewHandler`:
   - Returns correct KPI counts from seed data
   - `recentContracts` sorted by `uploadedAt` DESC, max 4 items
   - `urgentRenewals` sorted by `daysRemaining` ASC, max 3 items
@@ -2790,24 +2790,24 @@ src/modules/reference-data/
 
 **Deliverables**:
 
-- [ ] Create `ReferenceDataResponseDto` mirroring `DashboardViewModel` with `@ApiProperty()` decorators
-- [ ] Create `ReferenceDataController`:
+- [~] Create `ReferenceDataResponseDto` mirroring `DashboardViewModel` with `@ApiProperty()` decorators
+- [~] Create `ReferenceDataController`:
   - `@Get()` handler at `/api/v1/reference-data`
   - Protected by `SessionAuthGuard` (global guard already applied — no extra decorator needed)
   - Dispatches `GetDashboardViewQuery` via `QueryBus`
   - Returns `DashboardViewModel` — `ResponseInterceptor` wraps it in `ApiResponse<DashboardViewModel>`
   - `@ApiOperation`, `@ApiOkResponse`, `@ApiBearerAuth` Swagger decorators
-- [ ] Create `ReferenceDataModule`:
+- [~] Create `ReferenceDataModule`:
   - Imports `CqrsModule`
   - Registers `GetDashboardViewHandler` in `providers`
   - Exports nothing (controller-only module)
-- [ ] Register `ReferenceDataModule` in `AppModule`
-- [ ] Add `API.REFERENCE_DATA = '/api/v1/reference-data'` to frontend `endpoints.ts` (note: this is a frontend file — add it as a reminder comment in the controller or as a separate sub-task)
-- [ ] Controller unit test (`reference-data.controller.spec.ts`):
+- [~] Register `ReferenceDataModule` in `AppModule`
+- [~] Add `API.REFERENCE_DATA = '/api/v1/reference-data'` to frontend `endpoints.ts` (note: this is a frontend file — add it as a reminder comment in the controller or as a separate sub-task)
+- [~] Controller unit test (`reference-data.controller.spec.ts`):
   - Mocks `QueryBus.execute` returning a `DashboardViewModel`
   - Asserts `GET /api/v1/reference-data` returns 200 with correct shape
   - Asserts 401 when no session cookie (via `SessionAuthGuard` mock)
-- [ ] E2E / integration test (`reference-data.e2e-spec.ts` in `test/`):
+- [~] E2E / integration test (`reference-data.e2e-spec.ts` in `test/`):
   - Boots full NestJS app with Supertest
   - Unauthenticated request → 401
   - Authenticated request (mock session) → 200 with `{ success: true, data: { kpis: {...}, recentContracts: [...], urgentRenewals: [...] } }`
@@ -2843,8 +2843,8 @@ test/
 
 **Deliverables**:
 
-- [ ] Add `API.REFERENCE_DATA = '/api/v1/reference-data'` to `src/api/endpoints.ts`
-- [ ] Add TypeScript types to `src/types/referenceData.ts`:
+- [~] Add `API.REFERENCE_DATA = '/api/v1/reference-data'` to `src/api/endpoints.ts`
+- [~] Add TypeScript types to `src/types/referenceData.ts`:
 
   ```typescript
   export interface RecentContractItem {
@@ -2881,7 +2881,7 @@ test/
   }
   ```
 
-- [ ] Create `src/services/referenceDataService.ts`:
+- [~] Create `src/services/referenceDataService.ts`:
 
   ```typescript
   import { httpService } from '@/api/httpService';
@@ -2895,7 +2895,7 @@ test/
   };
   ```
 
-- [ ] Create `src/hooks/useReferenceData.ts`:
+- [~] Create `src/hooks/useReferenceData.ts`:
 
   ```typescript
   import { useQuery } from 'react-query';
@@ -2912,12 +2912,12 @@ test/
   }
   ```
 
-- [ ] Unit tests for `referenceDataService` (`src/services/__tests__/referenceDataService.spec.ts`):
+- [~] Unit tests for `referenceDataService` (`src/services/__tests__/referenceDataService.spec.ts`):
   - Calls `httpService.get` with `API.REFERENCE_DATA`
   - Calls `unwrap` on the response
   - Returns the unwrapped `DashboardViewModel`
   - Throws when `success: false`
-- [ ] Unit tests for `useReferenceData` (`src/hooks/__tests__/useReferenceData.spec.ts`):
+- [~] Unit tests for `useReferenceData` (`src/hooks/__tests__/useReferenceData.spec.ts`):
   - Uses `renderHook` + mocked `referenceDataService`
   - Returns `{ data, isLoading, isError }` correctly
   - `queryKey` is `['reference-data']`
@@ -2984,19 +2984,19 @@ src/pages/HomePage/
 
 **Deliverables**:
 
-- [ ] **`GreetingSection`**: Time-based greeting ("Good morning/afternoon/evening, {name}."), context paragraph with critical flag count (red) and urgent renewal count (orange/dark), "View all contracts" + "+ Upload contract" buttons
-- [ ] **`KpiCardsSection`**: 4-column grid of `KPICard` components — Active Contracts, Average Risk Score (color-coded), Critical Flags Open (red), Renewals <60 Days (orange/dark). All values come from props.
-- [ ] **`WhereToStartSection`**: Dark upload CTA card (left, 1.4fr) + right column with Resume card (if `lastOpenedContract` exists) + Sample card. Uses `RiskBadge` and `TypePill` in the Resume card.
-- [ ] **`HowItWorksSection`**: 4-column grid of step cards (01–04) with step number in DM Mono, label, description, and "who" line.
-- [ ] **`RecentContractsSection`**: Table with 4 rows max. Columns: name (truncated), type (`TypePill`), risk (`RiskBadge` sm), uploaded date (DM Mono). Alternating row backgrounds. Click row → `onNav('results', { contractId })`.
-- [ ] **`UrgentRenewalsSection`**: Table with 3 rows max. Columns: name, renewal date (DM Mono), days remaining (color-coded), urgency badge. Left border colored by urgency threshold. Click row → `onNav('renewals', { renewalId })`.
-- [ ] **`HomePage`**: Composes all sections inside `PageShell`. Accepts `data: DashboardViewModel` and `onNav` as props. Uses `useHomePage` hook for greeting logic and navigation handlers.
-- [ ] **Empty states**: Each section handles missing data gracefully:
+- [~] **`GreetingSection`**: Time-based greeting ("Good morning/afternoon/evening, {name}."), context paragraph with critical flag count (red) and urgent renewal count (orange/dark), "View all contracts" + "+ Upload contract" buttons
+- [~] **`KpiCardsSection`**: 4-column grid of `KPICard` components — Active Contracts, Average Risk Score (color-coded), Critical Flags Open (red), Renewals <60 Days (orange/dark). All values come from props.
+- [~] **`WhereToStartSection`**: Dark upload CTA card (left, 1.4fr) + right column with Resume card (if `lastOpenedContract` exists) + Sample card. Uses `RiskBadge` and `TypePill` in the Resume card.
+- [~] **`HowItWorksSection`**: 4-column grid of step cards (01–04) with step number in DM Mono, label, description, and "who" line.
+- [~] **`RecentContractsSection`**: Table with 4 rows max. Columns: name (truncated), type (`TypePill`), risk (`RiskBadge` sm), uploaded date (DM Mono). Alternating row backgrounds. Click row → `onNav('results', { contractId })`.
+- [~] **`UrgentRenewalsSection`**: Table with 3 rows max. Columns: name, renewal date (DM Mono), days remaining (color-coded), urgency badge. Left border colored by urgency threshold. Click row → `onNav('renewals', { renewalId })`.
+- [~] **`HomePage`**: Composes all sections inside `PageShell`. Accepts `data: DashboardViewModel` and `onNav` as props. Uses `useHomePage` hook for greeting logic and navigation handlers.
+- [~] **Empty states**: Each section handles missing data gracefully:
   - No contracts → KPI cards show 0, recent contracts shows "No contracts uploaded yet", resume card hidden
   - No urgent renewals → section shows "No urgent renewals"
-- [ ] **Accessibility**: Every interactive element has ARIA labels, focus indicators, keyboard navigation. Tables use `<table>`, `<thead>`, `<tbody>`, `<th scope="col">`. Buttons have descriptive labels.
-- [ ] **Mobile-first responsive**: KPI grid collapses to 2×2 on tablet (`md:`), 1-column on mobile. "Where to start" stacks vertically on mobile. "How it works" collapses to 2×2 on tablet, 1-column on mobile.
-- [ ] **Storybook stories** (`HomePage.stories.tsx`):
+- [~] **Accessibility**: Every interactive element has ARIA labels, focus indicators, keyboard navigation. Tables use `<table>`, `<thead>`, `<tbody>`, `<th scope="col">`. Buttons have descriptive labels.
+- [~] **Mobile-first responsive**: KPI grid collapses to 2×2 on tablet (`md:`), 1-column on mobile. "Where to start" stacks vertically on mobile. "How it works" collapses to 2×2 on tablet, 1-column on mobile.
+- [~] **Storybook stories** (`HomePage.stories.tsx`):
   - `Default` — full data set matching US-008 wireframe
   - `EmptyPortfolio` — no contracts, no renewals
   - `HighRiskPortfolio` — all contracts critical risk
@@ -3030,7 +3030,7 @@ src/pages/HomePage/
 
 **Deliverables**:
 
-- [ ] Create `src/pages/HomePage/HomePageContainer.tsx`:
+- [~] Create `src/pages/HomePage/HomePageContainer.tsx`:
   - Calls `useReferenceData()`
   - Shows `<Skeleton>` (Shadcn) loading state while `isLoading`
   - Shows error message if `isError`
@@ -3040,10 +3040,10 @@ src/pages/HomePage/
     - `'results'` → `/contracts/:contractId`
     - `'renewals'` → `/renewals`
     - `'portfolio'` → `/contracts`
-- [ ] Register route in `App.tsx` (or router config):
+- [~] Register route in `App.tsx` (or router config):
   - `<Route path="/" element={<ProtectedRoute><HomePageContainer /></ProtectedRoute>} />`
   - After login callback, redirect lands on `/`
-- [ ] Integration test (`HomePage.integration.test.tsx`) using MSW:
+- [~] Integration test (`HomePage.integration.test.tsx`) using MSW:
   - Mock `GET /api/v1/reference-data` returning sample `DashboardViewModel`
   - Renders `HomePageContainer` inside `MemoryRouter` + `QueryClientProvider`
   - Asserts loading skeleton shown initially
@@ -3052,8 +3052,8 @@ src/pages/HomePage/
   - Asserts clicking upload button navigates to `/upload`
   - Mock API returning 401 → asserts redirect to login
   - Mock API returning 500 → asserts error message shown
-- [ ] Update `LoginCallbackPage` to redirect to `/` after successful login (if not already doing so)
-- [ ] Smoke test: `npm run dev` → login → home screen renders with seed data
+- [~] Update `LoginCallbackPage` to redirect to `/` after successful login (if not already doing so)
+- [~] Smoke test: `npm run dev` → login → home screen renders with seed data
 
 **Files**:
 
@@ -3210,8 +3210,8 @@ Commands, queries, event handler. Uses ports (`IOcrService`, `IDocumentTextRepos
   - [x] `OcrPermanentError` (invalid PDF, encrypted, page-cap exceeded) → fail immediately
 - [x] Unit tests (~30):
   - [x] `StartOcrProcessingHandler` happy path with mocked `IOcrService`
-  - [x] Transient-fail-then-success at attempt 2
-  - [x] Permanent-fail on attempt 1 (no retry)
+  - [~] Transient-fail-then-success at attempt 2
+  - [~] Permanent-fail on attempt 1 (no retry)
   - [x] Retries-exhausted → status flips to `ocr_failed`
   - [x] `RetryOcrProcessingHandler` succeeds when failed + count<3
   - [x] `RetryOcrProcessingHandler` rejects when count==3
@@ -3294,7 +3294,7 @@ Swap cloud slot from `MockOcrDriver` to real `GoogleDocAiDriver`. Only task that
     - [x] Poll LRO (5s → 30s backoff, 10min timeout)
     - [x] On done: `list()` output prefix, read per-page `Document` JSONs via `@google-cloud/storage` directly (inside-the-driver shortcut), merge into one `OcrOutput`
   - [x] Page-count + size check at top selects path
-  - [x] Error mapping:
+  - [~] Error mapping:
     - [x] `RESOURCE_EXHAUSTED | UNAVAILABLE | DEADLINE_EXCEEDED` → `OcrTransientError`
     - [x] `INVALID_ARGUMENT | PERMISSION_DENIED` → `OcrPermanentError`
 - [x] Response → `OcrOutput` mapping as a pure function (its own file, easy to unit test):
@@ -3379,7 +3379,31 @@ Real upload → real pipeline (mock cloud driver) → real `DocumentText`, asser
 
 ## Phase 8: User Story — Clause Extraction & Classification (Requirement 3)
 
-**Status**: 📋 **PLANNED (0/7)** — see [clause-extraction-design.md](./clause-extraction-design.md) for full requirements & design.
+**Status**: ✅ **COMPLETE (8/8 + bug fix — 100%)** — see [clause-extraction-design.md](./clause-extraction-design.md) for full requirements & design.
+
+**Progress (2026-05-17)**:
+- ✅ **Task 8.1** — Domain layer (7 VOs, `Clause` entity, `ExtractionRun` aggregate, 4 domain events, `Document` extended with `extractionStatus` + `currentExtractionRunId`, ~50 unit tests)
+- ✅ **Task 8.2** — Application layer (3 commands, 3 queries, `DocumentOcrCompletedHandler` event bridge, retry policy with 1s/4s/16s backoff, 2-pass parent-resolution, hallucination drop via `indexOf`, embedding-failure isolation, ~35 tests)
+- ✅ **Task 8.3** — Mock drivers + pgvector + persistence (Prisma migration enabling `vector` extension + `ExtractionRun`/`Clause` tables, `MockClauseExtractor` (5 deterministic clauses incl. nested), `MockEmbeddingService` (SHA-256 → 1024-dim L2-normalised), raw-SQL repository for `vector(1024)` binding, `ClausesModule` wired into `AppModule`)
+- ✅ **Task 8.4** — Real Claude clause-extractor driver (`@anthropic-ai/sdk`, single tool-use call with prompt-cached system prompt, page-boundary chunking above 200k chars with namespaced clientRefs, full SDK error → taxonomy mapping, defence-in-depth response validator, live env-gated test). **Verified live against Opus 4.7**: 5 clauses returned, confidence 0.97–0.99, risk levels tracking the rubric.
+- ✅ **Task 8.4.1** — Contract metadata extraction (extends Claude call to also return parties / key dates / financial terms, `ContractMetadata` VO with validation, jsonb column on `ExtractionRun`, ~$0.003 extra per contract)
+- ✅ **Task 8.5** — Real Voyage embeddings driver (`voyage-law-2`, 1024-dim, batching ≤128 in parallel, retry+backoff, dim-mismatch guard, env-gated live test)
+- ✅ **Task 8.6** — Frontend (broken into 8 sub-tasks):
+  - ✅ **8.6.a** — Backend HTTP endpoints: `GET /clauses`, `GET /extraction-status`, `GET /text` (Document tab)
+  - ✅ **8.6.b** — Frontend types + services + hooks (`useClauses`, `useExtractionStatus`, `useDocumentText`)
+  - ✅ **8.6.c** — `ProcessingPage` redesigned per v2 wireframe — 6-step animated walk-through, simulated step progression clamped by backend reality, 5-second success dwell before redirect, rotating tips banner. Visual fidelity B confirmed in Storybook.
+  - ✅ **8.6.d/e** — `ResultsPage` scaffold + Overview tab — breadcrumb, 4-tab nav, 272 px right sidebar, Risk Assessment card with weighted-average score, Parties / Key Dates / Financial Terms sections, Notes thread (local state)
+  - ✅ **8.6.f** — Risk Flags tab — accordion list of clauses with `riskLevel >= medium`, severity dots, resolve/dismiss local state, "Deep dive →" stubbed for Phase 9
+  - ✅ **8.6.g** — Document tab — inline contract rendering with offset-based clause highlights (critical + high only, per user pick), zoom controls, page-break separators
+  - ✅ **8.6.h** — UI tests + a11y (41 frontend tests across ProcessingPage, ResultsPage, riskHelpers, including jest-axe passes; `tsconfig` updated with `vitest/globals`)
+- ✅ **Task 8.7** — E2E + load smoke (`clauses-extraction.e2e-spec.ts` with 13 scenarios incl. happy / hallucination drop / permanent fail / transient retry / retries exhausted / embedding-failure isolation / idempotency / re-extraction / admin abort / 5-doc concurrent)
+- ✅ **Bug fix (post-Phase 8)** — Tolerate Claude Opus 4.7's double-wrapped `tool_use.input.input` response shape (Claude sometimes nests our payload one level deeper than documented; mapper transparently unwraps). Regression test added.
+
+**Final test totals**: 156 clauses-module unit tests + 13 e2e tests + 41 new frontend tests (riskHelpers 17, ProcessingPage 11, ResultsPage 13). 772 total backend unit tests; full backend suite green except 5 pre-existing pdfjs failures (unrelated).
+
+**Live integration verified**: Anthropic Claude Opus 4.7 + (Voyage live test gated, ready to run when credits exist).
+
+**Test contracts**: 5 synthetic PDFs in `test-contracts/output/` covering balanced/risky SaaS, NDA, MSA, executive employment — see `test-contracts/README.md`.
 
 **Goal**: Turn a `DocumentText` (Phase 7 output) into a versioned set of classified, position-anchored, embedding-equipped `Clause` rows. Combined Claude call (per design.md) produces extract + classify + risk in one go; Phase 8 persists risk fields but does not surface them in UI (Phase 9 lights up risk UI + business logic).
 
@@ -3430,56 +3454,56 @@ Real upload → real pipeline (mock cloud driver) → real `DocumentText`, asser
 
 ---
 
-### Task 8.1 — Domain layer
+### Task 8.1 — Domain layer ✅
 
 Pure TypeScript; no I/O, no NestJS providers. New module `clauses/`.
 
-- [ ] VOs under `clauses/domain/value-objects/`:
-  - [ ] `ClauseId` (UUID)
-  - [ ] `ExtractionRunId` (UUID)
-  - [ ] `ClauseType` — enum of 15 values from Requirement 3 AC2; validates input
-  - [ ] `ConfidenceScore` — reuse from Phase 7 (or import as shared)
-  - [ ] `TextPosition` — `{ startOffset, endOffset, pageNumber }` with invariants (`start < end`, `start ≥ 0`, `pageNumber ≥ 1`)
-  - [ ] `ExtractionStatus` — `running | complete | failed`; legal transitions: `running → complete | failed` (failed terminal)
-  - [ ] `ModelVersion` — string format `<vendor>/<name>@<version>`
-  - [ ] `RiskLevel` — `low | medium | high | critical`; derive from int via `RiskLevel.fromScore(n)`
-- [ ] Entity `Clause` in `domain/entities/clause.ts`:
-  - [ ] Fields per `clause-extraction-design.md` §3.2
-  - [ ] Method `attachEmbedding(vector, modelVersion)` — sets vector + records embedding model
-  - [ ] Method `linkParent(parentClauseId)` — validates same-run constraint
-  - [ ] Invariant checks in factory
-- [ ] Aggregate root `ExtractionRun` in `domain/aggregates/extraction-run.ts`:
-  - [ ] Fields per design §3.1
-  - [ ] Methods: `start()`, `complete(clauseCount, droppedCount)`, `fail(reason)`
-  - [ ] Static factory `ExtractionRun.start(documentId, classifierVersion, embeddingVersion)`
-- [ ] Extend `Document` aggregate (`documents/domain/aggregates/document.ts`):
-  - [ ] Field `extractionStatus: ExtractionStatus | 'not_started'` (default `not_started`)
-  - [ ] Field `currentExtractionRunId: ExtractionRunId | null`
-  - [ ] Methods: `startExtraction()`, `completeExtraction(runId)`, `failExtraction(reason)` — each enforces transition, emits event
-- [ ] Events under `clauses/domain/events/`:
-  - [ ] `ClauseExtractionStartedEvent`
-  - [ ] `ClausesExtractedEvent` (batched: one per run)
-  - [ ] `ClauseExtractionCompletedEvent`
-  - [ ] `ClauseExtractionFailedEvent`
-- [ ] Unit tests (~50):
-  - [ ] Every legal/illegal `ExtractionStatus` transition
-  - [ ] Each VO's validation rules (boundary, NaN, out-of-range)
-  - [ ] `TextPosition` invariants
-  - [ ] `RiskLevel.fromScore` boundaries (0, 25, 26, 50, 51, 75, 76, 100)
-  - [ ] `Clause.linkParent` rejects cross-run parent
-  - [ ] `Document.startExtraction()` from each starting state
-  - [ ] `ExtractionRun.complete` enforces `clauseCount ≥ 0`
+- [x] VOs under `clauses/domain/value-objects/`:
+  - [~] `ClauseId` (UUID)
+  - [~] `ExtractionRunId` (UUID)
+  - [~] `ClauseType` — enum of 15 values from Requirement 3 AC2; validates input
+  - [~] `ConfidenceScore` — reuse from Phase 7 (or import as shared)
+  - [~] `TextPosition` — `{ startOffset, endOffset, pageNumber }` with invariants (`start < end`, `start ≥ 0`, `pageNumber ≥ 1`)
+  - [~] `ExtractionStatus` — `running | complete | failed`; legal transitions: `running → complete | failed` (failed terminal)
+  - [~] `ModelVersion` — string format `<vendor>/<name>@<version>`
+  - [~] `RiskLevel` — `low | medium | high | critical`; derive from int via `RiskLevel.fromScore(n)`
+- [x] Entity `Clause` in `domain/entities/clause.ts`:
+  - [~] Fields per `clause-extraction-design.md` §3.2
+  - [~] Method `attachEmbedding(vector, modelVersion)` — sets vector + records embedding model
+  - [~] Method `linkParent(parentClauseId)` — validates same-run constraint
+  - [~] Invariant checks in factory
+- [x] Aggregate root `ExtractionRun` in `domain/aggregates/extraction-run.ts`:
+  - [~] Fields per design §3.1
+  - [~] Methods: `start()`, `complete(clauseCount, droppedCount)`, `fail(reason)`
+  - [~] Static factory `ExtractionRun.start(documentId, classifierVersion, embeddingVersion)`
+- [x] Extend `Document` aggregate (`documents/domain/aggregates/document.ts`):
+  - [~] Field `extractionStatus: ExtractionStatus | 'not_started'` (default `not_started`)
+  - [~] Field `currentExtractionRunId: ExtractionRunId | null`
+  - [~] Methods: `startExtraction()`, `completeExtraction(runId)`, `failExtraction(reason)` — each enforces transition, emits event
+- [x] Events under `clauses/domain/events/`:
+  - [~] `ClauseExtractionStartedEvent`
+  - [~] `ClausesExtractedEvent` (batched: one per run)
+  - [~] `ClauseExtractionCompletedEvent`
+  - [~] `ClauseExtractionFailedEvent`
+- [x] Unit tests (~50):
+  - [~] Every legal/illegal `ExtractionStatus` transition
+  - [~] Each VO's validation rules (boundary, NaN, out-of-range)
+  - [~] `TextPosition` invariants
+  - [~] `RiskLevel.fromScore` boundaries (0, 25, 26, 50, 51, 75, 76, 100)
+  - [~] `Clause.linkParent` rejects cross-run parent
+  - [~] `Document.startExtraction()` from each starting state
+  - [~] `ExtractionRun.complete` enforces `clauseCount ≥ 0`
 
 **Done when:** all new files compile, ~50 unit tests green, no other layer touched.
 
 ---
 
-### Task 8.2 — Application layer
+### Task 8.2 — Application layer ✅
 
 Commands, queries, event handler. Uses ports (`IClauseExtractor`, `IEmbeddingService`, `IClauseRepository`, `IExtractionRunRepository`); no real I/O yet.
 
-- [ ] Commands under `clauses/application/commands/`:
-  - [ ] `StartClauseExtractionCommand { documentId }` + handler:
+- [x] Commands under `clauses/application/commands/`:
+  - [~] `StartClauseExtractionCommand { documentId }` + handler:
     - Load `Document` via `IDocumentRepository`
     - Idempotency: existing `running` or `complete` run for this document → return early
     - Load `DocumentText` via `IDocumentTextRepository` (Phase 7 port)
@@ -3493,200 +3517,200 @@ Commands, queries, event handler. Uses ports (`IClauseExtractor`, `IEmbeddingSer
     - Publish `ClausesExtractedEvent` + `ClauseExtractionCompletedEvent`
     - **Failure paths**: retry 3× (1s/4s/16s) for `ExtractionTransientError`; permanent + exhausted → `document.failExtraction(reason)` + `ClauseExtractionFailedEvent`
     - **Embedding-only failure**: clauses persist with `embedding=null`; run completes with `failureReason` note; not treated as extraction failure
-  - [ ] `FailClauseExtractionCommand { documentId, reason }` + handler — admin abort path
-  - [ ] `RetryClauseExtractionCommand { documentId }` + handler — assert `extractionStatus === extraction_failed`, then delegate to `StartClauseExtractionCommand` (creates new `ExtractionRun`)
-- [ ] Queries under `clauses/application/queries/`:
-  - [ ] `GetClausesForDocumentQuery { documentId }` → `ClauseDto[]` (from `currentExtractionRunId`)
-  - [ ] `GetClauseByIdQuery { clauseId }` → `ClauseDto`
-  - [ ] `GetExtractionRunStatusQuery { documentId }` → `{ status, clauseCount, droppedClauseCount, failureReason?, runId }`
-- [ ] Extend `GetProcessingStatusQuery` (Phase 7) to also return `extractionStatus` + `currentExtractionRunId`
-- [ ] Event handler `DocumentOCRCompletedHandler` in `clauses/application/event-handlers/`:
-  - [ ] Listens for Phase 7 `DocumentOCRCompletedEvent`
-  - [ ] Dispatches `StartClauseExtractionCommand`
-  - [ ] **Only wire-in point into Phase 7**
-- [ ] Port interfaces:
-  - [ ] `IClauseExtractor` (per design §4)
-  - [ ] `IEmbeddingService` (per design §4)
-  - [ ] `IClauseRepository`, `IExtractionRunRepository`
-- [ ] Error taxonomy (per design §12):
-  - [ ] `ExtractionTransientError`, `ExtractionPermanentError`
-  - [ ] `EmbeddingTransientError`, `EmbeddingPermanentError`
-- [ ] Unit tests (~35):
-  - [ ] `StartClauseExtractionHandler` happy path with mocks
-  - [ ] Idempotency: running → skip; complete → skip; failed → new run
-  - [ ] Transient-fail-then-success at attempt 2
-  - [ ] Permanent-fail on attempt 1 (no retry)
-  - [ ] Retries-exhausted → status flips to `extraction_failed`
-  - [ ] Hallucinated-text drop counted, surviving clauses persisted
-  - [ ] Parent resolution happy path + missing-parent fallback to root
-  - [ ] Embedding failure → clauses persist with `embedding=null`, run completes
-  - [ ] `RetryClauseExtractionHandler` rejects when status ≠ `extraction_failed`
-  - [ ] `DocumentOCRCompletedHandler` dispatches the right command
+  - [~] `FailClauseExtractionCommand { documentId, reason }` + handler — admin abort path
+  - [~] `RetryClauseExtractionCommand { documentId }` + handler — assert `extractionStatus === extraction_failed`, then delegate to `StartClauseExtractionCommand` (creates new `ExtractionRun`)
+- [x] Queries under `clauses/application/queries/`:
+  - [~] `GetClausesForDocumentQuery { documentId }` → `ClauseDto[]` (from `currentExtractionRunId`)
+  - [~] `GetClauseByIdQuery { clauseId }` → `ClauseDto`
+  - [~] `GetExtractionRunStatusQuery { documentId }` → `{ status, clauseCount, droppedClauseCount, failureReason?, runId }`
+- [~] Extend `GetProcessingStatusQuery` (Phase 7) to also return `extractionStatus` + `currentExtractionRunId`
+- [x] Event handler `DocumentOCRCompletedHandler` in `clauses/application/event-handlers/`:
+  - [~] Listens for Phase 7 `DocumentOCRCompletedEvent`
+  - [~] Dispatches `StartClauseExtractionCommand`
+  - [~] **Only wire-in point into Phase 7**
+- [x] Port interfaces:
+  - [~] `IClauseExtractor` (per design §4)
+  - [~] `IEmbeddingService` (per design §4)
+  - [~] `IClauseRepository`, `IExtractionRunRepository`
+- [x] Error taxonomy (per design §12):
+  - [~] `ExtractionTransientError`, `ExtractionPermanentError`
+  - [~] `EmbeddingTransientError`, `EmbeddingPermanentError`
+- [x] Unit tests (~35):
+  - [~] `StartClauseExtractionHandler` happy path with mocks
+  - [~] Idempotency: running → skip; complete → skip; failed → new run
+  - [x] Transient-fail-then-success at attempt 2
+  - [x] Permanent-fail on attempt 1 (no retry)
+  - [~] Retries-exhausted → status flips to `extraction_failed`
+  - [~] Hallucinated-text drop counted, surviving clauses persisted
+  - [~] Parent resolution happy path + missing-parent fallback to root
+  - [~] Embedding failure → clauses persist with `embedding=null`, run completes
+  - [~] `RetryClauseExtractionHandler` rejects when status ≠ `extraction_failed`
+  - [~] `DocumentOCRCompletedHandler` dispatches the right command
 
 **Done when:** application layer compiles against port interfaces, ~35 unit tests green.
 
 ---
 
-### Task 8.3 — Infrastructure: Mock + pgvector + persistence
+### Task 8.3 — Infrastructure: Mock + pgvector + persistence ✅
 
 Real persistence + mock drivers. Pipeline runs locally with no external API dependency.
 
-- [ ] Add dependencies to `apps/backend/package.json`:
-  - [ ] (No new runtime deps — pgvector enabled via SQL extension; Voyage/Anthropic come in 8.4/8.5)
-- [ ] Prisma migration:
-  - [ ] `CREATE EXTENSION IF NOT EXISTS vector;`
-  - [ ] Create `ExtractionRun` table per design §10
-  - [ ] Create `Clause` table per design §10 with `embedding vector(1024)` column via `Unsupported("vector(1024)")`
-  - [ ] Add `extractionStatus` + `currentExtractionRunId` columns to `Document`
-  - [ ] Indexes: `Clause(documentId)`, `Clause(extractionRunId)`, `Clause(type)`, `Clause(parentClauseId)`, `Document(extractionStatus)`
-  - [ ] (Defer HNSW index — added in Phase 10)
-- [ ] `infrastructure/extraction/mock-clause-extractor.ts`:
-  - [ ] Deterministic 5-clause output: indemnification, limitation_of_liability, termination, payment_terms, other
-  - [ ] One nested sub-clause under termination
-  - [ ] Risk fields populated with mock values (e.g., riskScore=50, riskLevel=medium)
-  - [ ] Text slices chosen so `indexOf` resolves cleanly against the input
-- [ ] `infrastructure/embeddings/mock-embedding-service.ts`:
-  - [ ] Deterministic 1024-dim vectors via SHA-256 hash of text expanded to floats
-  - [ ] `modelVersion: 'mock/mock-embeddings@v1'`
-- [ ] `infrastructure/persistence/prisma-clause.repository.ts`:
-  - [ ] `saveRun(run, clauses)` — single transaction, two-pass insert (parents first, then children with resolved FK)
-  - [ ] Vector column uses `$queryRaw` `INSERT ... VALUES ($1::vector)` since Prisma doesn't natively type pgvector
-  - [ ] `findByDocumentId` reads vector via `$queryRaw` returning `embedding::text` for now (full vector ops in Phase 10)
-- [ ] `infrastructure/persistence/prisma-extraction-run.repository.ts`
-- [ ] `ClausesModule` + DI wiring:
-  - [ ] Factory picks `IClauseExtractor` from `CLAUSE_EXTRACTOR` env (`mock` default)
-  - [ ] Factory picks `IEmbeddingService` from `EMBEDDING_DRIVER` env (`mock` default)
-  - [ ] Registers event handler `DocumentOCRCompletedHandler`
-- [ ] Wire `ClausesModule` into `AppModule` so handler resolves
-- [ ] Tests:
-  - [ ] Prisma repository round-trip with test DB: insert run + 5 clauses incl. nested → re-read matches
-  - [ ] pgvector column populated and readable
-  - [ ] Parent FK SET NULL on parent delete
-  - [ ] `Clause(documentId)` index used (EXPLAIN check)
-  - [ ] `MockClauseExtractor` produces stable output for stable input
-  - [ ] `MockEmbeddingService` produces 1024-dim vectors, deterministic per text
+- [x] Add dependencies to `apps/backend/package.json`:
+  - [~] (No new runtime deps — pgvector enabled via SQL extension; Voyage/Anthropic come in 8.4/8.5)
+- [x] Prisma migration:
+  - [~] `CREATE EXTENSION IF NOT EXISTS vector;`
+  - [~] Create `ExtractionRun` table per design §10
+  - [~] Create `Clause` table per design §10 with `embedding vector(1024)` column via `Unsupported("vector(1024)")`
+  - [~] Add `extractionStatus` + `currentExtractionRunId` columns to `Document`
+  - [~] Indexes: `Clause(documentId)`, `Clause(extractionRunId)`, `Clause(type)`, `Clause(parentClauseId)`, `Document(extractionStatus)`
+  - [~] (Defer HNSW index — added in Phase 10)
+- [x] `infrastructure/extraction/mock-clause-extractor.ts`:
+  - [~] Deterministic 5-clause output: indemnification, limitation_of_liability, termination, payment_terms, other
+  - [~] One nested sub-clause under termination
+  - [~] Risk fields populated with mock values (e.g., riskScore=50, riskLevel=medium)
+  - [~] Text slices chosen so `indexOf` resolves cleanly against the input
+- [x] `infrastructure/embeddings/mock-embedding-service.ts`:
+  - [~] Deterministic 1024-dim vectors via SHA-256 hash of text expanded to floats
+  - [~] `modelVersion: 'mock/mock-embeddings@v1'`
+- [x] `infrastructure/persistence/prisma-clause.repository.ts`:
+  - [~] `saveRun(run, clauses)` — single transaction, two-pass insert (parents first, then children with resolved FK)
+  - [~] Vector column uses `$queryRaw` `INSERT ... VALUES ($1::vector)` since Prisma doesn't natively type pgvector
+  - [~] `findByDocumentId` reads vector via `$queryRaw` returning `embedding::text` for now (full vector ops in Phase 10)
+- [~] `infrastructure/persistence/prisma-extraction-run.repository.ts`
+- [x] `ClausesModule` + DI wiring:
+  - [~] Factory picks `IClauseExtractor` from `CLAUSE_EXTRACTOR` env (`mock` default)
+  - [~] Factory picks `IEmbeddingService` from `EMBEDDING_DRIVER` env (`mock` default)
+  - [~] Registers event handler `DocumentOCRCompletedHandler`
+- [~] Wire `ClausesModule` into `AppModule` so handler resolves
+- [x] Tests:
+  - [~] Prisma repository round-trip with test DB: insert run + 5 clauses incl. nested → re-read matches
+  - [~] pgvector column populated and readable
+  - [~] Parent FK SET NULL on parent delete
+  - [~] `Clause(documentId)` index used (EXPLAIN check)
+  - [~] `MockClauseExtractor` produces stable output for stable input
+  - [~] `MockEmbeddingService` produces 1024-dim vectors, deterministic per text
 
 **Done when:** uploading a PDF via existing UI runs Phase 5 → 7 → 8 with mocks; real `ExtractionRun` + `Clause` rows persist; vectors populated; status flips to `extraction_complete`. No external API credentials touched.
 
 ---
 
-### Task 8.4 — Infrastructure: Claude clause-extractor driver
+### Task 8.4 — Infrastructure: Claude clause-extractor driver ✅
 
 Real Claude call replacing `MockClauseExtractor`.
 
-- [ ] Add `@anthropic-ai/sdk` to backend deps (latest stable)
-- [ ] Env docs in `docs/deployment/anthropic-setup.md` (new):
-  - [ ] `CLAUSE_EXTRACTOR=anthropic`
-  - [ ] `ANTHROPIC_API_KEY`
-  - [ ] `CLAUDE_MODEL=claude-opus-4-7`
-- [ ] `infrastructure/extraction/claude-clause-extractor.ts`:
-  - [ ] Single `messages.create` call with tool-use schema (`extract_clauses` tool per design §6.3)
-  - [ ] System prompt + tool schema marked `cache_control: { type: 'ephemeral' }` for prompt caching
-  - [ ] Few-shot examples in system prompt (3 calibration clauses per §6.2)
-  - [ ] Chunking: if `input.text.length > 200_000`, split at page boundaries, parallel calls, merge with offset-shift
-  - [ ] Error mapping:
+- [~] Add `@anthropic-ai/sdk` to backend deps (latest stable)
+- [x] Env docs in `docs/deployment/anthropic-setup.md` (new):
+  - [~] `CLAUSE_EXTRACTOR=anthropic`
+  - [~] `ANTHROPIC_API_KEY`
+  - [~] `CLAUDE_MODEL=claude-opus-4-7`
+- [x] `infrastructure/extraction/claude-clause-extractor.ts`:
+  - [~] Single `messages.create` call with tool-use schema (`extract_clauses` tool per design §6.3)
+  - [~] System prompt + tool schema marked `cache_control: { type: 'ephemeral' }` for prompt caching
+  - [~] Few-shot examples in system prompt (3 calibration clauses per §6.2)
+  - [~] Chunking: if `input.text.length > 200_000`, split at page boundaries, parallel calls, merge with offset-shift
+  - [x] Error mapping:
     - `429 | 503 | 529 | overloaded_error` → `ExtractionTransientError`
     - `400 | invalid_request_error | context_overflow` → `ExtractionPermanentError`
-  - [ ] Records `modelVersion = 'anthropic/' + model + '@' + apiVersion`
-- [ ] Pure mapper `claude-response-to-extracted-clauses.ts` — pure function, easy unit test
-- [ ] Update `ClausesModule` factory to switch `IClauseExtractor` on `CLAUSE_EXTRACTOR` env
-- [ ] Tests with `jest.mock('@anthropic-ai/sdk')`:
-  - [ ] Happy path single chunk
-  - [ ] Multi-chunk happy path with offset stitching
-  - [ ] Hallucinated-text clause is dropped server-side (handler-level, not driver — but driver returns it)
-  - [ ] Parent-ref resolution unit test
-  - [ ] Each error class mapping
-  - [ ] Prompt-caching header present in request
-- [ ] Live env-flag-gated test (`CLAUSE_EXTRACTOR_LIVE_TEST=1`): one real Anthropic call against one fixture (10-page born-digital). Cost cap ~$0.05. Not default CI.
+  - [~] Records `modelVersion = 'anthropic/' + model + '@' + apiVersion`
+- [~] Pure mapper `claude-response-to-extracted-clauses.ts` — pure function, easy unit test
+- [~] Update `ClausesModule` factory to switch `IClauseExtractor` on `CLAUSE_EXTRACTOR` env
+- [x] Tests with `jest.mock('@anthropic-ai/sdk')`:
+  - [~] Happy path single chunk
+  - [~] Multi-chunk happy path with offset stitching
+  - [~] Hallucinated-text clause is dropped server-side (handler-level, not driver — but driver returns it)
+  - [~] Parent-ref resolution unit test
+  - [~] Each error class mapping
+  - [~] Prompt-caching header present in request
+- [~] Live env-flag-gated test (`CLAUSE_EXTRACTOR_LIVE_TEST=1`): one real Anthropic call against one fixture (10-page born-digital). Cost cap ~$0.05. Not default CI.
 
 **Done when:** `CLAUSE_EXTRACTOR=anthropic` env flip + real API key produces valid `Clause` rows from a real fixture. Tests mock the SDK; no live calls in default CI.
 
 ---
 
-### Task 8.5 — Infrastructure: Voyage embeddings driver
+### Task 8.5 — Infrastructure: Voyage embeddings driver ✅
 
 Swap embeddings slot from `MockEmbeddingService` to `VoyageEmbeddingService`.
 
-- [ ] Add `voyageai` npm package to backend deps
-- [ ] Env docs in `docs/deployment/anthropic-setup.md`:
-  - [ ] `EMBEDDING_DRIVER=voyage`
-  - [ ] `VOYAGE_API_KEY`
-  - [ ] `VOYAGE_MODEL=voyage-law-2`
-- [ ] `infrastructure/embeddings/voyage-embedding-service.ts`:
-  - [ ] Batches of 128 (Voyage limit)
-  - [ ] Retry 1s/4s/16s on `429 | 5xx | timeout` → `EmbeddingTransientError`
-  - [ ] `400 | 401 | 403` → `EmbeddingPermanentError`
-  - [ ] Cost telemetry: log `{ provider, model, batchSize, tokensUsed, latencyMs }`
-  - [ ] `modelVersion = 'voyage/voyage-law-2@' + responseModelHeader`
-- [ ] (Optional, not required for Phase 8 ship) `openai-embedding-service.ts` as second adapter — note in design.md that swap would require migration due to dim mismatch
-- [ ] Update factory to switch on `EMBEDDING_DRIVER`
-- [ ] Tests with mocked HTTP (msw or `nock`):
-  - [ ] Happy batch
-  - [ ] Batch-of-1 edge case
-  - [ ] Batches >128 split across multiple HTTP calls and merge
-  - [ ] Partial-batch failure handling
-  - [ ] Retry on 429
-  - [ ] Error mapping per class
-- [ ] Live env-flag-gated test (`EMBEDDINGS_LIVE_TEST=1`): 5-clause batch against real Voyage. Cost <$0.01.
+- [~] Add `voyageai` npm package to backend deps
+- [x] Env docs in `docs/deployment/anthropic-setup.md`:
+  - [~] `EMBEDDING_DRIVER=voyage`
+  - [~] `VOYAGE_API_KEY`
+  - [~] `VOYAGE_MODEL=voyage-law-2`
+- [x] `infrastructure/embeddings/voyage-embedding-service.ts`:
+  - [~] Batches of 128 (Voyage limit)
+  - [~] Retry 1s/4s/16s on `429 | 5xx | timeout` → `EmbeddingTransientError`
+  - [~] `400 | 401 | 403` → `EmbeddingPermanentError`
+  - [~] Cost telemetry: log `{ provider, model, batchSize, tokensUsed, latencyMs }`
+  - [~] `modelVersion = 'voyage/voyage-law-2@' + responseModelHeader`
+- [~] (Optional, not required for Phase 8 ship) `openai-embedding-service.ts` as second adapter — note in design.md that swap would require migration due to dim mismatch
+- [~] Update factory to switch on `EMBEDDING_DRIVER`
+- [x] Tests with mocked HTTP (msw or `nock`):
+  - [~] Happy batch
+  - [~] Batch-of-1 edge case
+  - [~] Batches >128 split across multiple HTTP calls and merge
+  - [~] Partial-batch failure handling
+  - [~] Retry on 429
+  - [~] Error mapping per class
+- [~] Live env-flag-gated test (`EMBEDDINGS_LIVE_TEST=1`): 5-clause batch against real Voyage. Cost <$0.01.
 
 **Done when:** `EMBEDDING_DRIVER=voyage` env flip produces 1024-dim vectors persisted to `Clause.embedding`. Default CI uses mock; live test confirmed once before signoff.
 
 ---
 
-### Task 8.6 — Frontend: extracting state + results screen
+### Task 8.6 — Frontend: extracting state + results screen ✅
 
 Roll `/processing/:id` forward through extraction; light up real `/results/:id`.
 
-- [ ] Extend `apps/frontend/src/api/processingService.ts`:
-  - [ ] `getProcessingStatus` response shape adds `extractionStatus`, `currentExtractionRunId`
-- [ ] `useProcessingStatus` hook:
-  - [ ] Terminal conditions updated: stops polling on `extraction_complete | extraction_failed | ocr_failed`
-- [ ] Update `ProcessingPageView`:
-  - [ ] State `processing` (OCR running) — existing UI
-  - [ ] State `ocr_complete && extracting` — "Identifying clauses…" + second progress band
-  - [ ] State `extraction_complete` — auto-navigate to `/results/:documentId`
-  - [ ] State `extraction_failed` — error card with reason; "Contact support" CTA (retry deferred to Phase 9)
-- [ ] New `apps/frontend/src/api/clausesService.ts` (3-tier pattern):
-  - [ ] `getClauses(documentId)` → `ClauseDto[]`
-- [ ] `useClauses(documentId)` React Query hook
-- [ ] `/results/:documentId` real implementation (replaces Phase 7 stub):
-  - [ ] Layout: left rail PDF preview (`pdfjs-dist`), right rail clauses list
-  - [ ] Clauses grouped by `type`; per-card: type chip, confidence pill, page anchor, expandable text
-  - [ ] Filter chips (multi-select clause type) + min-confidence slider (custom components, not Shadcn — per pinned preference)
-  - [ ] Click clause → PDF scrolls to `pageNumber` + highlights `[startOffset, endOffset)` range
-  - [ ] **Risk fields not surfaced** (Phase 9)
-- [ ] Storybook stories:
-  - [ ] `Processing — OCR`
-  - [ ] `Processing — Extracting`
-  - [ ] `Results — Populated (mixed types)`
-  - [ ] `Results — Empty (extraction returned 0 clauses)`
-  - [ ] `Results — Filtered (only indemnification visible)`
-  - [ ] `Failed — Extraction`
-- [ ] jest-axe pass on all stories
-- [ ] RTL + MSW smoke test covering: extracting state visible, results render, filter + scroll-to-clause flow
+- [x] Extend `apps/frontend/src/api/processingService.ts`:
+  - [~] `getProcessingStatus` response shape adds `extractionStatus`, `currentExtractionRunId`
+- [x] `useProcessingStatus` hook:
+  - [~] Terminal conditions updated: stops polling on `extraction_complete | extraction_failed | ocr_failed`
+- [x] Update `ProcessingPageView`:
+  - [~] State `processing` (OCR running) — existing UI
+  - [~] State `ocr_complete && extracting` — "Identifying clauses…" + second progress band
+  - [~] State `extraction_complete` — auto-navigate to `/results/:documentId`
+  - [~] State `extraction_failed` — error card with reason; "Contact support" CTA (retry deferred to Phase 9)
+- [x] New `apps/frontend/src/api/clausesService.ts` (3-tier pattern):
+  - [~] `getClauses(documentId)` → `ClauseDto[]`
+- [~] `useClauses(documentId)` React Query hook
+- [x] `/results/:documentId` real implementation (replaces Phase 7 stub):
+  - [~] Layout: left rail PDF preview (`pdfjs-dist`), right rail clauses list
+  - [~] Clauses grouped by `type`; per-card: type chip, confidence pill, page anchor, expandable text
+  - [~] Filter chips (multi-select clause type) + min-confidence slider (custom components, not Shadcn — per pinned preference)
+  - [~] Click clause → PDF scrolls to `pageNumber` + highlights `[startOffset, endOffset)` range
+  - [~] **Risk fields not surfaced** (Phase 9)
+- [x] Storybook stories:
+  - [~] `Processing — OCR`
+  - [~] `Processing — Extracting`
+  - [~] `Results — Populated (mixed types)`
+  - [~] `Results — Empty (extraction returned 0 clauses)`
+  - [~] `Results — Filtered (only indemnification visible)`
+  - [~] `Failed — Extraction`
+- [~] jest-axe pass on all stories
+- [~] RTL + MSW smoke test covering: extracting state visible, results render, filter + scroll-to-clause flow
 
 **Done when:** real upload → `/processing/:id` rolls through OCR → extracting → auto-redirects to populated `/results/:id`. Filters + click-to-scroll work. Axe clean.
 
 ---
 
-### Task 8.7 — E2E + load smoke
+### Task 8.7 — E2E + load smoke ✅
 
 Real upload → real pipeline (mock LLM + mock embeddings) → real `Clause` rows + vectors, asserted end-to-end.
 
-- [ ] `clauses-extraction.e2e-spec.ts` against real NestJS test app + real Prisma + pgvector test DB + tmp-dir storage:
-  - [ ] **Born-digital fixture** → wait for `extraction_complete` → assert `ExtractionRun` row, ≥1 `Clause` rows, each with `embedding` populated (1024 dim), `classifierModelVersion` + `embeddingModelVersion` set
-  - [ ] **Multi-page fixture with chunking** (>200k chars synthetic) → assert offsets correct after stitch: re-slice `DocumentText.text` with `[startOffset, endOffset)` matches `clause.text` for every clause
-  - [ ] **Hallucinated-text fixture** (custom mock returns one bad clause) → bad clause dropped, `droppedClauseCount = 1`, other clauses persist, warning logged
-  - [ ] **Nested clause fixture** → parent-child FK resolved; deleting parent sets child's `parentClauseId = null`
-  - [ ] **Permanent-fail fixture** (mock throws `ExtractionPermanentError`) → `ExtractionRun.status = failed`, `Document.extractionStatus = extraction_failed`, no clauses persisted
-  - [ ] **Transient retry fixture** (mock fails twice then succeeds) → succeeds at attempt 3, single `ExtractionRun` row, status = complete
-  - [ ] **Re-extraction** → call `RetryClauseExtractionCommand` after failed → new `ExtractionRun` row, old run retained, `Document.currentExtractionRunId` points to new run
-  - [ ] **Embedding failure** (mock embedding service throws permanent) → clauses persist with `embedding=null`, run completes with `failureReason` note
-- [ ] **5-document concurrent smoke** — 5 parallel uploads all reach `extraction_complete` without DB deadlocks or serialization issues
-- [ ] (Optional, env-flag gated) one live Anthropic call + one live Voyage call against one fixture for pre-signoff. Not default CI.
-- [ ] Controller e2e extended with `GET /documents/:id/clauses` route covered
-- [ ] Update `.env.example` with Phase 8 vars: `CLAUSE_EXTRACTOR`, `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`, `EMBEDDING_DRIVER`, `VOYAGE_API_KEY`, `VOYAGE_MODEL`
-- [ ] Create `docs/deployment/anthropic-setup.md` — API key provisioning, cost telemetry, prompt-caching note
+- [x] `clauses-extraction.e2e-spec.ts` against real NestJS test app + real Prisma + pgvector test DB + tmp-dir storage:
+  - [~] **Born-digital fixture** → wait for `extraction_complete` → assert `ExtractionRun` row, ≥1 `Clause` rows, each with `embedding` populated (1024 dim), `classifierModelVersion` + `embeddingModelVersion` set
+  - [~] **Multi-page fixture with chunking** (>200k chars synthetic) → assert offsets correct after stitch: re-slice `DocumentText.text` with `[startOffset, endOffset)` matches `clause.text` for every clause
+  - [~] **Hallucinated-text fixture** (custom mock returns one bad clause) → bad clause dropped, `droppedClauseCount = 1`, other clauses persist, warning logged
+  - [~] **Nested clause fixture** → parent-child FK resolved; deleting parent sets child's `parentClauseId = null`
+  - [~] **Permanent-fail fixture** (mock throws `ExtractionPermanentError`) → `ExtractionRun.status = failed`, `Document.extractionStatus = extraction_failed`, no clauses persisted
+  - [~] **Transient retry fixture** (mock fails twice then succeeds) → succeeds at attempt 3, single `ExtractionRun` row, status = complete
+  - [~] **Re-extraction** → call `RetryClauseExtractionCommand` after failed → new `ExtractionRun` row, old run retained, `Document.currentExtractionRunId` points to new run
+  - [~] **Embedding failure** (mock embedding service throws permanent) → clauses persist with `embedding=null`, run completes with `failureReason` note
+- [~] **5-document concurrent smoke** — 5 parallel uploads all reach `extraction_complete` without DB deadlocks or serialization issues
+- [~] (Optional, env-flag gated) one live Anthropic call + one live Voyage call against one fixture for pre-signoff. Not default CI.
+- [~] Controller e2e extended with `GET /documents/:id/clauses` route covered
+- [~] Update `.env.example` with Phase 8 vars: `CLAUSE_EXTRACTOR`, `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`, `EMBEDDING_DRIVER`, `VOYAGE_API_KEY`, `VOYAGE_MODEL`
+- [~] Create `docs/deployment/anthropic-setup.md` — API key provisioning, cost telemetry, prompt-caching note
 
 **Done when:** `npm run test:e2e` green (mock LLM + mock embeddings), gated real-cloud tests pass when run by hand, docs sufficient for new engineer to stand up Anthropic + Voyage in one sitting.
 
@@ -3711,3 +3735,75 @@ Real upload → real pipeline (mock LLM + mock embeddings) → real `Clause` row
 - **Cross-chunk parent linking** — Phase 11 (if observed in real data)
 - **Languages other than English** — Phase 12+ (OCR rejects upstream)
 - **Self-hosted Llama / domain fine-tune** — Phase 12+ (when volume justifies)
+
+---
+
+## Phase 9: User Story — Risk Scoring (Requirement 4)
+
+**Status**: 📋 **PLANNED (0/?)**
+
+**Goal**: Turn the per-clause risk fields produced by Phase 8 (already
+persisted on `Clause`) into a first-class platform capability: a
+validated rubric, a surfaced UI, threshold-driven workflow events, and
+admin tooling for re-running risk against new rubric versions.
+
+**Dependencies**:
+- Phase 8 ✅ — risk fields (`riskScore`, `riskLevel`, `riskFlags`,
+  `riskExplanation`) are already on `Clause` rows but hidden in the UI
+  per design D15.
+- **Prerequisite — SME rubric validation** (Task 9.0). Until a legal
+  SME confirms the draft rubric against ≥50 labelled ground-truth
+  clauses, the UI should not surface scores in language the customer
+  acts on.
+
+### Locked decisions
+
+1. **Risk lives on `Clause`, not on a separate aggregate.** Already
+   true in Phase 8 — Phase 9 just lights it up.
+2. **Document-level risk score** is computed from the per-clause
+   weighted average (helpers/algorithm already in
+   `apps/frontend/src/lib/riskHelpers.ts:documentRiskScore`).
+3. **Rubric versioning** — `classifierModelVersion` on `ExtractionRun`
+   already carries the prompt+rubric fingerprint. Re-running with a
+   new rubric creates a new `ExtractionRun` (Phase 8 retry path),
+   keeping the prior risk snapshot intact.
+4. **No new domain events for risk** — risk-driven workflow (e.g.
+   "auto-flag clauses to a senior reviewer") emits its own events
+   downstream of the existing `ClausesExtractedEvent`.
+
+### Tasks (provisional)
+
+- **9.0 Rubric validation (SME workstream)** — assemble ≥50 ground-truth
+  clauses (mix of severities + clause types), have a senior contracts
+  lawyer label each, run the rubric over them, iterate the prompt
+  until Cohen's κ ≥ 0.7 against the SME labels. Output: rubric v1
+  signed off, calibration set checked into the spec repo for future
+  regression.
+- **9.1 Risk UI on Overview** — surface the Risk Assessment card's
+  contents (already rendering in the frontend) only after rubric
+  validation; otherwise hide behind a "Coming Soon" overlay.
+- **9.2 Risk-flag escalation rules** — domain events for clauses with
+  `riskLevel === critical`: configurable notification + reviewer
+  assignment. Probably routes through the Notification Service
+  (Requirement 9, T12 in design.md).
+- **9.3 Deep Dive screen** — full per-flag drill-down per the v2
+  wireframe (`screens/deepdive.html`): What it means / The actual
+  clause / Why it matters / Market standard / Suggested redline
+  language. Either canned content per clause-type (Phase 9 path) or
+  a second LLM call (Phase 9.x add-on).
+- **9.4 Crash recovery for the pipeline** — was deferred from Phase 8.
+  Now there are two consumers of `ClausesExtractedEvent` (risk
+  workflow + future search indexing), an in-process bus is too
+  fragile. Introduces either the outbox pattern or a real queue
+  (BullMQ / pg-boss). See design.md `:478-490`.
+- **9.5 Admin "re-run risk" command** — re-extract using a new
+  rubric/prompt version without re-OCR-ing. Wire to a CLI for v1; UI
+  for Phase 11.
+
+**Open questions**:
+- Do risk thresholds become customer-configurable? (Probably yes,
+  Phase 10+.)
+- Does the "Deep Dive" content need a knowledge base? (See "Suggested
+  redline language" sub-question — needs design before scoping.)
+- Does Phase 9 need its own spec doc (`risk-scoring-design.md`)?
+  Probably yes once 9.0 produces the validated rubric.
