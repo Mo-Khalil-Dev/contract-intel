@@ -257,6 +257,58 @@ describe('Document aggregate', () => {
     });
   });
 
+  describe('extraction lifecycle', () => {
+    function makeOcrCompleteDoc() {
+      const doc = makeDoc();
+      doc.markComplete();
+      doc.startProcessing();
+      doc.completeProcessing({
+        driver: 'native_pdf',
+        language: 'en',
+        confidence: 1,
+        pageCount: 5,
+      });
+      doc.pullDomainEvents();
+      return doc;
+    }
+
+    it('startExtraction() requires processingStatus = ocr_complete', () => {
+      const doc = makeDoc();
+      expect(() => doc.startExtraction('run-1')).toThrow(DomainException);
+    });
+
+    it('startExtraction() flips status and records run id', () => {
+      const doc = makeOcrCompleteDoc();
+      doc.startExtraction('run-1');
+      expect(doc.extractionStatus.value).toBe('extracting');
+      expect(doc.currentExtractionRunId).toBe('run-1');
+    });
+
+    it('completeExtraction() flips extracting → extraction_complete', () => {
+      const doc = makeOcrCompleteDoc();
+      doc.startExtraction('run-1');
+      doc.completeExtraction();
+      expect(doc.extractionStatus.value).toBe('extraction_complete');
+    });
+
+    it('failExtraction() flips extracting → extraction_failed, sets reason', () => {
+      const doc = makeOcrCompleteDoc();
+      doc.startExtraction('run-1');
+      doc.failExtraction('claude_unavailable');
+      expect(doc.extractionStatus.value).toBe('extraction_failed');
+      expect(doc.failureReason).toBe('claude_unavailable');
+    });
+
+    it('re-extraction (retry after failure) allowed', () => {
+      const doc = makeOcrCompleteDoc();
+      doc.startExtraction('run-1');
+      doc.failExtraction('transient');
+      doc.startExtraction('run-2');
+      expect(doc.extractionStatus.value).toBe('extracting');
+      expect(doc.currentExtractionRunId).toBe('run-2');
+    });
+  });
+
   describe('rehydrate()', () => {
     it('reloads without emitting events', () => {
       const original = makeDoc();
@@ -270,6 +322,8 @@ describe('Document aggregate', () => {
         size: original.size,
         status: original.status,
         processingStatus: original.processingStatus,
+        extractionStatus: original.extractionStatus,
+        currentExtractionRunId: original.currentExtractionRunId,
         storageKey: original.storageKey,
         uploadedBy: original.uploadedBy,
         orgId: original.orgId,

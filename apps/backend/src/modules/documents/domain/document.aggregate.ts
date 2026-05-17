@@ -1,6 +1,7 @@
 import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { DomainException } from '../../../shared/exceptions/app-error';
 import { DocumentId } from './value-objects/document-id.vo';
+import { DocumentExtractionStatus } from './value-objects/document-extraction-status.vo';
 import { DocumentName } from './value-objects/document-name.vo';
 import { DocumentType } from './value-objects/document-type.vo';
 import { FileSize } from './value-objects/file-size.vo';
@@ -31,6 +32,8 @@ interface DocumentProps {
   size: FileSize;
   status: UploadStatus;
   processingStatus: ProcessingStatus;
+  extractionStatus: DocumentExtractionStatus;
+  currentExtractionRunId: string | null;
   storageKey: StorageKey;
   uploadedBy: UploadedBy;
   orgId: OrgId;
@@ -78,6 +81,8 @@ export class Document extends AggregateRoot<DocumentId> {
       size: params.size,
       status,
       processingStatus: ProcessingStatus.notStarted(),
+      extractionStatus: DocumentExtractionStatus.notStarted(),
+      currentExtractionRunId: null,
       storageKey: params.storageKey,
       uploadedBy: params.uploadedBy,
       orgId: params.orgId,
@@ -247,6 +252,45 @@ export class Document extends AggregateRoot<DocumentId> {
     );
   }
 
+  // ── Clause extraction lifecycle (Phase 8) ────────────────────────
+  //
+  // Lives on the Document aggregate so the frontend can branch on a single
+  // status field as the document rolls forward through upload → OCR →
+  // extraction. The ExtractionRun aggregate (clauses module) owns the
+  // detail (model versions, counts, events).
+
+  startExtraction(extractionRunId: string, now?: Date): void {
+    const at = now ?? new Date();
+    if (this.props.processingStatus.value !== ProcessingStatusValue.OCR_COMPLETE) {
+      throw new DomainException(
+        'CANNOT_START_EXTRACTION',
+        `OCR must be 'ocr_complete' to start extraction (got '${this.props.processingStatus.value}')`,
+      );
+    }
+    this.props.extractionStatus = this.props.extractionStatus.transitionTo(
+      DocumentExtractionStatus.fromValue('extracting'),
+    );
+    this.props.currentExtractionRunId = extractionRunId;
+    this.props.updatedAt = at;
+  }
+
+  completeExtraction(now?: Date): void {
+    const at = now ?? new Date();
+    this.props.extractionStatus = this.props.extractionStatus.transitionTo(
+      DocumentExtractionStatus.fromValue('extraction_complete'),
+    );
+    this.props.updatedAt = at;
+  }
+
+  failExtraction(reason: string, now?: Date): void {
+    const at = now ?? new Date();
+    this.props.extractionStatus = this.props.extractionStatus.transitionTo(
+      DocumentExtractionStatus.fromValue('extraction_failed'),
+    );
+    this.props.failureReason = reason;
+    this.props.updatedAt = at;
+  }
+
   // ── Read accessors ───────────────────────────────────────────────
 
   get name(): DocumentName {
@@ -287,5 +331,11 @@ export class Document extends AggregateRoot<DocumentId> {
   }
   get failureReason(): string | null {
     return this.props.failureReason;
+  }
+  get extractionStatus(): DocumentExtractionStatus {
+    return this.props.extractionStatus;
+  }
+  get currentExtractionRunId(): string | null {
+    return this.props.currentExtractionRunId;
   }
 }

@@ -3374,3 +3374,340 @@ Real upload → real pipeline (mock cloud driver) → real `DocumentText`, asser
 - Per-page real-time progress (UI shows binary status only)
 - Re-run as admin operation (CLI exists; admin UI deferred)
 - Languages other than English (detector rejects up front in v1)
+
+---
+
+## Phase 8: User Story — Clause Extraction & Classification (Requirement 3)
+
+**Status**: 📋 **PLANNED (0/7)** — see [clause-extraction-design.md](./clause-extraction-design.md) for full requirements & design.
+
+**Goal**: Turn a `DocumentText` (Phase 7 output) into a versioned set of classified, position-anchored, embedding-equipped `Clause` rows. Combined Claude call (per design.md) produces extract + classify + risk in one go; Phase 8 persists risk fields but does not surface them in UI (Phase 9 lights up risk UI + business logic).
+
+**Dependencies**: Phase 7 ✅ (OCR pipeline, `DocumentText`, `DocumentOCRCompletedEvent`).
+
+### Locked decisions (2026-05-17)
+
+1. **Combined Claude call** — extract + classify + risk score in one invocation (honors design.md).
+2. **Phase 8 persists risk fields; UI hides them.** Rubric is DRAFT — Phase 9 prerequisite: SME validation.
+3. **Embedding model**: Voyage `voyage-law-2`, 1024-dim, pgvector storage.
+4. **Vector dimension locked at 1024**; future model swap = migration + backfill.
+5. **Nesting via self-FK** `parentClauseId`, max 2 levels, `ON DELETE SET NULL`.
+6. **Global char offsets** into `DocumentText.text`; LLM returns text verbatim, server resolves offsets via `indexOf`; hallucinated text → drop + log.
+7. **Versioned extraction runs** — `ExtractionRun` aggregate; re-extraction creates new run, old retained.
+8. **In-process event trigger** (`DocumentOCRCompletedHandler`); crash-recovery deferred to Phase 9.
+9. **`extracting` state** surfaced on `/processing/:id` as a second progress band (one screen rolls forward through OCR → extraction → results).
+10. **Embedding failure ≠ extraction failure** — clauses persist with `embedding=null` if Voyage is down; flagged on the run.
+
+### Architecture summary
+
+- **Module**: new `apps/backend/src/modules/clauses/` with the same DDD shape as `documents/`.
+- **Ports**: `IClauseExtractor`, `IEmbeddingService`, `IClauseRepository`, `IExtractionRunRepository`.
+- **Drivers**:
+  - `MockClauseExtractor` (deterministic fixture, ~5 clauses with one nested child)
+  - `ClaudeClauseExtractor` (Anthropic SDK, single call w/ tool-use JSON schema, prompt-cached system prompt)
+  - `MockEmbeddingService` (hash-based deterministic vectors)
+  - `VoyageEmbeddingService` (`voyage-law-2`, batch 128, retry+backoff)
+- **Persistence**: Prisma + pgvector. New tables `ExtractionRun`, `Clause`. `Document` gains `extractionStatus` + `currentExtractionRunId`.
+- **Trigger**: `DocumentOCRCompletedHandler` (in `clauses/` module) dispatches `StartClauseExtractionCommand`. Zero changes to Phase 7 code.
+
+### Dependency graph & ordering
+
+```
+8.1 (domain) ──► 8.2 (application) ──┬──► 8.3 (mock + pgvector + persistence)
+                                     │       │
+                                     │       ├──► 8.4 (Claude extractor)
+                                     │       │
+                                     │       └──► 8.5 (Voyage embeddings)
+                                     │              │
+                                     │              ▼
+                                     └────────► 8.7 (E2E)
+                                                    ▲
+                                                    │
+                                       8.6 (frontend) ─┘
+```
+
+8.6 can run in parallel with 8.4/8.5 once 8.2 query contracts are stable. Rough effort: 8.1 ~2d, 8.2 ~2d, 8.3 ~3d, 8.4 ~3d, 8.5 ~1d, 8.6 ~2-3d, 8.7 ~1-2d. **Total ~14-16 working days** single engineer.
+
+---
+
+### Task 8.1 — Domain layer
+
+Pure TypeScript; no I/O, no NestJS providers. New module `clauses/`.
+
+- [ ] VOs under `clauses/domain/value-objects/`:
+  - [ ] `ClauseId` (UUID)
+  - [ ] `ExtractionRunId` (UUID)
+  - [ ] `ClauseType` — enum of 15 values from Requirement 3 AC2; validates input
+  - [ ] `ConfidenceScore` — reuse from Phase 7 (or import as shared)
+  - [ ] `TextPosition` — `{ startOffset, endOffset, pageNumber }` with invariants (`start < end`, `start ≥ 0`, `pageNumber ≥ 1`)
+  - [ ] `ExtractionStatus` — `running | complete | failed`; legal transitions: `running → complete | failed` (failed terminal)
+  - [ ] `ModelVersion` — string format `<vendor>/<name>@<version>`
+  - [ ] `RiskLevel` — `low | medium | high | critical`; derive from int via `RiskLevel.fromScore(n)`
+- [ ] Entity `Clause` in `domain/entities/clause.ts`:
+  - [ ] Fields per `clause-extraction-design.md` §3.2
+  - [ ] Method `attachEmbedding(vector, modelVersion)` — sets vector + records embedding model
+  - [ ] Method `linkParent(parentClauseId)` — validates same-run constraint
+  - [ ] Invariant checks in factory
+- [ ] Aggregate root `ExtractionRun` in `domain/aggregates/extraction-run.ts`:
+  - [ ] Fields per design §3.1
+  - [ ] Methods: `start()`, `complete(clauseCount, droppedCount)`, `fail(reason)`
+  - [ ] Static factory `ExtractionRun.start(documentId, classifierVersion, embeddingVersion)`
+- [ ] Extend `Document` aggregate (`documents/domain/aggregates/document.ts`):
+  - [ ] Field `extractionStatus: ExtractionStatus | 'not_started'` (default `not_started`)
+  - [ ] Field `currentExtractionRunId: ExtractionRunId | null`
+  - [ ] Methods: `startExtraction()`, `completeExtraction(runId)`, `failExtraction(reason)` — each enforces transition, emits event
+- [ ] Events under `clauses/domain/events/`:
+  - [ ] `ClauseExtractionStartedEvent`
+  - [ ] `ClausesExtractedEvent` (batched: one per run)
+  - [ ] `ClauseExtractionCompletedEvent`
+  - [ ] `ClauseExtractionFailedEvent`
+- [ ] Unit tests (~50):
+  - [ ] Every legal/illegal `ExtractionStatus` transition
+  - [ ] Each VO's validation rules (boundary, NaN, out-of-range)
+  - [ ] `TextPosition` invariants
+  - [ ] `RiskLevel.fromScore` boundaries (0, 25, 26, 50, 51, 75, 76, 100)
+  - [ ] `Clause.linkParent` rejects cross-run parent
+  - [ ] `Document.startExtraction()` from each starting state
+  - [ ] `ExtractionRun.complete` enforces `clauseCount ≥ 0`
+
+**Done when:** all new files compile, ~50 unit tests green, no other layer touched.
+
+---
+
+### Task 8.2 — Application layer
+
+Commands, queries, event handler. Uses ports (`IClauseExtractor`, `IEmbeddingService`, `IClauseRepository`, `IExtractionRunRepository`); no real I/O yet.
+
+- [ ] Commands under `clauses/application/commands/`:
+  - [ ] `StartClauseExtractionCommand { documentId }` + handler:
+    - Load `Document` via `IDocumentRepository`
+    - Idempotency: existing `running` or `complete` run for this document → return early
+    - Load `DocumentText` via `IDocumentTextRepository` (Phase 7 port)
+    - `document.startExtraction()` → persist → publish `DocumentExtractionStartedEvent`
+    - Create `ExtractionRun` (status=running, model versions recorded)
+    - Call `IClauseExtractor.extract(input)`
+    - Server-side: resolve offsets via `indexOf`; drop hallucinated clauses (increment counter)
+    - Server-side: two-pass parent resolution (`clientRef` → real `ClauseId`)
+    - Call `IEmbeddingService.embedBatch(clauses.map(c => c.text))`; attach vectors
+    - Persist run + clauses in single transaction; update `Document.extractionStatus` + `currentExtractionRunId`
+    - Publish `ClausesExtractedEvent` + `ClauseExtractionCompletedEvent`
+    - **Failure paths**: retry 3× (1s/4s/16s) for `ExtractionTransientError`; permanent + exhausted → `document.failExtraction(reason)` + `ClauseExtractionFailedEvent`
+    - **Embedding-only failure**: clauses persist with `embedding=null`; run completes with `failureReason` note; not treated as extraction failure
+  - [ ] `FailClauseExtractionCommand { documentId, reason }` + handler — admin abort path
+  - [ ] `RetryClauseExtractionCommand { documentId }` + handler — assert `extractionStatus === extraction_failed`, then delegate to `StartClauseExtractionCommand` (creates new `ExtractionRun`)
+- [ ] Queries under `clauses/application/queries/`:
+  - [ ] `GetClausesForDocumentQuery { documentId }` → `ClauseDto[]` (from `currentExtractionRunId`)
+  - [ ] `GetClauseByIdQuery { clauseId }` → `ClauseDto`
+  - [ ] `GetExtractionRunStatusQuery { documentId }` → `{ status, clauseCount, droppedClauseCount, failureReason?, runId }`
+- [ ] Extend `GetProcessingStatusQuery` (Phase 7) to also return `extractionStatus` + `currentExtractionRunId`
+- [ ] Event handler `DocumentOCRCompletedHandler` in `clauses/application/event-handlers/`:
+  - [ ] Listens for Phase 7 `DocumentOCRCompletedEvent`
+  - [ ] Dispatches `StartClauseExtractionCommand`
+  - [ ] **Only wire-in point into Phase 7**
+- [ ] Port interfaces:
+  - [ ] `IClauseExtractor` (per design §4)
+  - [ ] `IEmbeddingService` (per design §4)
+  - [ ] `IClauseRepository`, `IExtractionRunRepository`
+- [ ] Error taxonomy (per design §12):
+  - [ ] `ExtractionTransientError`, `ExtractionPermanentError`
+  - [ ] `EmbeddingTransientError`, `EmbeddingPermanentError`
+- [ ] Unit tests (~35):
+  - [ ] `StartClauseExtractionHandler` happy path with mocks
+  - [ ] Idempotency: running → skip; complete → skip; failed → new run
+  - [ ] Transient-fail-then-success at attempt 2
+  - [ ] Permanent-fail on attempt 1 (no retry)
+  - [ ] Retries-exhausted → status flips to `extraction_failed`
+  - [ ] Hallucinated-text drop counted, surviving clauses persisted
+  - [ ] Parent resolution happy path + missing-parent fallback to root
+  - [ ] Embedding failure → clauses persist with `embedding=null`, run completes
+  - [ ] `RetryClauseExtractionHandler` rejects when status ≠ `extraction_failed`
+  - [ ] `DocumentOCRCompletedHandler` dispatches the right command
+
+**Done when:** application layer compiles against port interfaces, ~35 unit tests green.
+
+---
+
+### Task 8.3 — Infrastructure: Mock + pgvector + persistence
+
+Real persistence + mock drivers. Pipeline runs locally with no external API dependency.
+
+- [ ] Add dependencies to `apps/backend/package.json`:
+  - [ ] (No new runtime deps — pgvector enabled via SQL extension; Voyage/Anthropic come in 8.4/8.5)
+- [ ] Prisma migration:
+  - [ ] `CREATE EXTENSION IF NOT EXISTS vector;`
+  - [ ] Create `ExtractionRun` table per design §10
+  - [ ] Create `Clause` table per design §10 with `embedding vector(1024)` column via `Unsupported("vector(1024)")`
+  - [ ] Add `extractionStatus` + `currentExtractionRunId` columns to `Document`
+  - [ ] Indexes: `Clause(documentId)`, `Clause(extractionRunId)`, `Clause(type)`, `Clause(parentClauseId)`, `Document(extractionStatus)`
+  - [ ] (Defer HNSW index — added in Phase 10)
+- [ ] `infrastructure/extraction/mock-clause-extractor.ts`:
+  - [ ] Deterministic 5-clause output: indemnification, limitation_of_liability, termination, payment_terms, other
+  - [ ] One nested sub-clause under termination
+  - [ ] Risk fields populated with mock values (e.g., riskScore=50, riskLevel=medium)
+  - [ ] Text slices chosen so `indexOf` resolves cleanly against the input
+- [ ] `infrastructure/embeddings/mock-embedding-service.ts`:
+  - [ ] Deterministic 1024-dim vectors via SHA-256 hash of text expanded to floats
+  - [ ] `modelVersion: 'mock/mock-embeddings@v1'`
+- [ ] `infrastructure/persistence/prisma-clause.repository.ts`:
+  - [ ] `saveRun(run, clauses)` — single transaction, two-pass insert (parents first, then children with resolved FK)
+  - [ ] Vector column uses `$queryRaw` `INSERT ... VALUES ($1::vector)` since Prisma doesn't natively type pgvector
+  - [ ] `findByDocumentId` reads vector via `$queryRaw` returning `embedding::text` for now (full vector ops in Phase 10)
+- [ ] `infrastructure/persistence/prisma-extraction-run.repository.ts`
+- [ ] `ClausesModule` + DI wiring:
+  - [ ] Factory picks `IClauseExtractor` from `CLAUSE_EXTRACTOR` env (`mock` default)
+  - [ ] Factory picks `IEmbeddingService` from `EMBEDDING_DRIVER` env (`mock` default)
+  - [ ] Registers event handler `DocumentOCRCompletedHandler`
+- [ ] Wire `ClausesModule` into `AppModule` so handler resolves
+- [ ] Tests:
+  - [ ] Prisma repository round-trip with test DB: insert run + 5 clauses incl. nested → re-read matches
+  - [ ] pgvector column populated and readable
+  - [ ] Parent FK SET NULL on parent delete
+  - [ ] `Clause(documentId)` index used (EXPLAIN check)
+  - [ ] `MockClauseExtractor` produces stable output for stable input
+  - [ ] `MockEmbeddingService` produces 1024-dim vectors, deterministic per text
+
+**Done when:** uploading a PDF via existing UI runs Phase 5 → 7 → 8 with mocks; real `ExtractionRun` + `Clause` rows persist; vectors populated; status flips to `extraction_complete`. No external API credentials touched.
+
+---
+
+### Task 8.4 — Infrastructure: Claude clause-extractor driver
+
+Real Claude call replacing `MockClauseExtractor`.
+
+- [ ] Add `@anthropic-ai/sdk` to backend deps (latest stable)
+- [ ] Env docs in `docs/deployment/anthropic-setup.md` (new):
+  - [ ] `CLAUSE_EXTRACTOR=anthropic`
+  - [ ] `ANTHROPIC_API_KEY`
+  - [ ] `CLAUDE_MODEL=claude-opus-4-7`
+- [ ] `infrastructure/extraction/claude-clause-extractor.ts`:
+  - [ ] Single `messages.create` call with tool-use schema (`extract_clauses` tool per design §6.3)
+  - [ ] System prompt + tool schema marked `cache_control: { type: 'ephemeral' }` for prompt caching
+  - [ ] Few-shot examples in system prompt (3 calibration clauses per §6.2)
+  - [ ] Chunking: if `input.text.length > 200_000`, split at page boundaries, parallel calls, merge with offset-shift
+  - [ ] Error mapping:
+    - `429 | 503 | 529 | overloaded_error` → `ExtractionTransientError`
+    - `400 | invalid_request_error | context_overflow` → `ExtractionPermanentError`
+  - [ ] Records `modelVersion = 'anthropic/' + model + '@' + apiVersion`
+- [ ] Pure mapper `claude-response-to-extracted-clauses.ts` — pure function, easy unit test
+- [ ] Update `ClausesModule` factory to switch `IClauseExtractor` on `CLAUSE_EXTRACTOR` env
+- [ ] Tests with `jest.mock('@anthropic-ai/sdk')`:
+  - [ ] Happy path single chunk
+  - [ ] Multi-chunk happy path with offset stitching
+  - [ ] Hallucinated-text clause is dropped server-side (handler-level, not driver — but driver returns it)
+  - [ ] Parent-ref resolution unit test
+  - [ ] Each error class mapping
+  - [ ] Prompt-caching header present in request
+- [ ] Live env-flag-gated test (`CLAUSE_EXTRACTOR_LIVE_TEST=1`): one real Anthropic call against one fixture (10-page born-digital). Cost cap ~$0.05. Not default CI.
+
+**Done when:** `CLAUSE_EXTRACTOR=anthropic` env flip + real API key produces valid `Clause` rows from a real fixture. Tests mock the SDK; no live calls in default CI.
+
+---
+
+### Task 8.5 — Infrastructure: Voyage embeddings driver
+
+Swap embeddings slot from `MockEmbeddingService` to `VoyageEmbeddingService`.
+
+- [ ] Add `voyageai` npm package to backend deps
+- [ ] Env docs in `docs/deployment/anthropic-setup.md`:
+  - [ ] `EMBEDDING_DRIVER=voyage`
+  - [ ] `VOYAGE_API_KEY`
+  - [ ] `VOYAGE_MODEL=voyage-law-2`
+- [ ] `infrastructure/embeddings/voyage-embedding-service.ts`:
+  - [ ] Batches of 128 (Voyage limit)
+  - [ ] Retry 1s/4s/16s on `429 | 5xx | timeout` → `EmbeddingTransientError`
+  - [ ] `400 | 401 | 403` → `EmbeddingPermanentError`
+  - [ ] Cost telemetry: log `{ provider, model, batchSize, tokensUsed, latencyMs }`
+  - [ ] `modelVersion = 'voyage/voyage-law-2@' + responseModelHeader`
+- [ ] (Optional, not required for Phase 8 ship) `openai-embedding-service.ts` as second adapter — note in design.md that swap would require migration due to dim mismatch
+- [ ] Update factory to switch on `EMBEDDING_DRIVER`
+- [ ] Tests with mocked HTTP (msw or `nock`):
+  - [ ] Happy batch
+  - [ ] Batch-of-1 edge case
+  - [ ] Batches >128 split across multiple HTTP calls and merge
+  - [ ] Partial-batch failure handling
+  - [ ] Retry on 429
+  - [ ] Error mapping per class
+- [ ] Live env-flag-gated test (`EMBEDDINGS_LIVE_TEST=1`): 5-clause batch against real Voyage. Cost <$0.01.
+
+**Done when:** `EMBEDDING_DRIVER=voyage` env flip produces 1024-dim vectors persisted to `Clause.embedding`. Default CI uses mock; live test confirmed once before signoff.
+
+---
+
+### Task 8.6 — Frontend: extracting state + results screen
+
+Roll `/processing/:id` forward through extraction; light up real `/results/:id`.
+
+- [ ] Extend `apps/frontend/src/api/processingService.ts`:
+  - [ ] `getProcessingStatus` response shape adds `extractionStatus`, `currentExtractionRunId`
+- [ ] `useProcessingStatus` hook:
+  - [ ] Terminal conditions updated: stops polling on `extraction_complete | extraction_failed | ocr_failed`
+- [ ] Update `ProcessingPageView`:
+  - [ ] State `processing` (OCR running) — existing UI
+  - [ ] State `ocr_complete && extracting` — "Identifying clauses…" + second progress band
+  - [ ] State `extraction_complete` — auto-navigate to `/results/:documentId`
+  - [ ] State `extraction_failed` — error card with reason; "Contact support" CTA (retry deferred to Phase 9)
+- [ ] New `apps/frontend/src/api/clausesService.ts` (3-tier pattern):
+  - [ ] `getClauses(documentId)` → `ClauseDto[]`
+- [ ] `useClauses(documentId)` React Query hook
+- [ ] `/results/:documentId` real implementation (replaces Phase 7 stub):
+  - [ ] Layout: left rail PDF preview (`pdfjs-dist`), right rail clauses list
+  - [ ] Clauses grouped by `type`; per-card: type chip, confidence pill, page anchor, expandable text
+  - [ ] Filter chips (multi-select clause type) + min-confidence slider (custom components, not Shadcn — per pinned preference)
+  - [ ] Click clause → PDF scrolls to `pageNumber` + highlights `[startOffset, endOffset)` range
+  - [ ] **Risk fields not surfaced** (Phase 9)
+- [ ] Storybook stories:
+  - [ ] `Processing — OCR`
+  - [ ] `Processing — Extracting`
+  - [ ] `Results — Populated (mixed types)`
+  - [ ] `Results — Empty (extraction returned 0 clauses)`
+  - [ ] `Results — Filtered (only indemnification visible)`
+  - [ ] `Failed — Extraction`
+- [ ] jest-axe pass on all stories
+- [ ] RTL + MSW smoke test covering: extracting state visible, results render, filter + scroll-to-clause flow
+
+**Done when:** real upload → `/processing/:id` rolls through OCR → extracting → auto-redirects to populated `/results/:id`. Filters + click-to-scroll work. Axe clean.
+
+---
+
+### Task 8.7 — E2E + load smoke
+
+Real upload → real pipeline (mock LLM + mock embeddings) → real `Clause` rows + vectors, asserted end-to-end.
+
+- [ ] `clauses-extraction.e2e-spec.ts` against real NestJS test app + real Prisma + pgvector test DB + tmp-dir storage:
+  - [ ] **Born-digital fixture** → wait for `extraction_complete` → assert `ExtractionRun` row, ≥1 `Clause` rows, each with `embedding` populated (1024 dim), `classifierModelVersion` + `embeddingModelVersion` set
+  - [ ] **Multi-page fixture with chunking** (>200k chars synthetic) → assert offsets correct after stitch: re-slice `DocumentText.text` with `[startOffset, endOffset)` matches `clause.text` for every clause
+  - [ ] **Hallucinated-text fixture** (custom mock returns one bad clause) → bad clause dropped, `droppedClauseCount = 1`, other clauses persist, warning logged
+  - [ ] **Nested clause fixture** → parent-child FK resolved; deleting parent sets child's `parentClauseId = null`
+  - [ ] **Permanent-fail fixture** (mock throws `ExtractionPermanentError`) → `ExtractionRun.status = failed`, `Document.extractionStatus = extraction_failed`, no clauses persisted
+  - [ ] **Transient retry fixture** (mock fails twice then succeeds) → succeeds at attempt 3, single `ExtractionRun` row, status = complete
+  - [ ] **Re-extraction** → call `RetryClauseExtractionCommand` after failed → new `ExtractionRun` row, old run retained, `Document.currentExtractionRunId` points to new run
+  - [ ] **Embedding failure** (mock embedding service throws permanent) → clauses persist with `embedding=null`, run completes with `failureReason` note
+- [ ] **5-document concurrent smoke** — 5 parallel uploads all reach `extraction_complete` without DB deadlocks or serialization issues
+- [ ] (Optional, env-flag gated) one live Anthropic call + one live Voyage call against one fixture for pre-signoff. Not default CI.
+- [ ] Controller e2e extended with `GET /documents/:id/clauses` route covered
+- [ ] Update `.env.example` with Phase 8 vars: `CLAUSE_EXTRACTOR`, `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`, `EMBEDDING_DRIVER`, `VOYAGE_API_KEY`, `VOYAGE_MODEL`
+- [ ] Create `docs/deployment/anthropic-setup.md` — API key provisioning, cost telemetry, prompt-caching note
+
+**Done when:** `npm run test:e2e` green (mock LLM + mock embeddings), gated real-cloud tests pass when run by hand, docs sufficient for new engineer to stand up Anthropic + Voyage in one sitting.
+
+---
+
+### Phase 8 success criteria
+
+- Upload a born-digital contract via `/upload` → `/processing/:id` rolls through OCR → extracting → auto-redirects to `/results/:id` within ~30s for a 20-page PDF.
+- `/results/:id` shows clauses grouped by type, with confidence + page anchors; clicking a clause highlights it in the PDF preview.
+- Re-extraction (via admin command) produces a second `ExtractionRun`; old run retained.
+- All tests green; 0 lint errors; axe clean; no live external API calls in default CI.
+
+### Deferred to later phases (intentional Phase 8 scope discipline)
+
+- **Risk rubric SME validation** — Phase 9 prerequisite (rubric in design.md §6.2 is DRAFT)
+- **Risk UI** — Phase 9 (level badges, escalation flow, threshold-driven events)
+- **Crash recovery** (outbox or queue) — Phase 9 (when risk scoring becomes second consumer)
+- **Semantic search endpoint + UI** — Phase 10
+- **HNSW vector index** — Phase 10 (when clause count >10k)
+- **Reranker** (Voyage rerank-2) — Phase 10 quality upgrade
+- **Admin re-extract / re-embed UI** — Phase 11 (CLI command only in v1)
+- **Cross-chunk parent linking** — Phase 11 (if observed in real data)
+- **Languages other than English** — Phase 12+ (OCR rejects upstream)
+- **Self-hosted Llama / domain fine-tune** — Phase 12+ (when volume justifies)
