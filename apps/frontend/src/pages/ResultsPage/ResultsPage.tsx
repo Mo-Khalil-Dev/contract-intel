@@ -1,42 +1,41 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { FileText } from 'lucide-react';
-import { Button } from '../HomePageV2/components/Button';
-import styles from './ResultsPage.module.css';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useClauses, useExtractionStatus } from '@/hooks/useClauses';
+import { ResultsPageView } from './ResultsPage.view';
 
 /**
- * Phase-7 stub. ProcessingPage redirects here on `ocr_complete`. The full
- * results UI (clauses, risk, flags) ships in a later phase — for now we
- * just confirm OCR succeeded and offer paths forward so the redirect
- * doesn't dead-end.
+ * Container — fetches per-document clauses + extraction-status snapshot
+ * and threads them into the presentational view. Loading/error states
+ * are handled inside the view so the breadcrumb stays visible at all
+ * times.
+ *
+ * Export / Approve / Share are stubs in Phase 8 — wired up alongside
+ * the real workflow integrations in Phase 11.
  */
 export function ResultsPage() {
   const { documentId } = useParams<{ documentId: string }>();
   const navigate = useNavigate();
 
+  const extractionQuery = useExtractionStatus(documentId);
+  const clausesQuery = useClauses(documentId);
+
   return (
-    <div className={styles.root}>
-      <main className={styles.main}>
-        <div className={styles.iconWrap}>
-          <FileText size={28} strokeWidth={2} aria-hidden="true" />
-        </div>
-        <h1 className={styles.title}>Analysis ready</h1>
-        <p className={styles.subtitle}>
-          We've extracted the text from your contract. The full clause-and-risk
-          breakdown is coming in the next release.
-        </p>
-        {documentId && (
-          <div className={styles.idRow}>
-            <span className={styles.idLabel}>Document ID</span>
-            <code className={styles.idValue}>{documentId}</code>
-          </div>
-        )}
-        <div className={styles.actions}>
-          <Button variant="secondary" onClick={() => navigate('/upload')}>
-            Upload another
-          </Button>
-          <Button onClick={() => navigate('/')}>Back to dashboard</Button>
-        </div>
-      </main>
-    </div>
+    <ResultsPageView
+      documentId={documentId}
+      clauses={clausesQuery.data ?? []}
+      extraction={extractionQuery.data}
+      isLoading={extractionQuery.isLoading || clausesQuery.isLoading}
+      isError={extractionQuery.isError || clausesQuery.isError}
+      onBackToContracts={() => navigate('/')}
+      onExport={() => {
+        // Phase 11 wires real PDF export. For now: no-op.
+        console.warn('Export not yet wired up');
+      }}
+      onApprove={() => {
+        console.warn('Approve not yet wired up');
+      }}
+      onShare={() => {
+        console.warn('Share not yet wired up');
+      }}
+    />
   );
 }
