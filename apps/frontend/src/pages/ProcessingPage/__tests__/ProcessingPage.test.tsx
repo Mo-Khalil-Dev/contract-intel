@@ -57,21 +57,47 @@ describe('ProcessingPage', () => {
   it('shows the processing state while the pipeline runs', async () => {
     mockGet.mockResolvedValue(status({ status: 'processing' }));
     renderPage();
-    expect(await screen.findByText(/extracting text/i)).toBeInTheDocument();
+    expect(await screen.findByText(/analyzing your contract/i)).toBeInTheDocument();
     expect(screen.getByText(documentId)).toBeInTheDocument();
   });
 
-  it('redirects to /results/:id once OCR is complete', async () => {
+  it('redirects to /results/:id only after extraction completes (with success-dwell)', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    mockGet.mockResolvedValue(status({ status: 'ocr_complete' }));
+    mockGet.mockResolvedValue(
+      status({
+        status: 'ocr_complete',
+        extractionStatus: 'extraction_complete',
+        currentExtractionRunId: 'run-123',
+      }),
+    );
     renderPage();
 
-    expect(await screen.findByText(/analysis ready/i)).toBeInTheDocument();
-    // Auto-navigate fires after a 1.2s delay so users see the success flash.
+    // Success flash shows immediately…
+    expect(await screen.findByText(/analysis complete/i)).toBeInTheDocument();
+    // …but the container holds for ~5s so the user can read the screen.
+    expect(screen.queryByText('RESULTS PAGE')).not.toBeInTheDocument();
     await act(async () => {
-      vi.advanceTimersByTime(1300);
+      vi.advanceTimersByTime(5200);
     });
     expect(await screen.findByText('RESULTS PAGE')).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it('stays on the processing page while only OCR has completed', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    mockGet.mockResolvedValue(
+      status({
+        status: 'ocr_complete',
+        extractionStatus: 'extracting',
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByText(/analyzing your contract/i)).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(6000);
+    });
+    expect(screen.queryByText('RESULTS PAGE')).not.toBeInTheDocument();
     vi.useRealTimers();
   });
 

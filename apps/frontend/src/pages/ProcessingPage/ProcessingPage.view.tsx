@@ -271,6 +271,7 @@ function ProgressBar({ percent, success }: { percent: number; success?: boolean 
     <div
       className={styles.progressTrack}
       role="progressbar"
+      aria-label="Contract analysis progress"
       aria-valuenow={Math.round(percent)}
       aria-valuemin={0}
       aria-valuemax={100}
