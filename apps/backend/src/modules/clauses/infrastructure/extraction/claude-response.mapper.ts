@@ -39,7 +39,21 @@ export function mapClaudeResponseToClauses(
     );
   }
 
-  const input = toolUse.input;
+  // Claude Opus 4.7 (with current Anthropic SDK) sometimes double-wraps
+  // tool-use input under an extra `input` key — the real payload lives
+  // at toolUse.input.input rather than toolUse.input. Unwrap one level
+  // when we detect the pattern; tolerated invisibly.
+  let input: unknown = toolUse.input;
+  if (
+    input &&
+    typeof input === 'object' &&
+    !('clauses' in (input as Record<string, unknown>)) &&
+    'input' in (input as Record<string, unknown>) &&
+    typeof (input as { input: unknown }).input === 'object'
+  ) {
+    input = (input as { input: unknown }).input;
+  }
+
   if (
     !input ||
     typeof input !== 'object' ||

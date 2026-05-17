@@ -72,6 +72,36 @@ describe('mapClaudeResponseToClauses', () => {
     expect(out.metadata.paymentAmount).toBe('£50,000');
   });
 
+  it('unwraps Claude Opus 4.7 double-wrapped tool_use input', () => {
+    // Real-world quirk observed in production logs (2026-05-17): Claude
+    // Opus 4.7 with our tool schema emits `input: { input: {...} }`
+    // instead of `input: {...}`. Mapper transparently unwraps one level.
+    const out = mapClaudeResponseToClauses([
+      toolUseBlock({
+        input: {
+          metadata: {
+            contractType: 'NDA',
+            parties: [{ role: 'Party', name: 'Helix Biotech Inc.' }],
+            effectiveDate: '2024-09-12',
+            terminationDate: null,
+            noticePeriod: '30 days',
+            autoRenewal: null,
+            paymentAmount: null,
+            currency: null,
+            paymentSchedule: null,
+            priceEscalation: null,
+            paymentTerms: null,
+          },
+          clauses: [validClause({ type: 'confidentiality' })],
+        },
+      }),
+    ]);
+    expect(out.clauses).toHaveLength(1);
+    expect(out.clauses[0].type).toBe('confidentiality');
+    expect(out.metadata.contractType).toBe('NDA');
+    expect(out.metadata.parties).toHaveLength(1);
+  });
+
   it('returns empty metadata when omitted', () => {
     const out = mapClaudeResponseToClauses([
       toolUseBlock({ clauses: [validClause()] }),

@@ -157,6 +157,11 @@ export class StartClauseExtractionHandler
         language: documentText.language.code,
       });
     } catch (err) {
+      this.logger.error(
+        `Extraction phase failed for document ${command.documentId}: ${
+          err instanceof Error ? err.stack ?? err.message : String(err)
+        }`,
+      );
       await this.onPermanentFailure(document, run, this.reasonFromError(err));
       return;
     }
@@ -176,7 +181,25 @@ export class StartClauseExtractionHandler
       embeddingModelVersion,
     );
 
-    await this.clauses.saveForRun(run.id, clauses);
+    try {
+      await this.clauses.saveForRun(run.id, clauses);
+    } catch (err) {
+      // Persistence-phase failures (e.g. pgvector raw-SQL errors) bypass
+      // the retry loop and the extraction try/catch — they'd bubble up
+      // silently through the CQRS event handler. Log explicitly so we
+      // can diagnose.
+      this.logger.error(
+        `Persistence phase failed for document ${command.documentId}: ${
+          err instanceof Error ? err.stack ?? err.message : String(err)
+        }`,
+      );
+      await this.onPermanentFailure(
+        document,
+        run,
+        `internal_error:${err instanceof Error ? err.message : 'unknown'}`,
+      );
+      return;
+    }
 
     run.complete({
       clauseCount: clauses.length,
@@ -227,6 +250,12 @@ export class StartClauseExtractionHandler
           continue;
         }
         // Unknown error → treat as permanent so we don't loop forever.
+        // Surface the underlying stack trace so diagnostics aren't blind.
+        this.logger.error(
+          `Unmapped error in clause extractor (document ${input.documentId}): ${
+            err instanceof Error ? err.stack ?? err.message : String(err)
+          }`,
+        );
         throw new ExtractionPermanentError(
           'internal_error',
           err instanceof Error ? err.message : 'unknown_error',

@@ -126,7 +126,20 @@ export class ClaudeClauseExtractor implements IClauseExtractor {
     } catch (err) {
       throw this.mapSdkError(err);
     }
-    return mapClaudeResponseToClauses(response.content);
+    try {
+      return mapClaudeResponseToClauses(response.content);
+    } catch (err) {
+      // Diagnostic: dump the raw Claude response when the mapper
+      // rejects it so we can see what shape was actually returned.
+      this.logger.error(
+        `Mapper rejected Claude response. Raw content:\n${JSON.stringify(
+          response.content,
+          null,
+          2,
+        )}\nMapper error: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      throw err;
+    }
   }
 
   // ── Chunking ──────────────────────────────────────────────────────
@@ -225,6 +238,20 @@ export class ClaudeClauseExtractor implements IClauseExtractor {
       return new ExtractionTransientError(
         `Claude request timed out: ${err.message}`,
         err,
+      );
+    }
+
+    // The SDK throws a plain Error (NOT an APIError) when no api key
+    // is configured — surfaces before the HTTP request is built. Map
+    // it to a friendly permanent error so the UI reads `unauthorized`
+    // rather than the generic `internal_error`.
+    if (
+      err instanceof Error &&
+      /resolve authentication method|api[_ -]?key/i.test(err.message)
+    ) {
+      return new ExtractionPermanentError(
+        'unauthorized',
+        `Anthropic API key not configured: ${err.message}`,
       );
     }
 

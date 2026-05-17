@@ -28,8 +28,19 @@ export class DocumentOcrCompletedHandler
     this.logger.log(
       `OCR complete for document ${event.getAggregateId()} — kicking off clause extraction`,
     );
-    await this.commandBus.execute(
-      new StartClauseExtractionCommand(event.getAggregateId()),
-    );
+    try {
+      await this.commandBus.execute(
+        new StartClauseExtractionCommand(event.getAggregateId()),
+      );
+    } catch (err) {
+      // CQRS swallows event-handler throws by default; explicit logging
+      // here surfaces extraction failures during diagnostics.
+      this.logger.error(
+        `Clause extraction failed for document ${event.getAggregateId()}: ${
+          err instanceof Error ? err.stack ?? err.message : String(err)
+        }`,
+      );
+      throw err;
+    }
   }
 }
