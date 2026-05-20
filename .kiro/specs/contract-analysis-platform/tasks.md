@@ -3765,7 +3765,7 @@ Mirror the Phase 6 audit module's event-handler wiring under
 - Idempotent (re-runnable). Logs counts. Document in
   `apps/backend/README.md`.
 
-#### Task 10.4: Filter, sort, and paginate contracts on the server
+#### ~~Task 10.4: Filter, sort, and paginate contracts on the server~~ ✅
 
 Under `modules/documents/application/queries/`:
 

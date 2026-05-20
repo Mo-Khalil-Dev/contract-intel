@@ -15,6 +15,10 @@ import { CompleteUploadHandler } from './application/commands/complete-upload.ha
 import { FailUploadHandler } from './application/commands/fail-upload.handler';
 import { GetUploadStatusHandler } from './application/queries/get-upload-status.handler';
 
+// Application layer — Phase 10 (Contracts View queries)
+import { GetDocumentListHandler } from './application/queries/get-document-list.handler';
+import { GetDocumentSummaryHandler } from './application/queries/get-document-summary.handler';
+
 // Application layer — Phase 7 (OCR)
 import { StartOcrProcessingHandler } from './application/commands/start-ocr-processing.handler';
 import { FailOcrProcessingHandler } from './application/commands/fail-ocr-processing.handler';
@@ -131,6 +135,8 @@ import { OnClauseExtractionFailedHandler } from './application/projections/docum
     ClassifierThenRouter,
     { provide: DOCUMENT_TEXT_REPOSITORY, useClass: PrismaDocumentTextRepository },
     { provide: DOCUMENT_LIST_ITEM_REPOSITORY, useClass: PrismaDocumentListItemRepository },
+    GetDocumentListHandler,
+    GetDocumentSummaryHandler,
     OnDocumentUploadStartedHandler,
     OnClauseExtractionCompletedHandler,
     OnClauseExtractionFailedHandler,
