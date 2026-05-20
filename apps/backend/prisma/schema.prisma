@@ -90,6 +90,7 @@ model Document {
   documentText   DocumentText?
   extractionRuns ExtractionRun[]
   clauses        Clause[]
+  listItem       DocumentListItem?
 
   // Every read is scoped by orgId, so the index drives every list query.
   @@index([orgId])
@@ -185,6 +186,44 @@ model AuditEvent {
   @@index([resourceId])
   @@index([timestamp])
   @@index([sequenceNumber])
+}
+
+// -----------------------------------------------------------------------------
+// Document list projection (Phase 10) — CQRS read model
+// -----------------------------------------------------------------------------
+//
+// Denormalised, per-document row optimised for the Contracts View (Portfolio)
+// screen. Populated by domain event handlers in the documents module — never
+// mutated by application code outside those handlers. The Document aggregate
+// remains the source of truth; this table is a disposable cache that can be
+// rebuilt from scratch via the backfill script.
+//
+// One row per Document. `id` mirrors Document.id (FK with cascade delete) so
+// the row vanishes when the document is hard-deleted.
+model DocumentListItem {
+  id           String   @id // == Document.id
+  orgId        String
+  name         String // file name with extension stripped
+  type         String // ContractType (vendor | license | partnership | customer | lease | nda | other)
+  counterparty String // first party — '' if unknown
+  riskScore    Float? // null until extraction completes
+  flagsRed     Int      @default(0)
+  flagsOrange  Int      @default(0)
+  flagsBlue    Int      @default(0)
+  terminationDate        DateTime?
+  status                 String // complete | processing | failed
+  uploadedAt             DateTime
+  hasUnlimitedLiability  Boolean  @default(false)
+  updatedAt              DateTime @updatedAt
+
+  document Document @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  // Every list query is scoped by orgId then filters/sorts on one of the
+  // columns below — the composite indexes drive all four read paths.
+  @@index([orgId, riskScore])
+  @@index([orgId, uploadedAt])
+  @@index([orgId, name])
+  @@index([orgId, status])
 }
 
 // Position-anchored, classified, embedding-equipped clause. Embedding is

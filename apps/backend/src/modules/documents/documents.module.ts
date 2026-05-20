@@ -26,6 +26,7 @@ import { DocumentUploadCompletedHandler } from './application/event-handlers/doc
 // Ports
 import { DOCUMENT_REPOSITORY } from './domain/document.repository';
 import { DOCUMENT_TEXT_REPOSITORY } from './domain/document-text.repository';
+import { DOCUMENT_LIST_ITEM_REPOSITORY } from './application/projections/document-list-item/document-list-item.repository';
 import { STORAGE_SERVICE, IStorageService } from './domain/ports/storage-service.port';
 import { OCR_SERVICE, IOcrService } from './domain/ports/ocr-service.port';
 
@@ -57,6 +58,9 @@ import {
   GoogleDocAiSdkClient,
 } from './infrastructure/ocr/google-doc-ai.adapters';
 import { PrismaDocumentTextRepository } from './infrastructure/prisma-document-text.repository';
+
+// Infrastructure — Phase 10 (Contracts View read model)
+import { PrismaDocumentListItemRepository } from './infrastructure/prisma-document-list-item.repository';
 
 /**
  * Documents module — Phase 5.
@@ -121,6 +125,7 @@ import { PrismaDocumentTextRepository } from './infrastructure/prisma-document-t
 
     ClassifierThenRouter,
     { provide: DOCUMENT_TEXT_REPOSITORY, useClass: PrismaDocumentTextRepository },
+    { provide: DOCUMENT_LIST_ITEM_REPOSITORY, useClass: PrismaDocumentListItemRepository },
     { provide: OCR_SERVICE, useExisting: ClassifierThenRouter },
 
     // Cloud-track driver — env-driven. `mock` for tests/local-dev,
