@@ -161,6 +161,32 @@ model ExtractionRun {
   @@index([status])
 }
 
+// -----------------------------------------------------------------------------
+// Audit domain (Phase 6)
+// -----------------------------------------------------------------------------
+
+// Append-only audit log. No UPDATE or DELETE operations are permitted on this
+// table — the repository enforces INSERT + SELECT only. Each row carries a
+// SHA-256 checksum for tamper detection.
+model AuditEvent {
+  id             String   @id
+  actorId        String
+  action         String
+  resourceType   String
+  resourceId     String
+  checksum       String
+  sequenceNumber Int
+  timestamp      DateTime
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([resourceId])
+  @@index([timestamp])
+  @@index([sequenceNumber])
+}
+
 // Position-anchored, classified, embedding-equipped clause. Embedding is
 // nullable so a Voyage outage doesn't kill the extraction run — clauses
 // land with `embedding = NULL` and a backfill job (deferred) can re-embed.

@@ -230,69 +230,16 @@ Each user story includes:
 
 The plan starts with **scaffolding and cross-cutting concerns**, then proceeds through **Design System → Authentication → Core Screens**.
 
-## Frontend Architecture Guidelines
+## Architecture & Frontend Rules — see the playbook
 
-All frontend tasks follow these mandatory patterns:
-
-### 1. Component Structure (Every Component)
-
-```
-ComponentName/
-├── ComponentName.tsx          # JSX only, max 15 lines, no logic
-├── useComponentName.ts        # All UI logic (hooks, state, handlers)
-├── ComponentName.module.css   # All styles
-├── ComponentName.test.tsx     # Unit tests
-└── ComponentName.stories.tsx  # Storybook story
-```
-
-### 2. 3-Tier API Call Stack (Every API Call)
-
-```
-UI Hook (useX.ts)
-  → Service (src/services/)
-    → httpService (src/api/httpService.ts)
-      → Axios (client.ts)
-```
-
-**Rules**:
-
-- Hooks call service methods only (no axios, no fetch, no direct HTTP)
-- Services own domain shape, unwrap `ApiResponse<T>`, handle errors
-- httpService is the ONLY file that imports axios
-- All API URLs defined in `src/api/endpoints.ts`
-
-### 3. API Response Standard
-
-All backend endpoints return:
-
-```typescript
-{ success: boolean; data?: T; error?: string }
-```
-
-Every service method must call `.then(unwrap)` — never return raw `ApiResponse` to a hook.
-
-### 4. Shadcn UI as Base
-
-Use Shadcn UI components as the foundation, then customize with design tokens.
-
-### 5. Accessibility Built-In (Every Component)
-
-- Focus indicators visible (3px outline)
-- Touch targets ≥44px on mobile
-- ARIA labels on icon buttons
-- Keyboard navigation (Tab, Enter, Space, Escape)
-- Color contrast ≥4.5:1
-- Screen reader tested
-
-### 6. Mobile-First Responsive
-
-Start with 320px baseline, progressively enhance with `min-width` media queries.
-
-### 7. All SVG Icons Centralized
-
-All SVG icons live in `src/components/core/icons.tsx`. No inline SVGs elsewhere.
-
----
+All architecture guidance — Clean Architecture, DDD/CQRS, frontend
+patterns (component structure, 3-tier API stack, Shadcn integration,
+accessibility, mobile-first, centralised icons), the file-structure
+reference for backend + frontend, and the PR-review enforcement
+checklist — lives in the Architecture Playbook at
+[`.kiro/steering/architecture.md`](../../steering/architecture.md).
+This document does not duplicate those rules; every task in this file
+assumes the playbook applies.
 
 ## Wireframe Screens Available
 
@@ -2318,12 +2265,12 @@ Aggregate: AuditEvent
 
 **Deliverables**:
 
-- [~] AuditEvent aggregate with factory
-- [~] Value objects: AuditEventId, AuditAction, ActorId, ResourceId, Checksum, SequenceNumber
-- [~] Domain event: AuditEventRecordedEvent
-- [~] Repository interface: IAuditEventRepository
-- [~] Unit tests for aggregate and value objects
-- [~] Property test: Checksum verification
+- [x] AuditEvent aggregate with factory
+- [x] Value objects: AuditEventId, AuditAction, ActorId, ResourceId, Checksum, SequenceNumber
+- [x] Domain event: AuditEventRecordedEvent
+- [x] Repository interface: IAuditEventRepository
+- [x] Unit tests for aggregate and value objects
+- [x] Property test: Checksum verification
 
 **Files**:
 
@@ -2372,12 +2319,12 @@ Event Handlers:
 
 **Deliverables**:
 
-- [~] RecordAuditEventCommand + RecordAuditEventHandler
-- [~] QueryAuditEventsQuery + QueryAuditEventsHandler (pagination, filters)
-- [~] ExportAuditLogQuery + ExportAuditLogHandler (JSON, CSV, PDF)
-- [~] Event handlers for all domain events (user login, document upload, etc.)
-- [~] Unit tests for all handlers
-- [~] Property test: Sequence number monotonicity
+- [x] RecordAuditEventCommand + RecordAuditEventHandler
+- [x] QueryAuditEventsQuery + QueryAuditEventsHandler (pagination, filters)
+- [x] ExportAuditLogQuery + ExportAuditLogHandler (JSON, CSV, PDF)
+- [x] Event handlers for all domain events (user login, document upload, etc.)
+- [x] Unit tests for all handlers
+- [x] Property test: Sequence number monotonicity
 
 **Files**:
 
@@ -2407,14 +2354,14 @@ modules/audit/application/
 
 **Deliverables**:
 
-- [~] PrismaAuditEventRepository (INSERT + SELECT only, no UPDATE/DELETE)
-- [~] Database role configuration (no UPDATE/DELETE permissions)
-- [~] AuditController (query endpoint, export endpoint)
-- [~] DTOs: QueryAuditEventsDto, AuditEventResponseDto, ExportAuditLogDto
-- [~] AuditMapper (AuditEvent aggregate ↔ Prisma ↔ DTO)
-- [~] AuditModule wiring
-- [~] Integration tests (verify immutability, sequence numbers)
-- [~] Property test: Immutable audit log (attempt UPDATE/DELETE, verify rejection)
+- [x] PrismaAuditEventRepository (INSERT + SELECT only, no UPDATE/DELETE)
+- [x] Database role configuration (no UPDATE/DELETE permissions)
+- [x] AuditController (query endpoint, export endpoint)
+- [x] DTOs: QueryAuditEventsDto, AuditEventResponseDto, ExportAuditLogDto
+- [x] AuditMapper (AuditEvent aggregate ↔ Prisma ↔ DTO)
+- [x] AuditModule wiring
+- [x] Integration tests (verify immutability, sequence numbers)
+- [x] Property test: Immutable audit log (attempt UPDATE/DELETE, verify rejection)
 
 **Files**:
 
@@ -2440,7 +2387,7 @@ modules/audit/infrastructure/
 
 **Deliverables**:
 
-- [~] AuditLogPage (admin only)
+- [x] AuditLogPage (admin only)
 - [~] AuditLogTable component (filterable, paginated)
 - [~] AuditEventDetail component (modal)
 - [~] ExportAuditLogButton component
@@ -2480,167 +2427,6 @@ frontend/src/
 
 ---
 
-## Frontend Architecture Enforcement Checklist
-
-Every frontend task MUST follow these patterns. Use this checklist to verify compliance:
-
-### ✅ Component Structure (Every Component)
-
-- [~] **ComponentName.tsx**: JSX only, max 15 lines, no logic
-- [~] **useComponentName.ts**: All UI logic (hooks, state, handlers)
-- [~] **ComponentName.module.css**: All styles
-- [~] **ComponentName.test.tsx**: Unit tests
-- [~] **ComponentName.stories.tsx**: Storybook story
-
-### ✅ 3-Tier API Call Stack (Every API Call)
-
-- [~] **Layer 1 - UI Hook (useX.ts)**: Calls service methods only
-- [~] **Layer 2 - Service (src/services/)**: Calls httpService, unwraps ApiResponse<T>
-- [~] **Layer 3 - httpService (src/api/httpService.ts)**: ONLY file that imports axios
-- [~] **No axios imports** outside httpService.ts
-- [~] **All API URLs** defined in src/api/endpoints.ts
-
-### ✅ API Response Standard (Every Service Method)
-
-- [~] Backend returns `{ success: boolean; data?: T; error?: string }`
-- [~] Service calls `.then(unwrap)` to extract data
-- [~] Never return raw ApiResponse to hooks
-
-### ✅ Shadcn UI Integration (Every Component)
-
-- [~] Use Shadcn UI components as base (Button, Dialog, Tabs, Checkbox, etc.)
-- [~] Customize with design tokens
-- [~] Never build from scratch if Shadcn has it
-
-### ✅ Centralized Icons (Every Icon)
-
-- [~] All SVG icons in `src/components/core/icons.tsx`
-- [~] No inline SVGs in components
-- [~] Named exports (not default)
-- [~] Consistent sizing (24×24 default)
-
-### ✅ Accessibility (Every Component)
-
-- [ ] Focus indicators visible (3px outline)
-- [ ] Touch targets ≥44px on mobile
-- [~] ARIA labels on icon buttons
-- [~] Keyboard navigation (Tab, Enter, Space, Escape)
-- [ ] Color contrast ≥4.5:1
-- [ ] Screen reader tested
-
-### ✅ Mobile-First Responsive (Every Component)
-
-- [~] Start with 320px baseline
-- [~] Use `min-width` media queries (not `max-width`)
-- [~] Test on real devices (iPhone, Android, iPad, desktop)
-
-### ✅ Testing (Every Component)
-
-- [ ] Mock at service boundary (not axios)
-- [ ] Test hooks against mocked services
-- [ ] Test components with mocked hooks
-- [~] Integration test for full API flow
-
----
-
-## File Structure Reference
-
-### Backend (NestJS + Clean Architecture)
-
-```
-apps/backend/src/
-├── modules/{feature}/
-│   ├── domain/                   # Pure business logic
-│   │   ├── {feature}.aggregate.ts
-│   │   ├── {feature}-id.vo.ts
-│   │   ├── {feature}.events.ts
-│   │   ├── {feature}.factory.ts
-│   │   └── {feature}.repository.ts (interface)
-│   ├── application/              # Use cases (CQRS)
-│   │   ├── commands/
-│   │   │   ├── {action}.command.ts
-│   │   │   └── {action}.handler.ts
-│   │   ├── queries/
-│   │   │   ├── {action}.query.ts
-│   │   │   └── {action}.handler.ts
-│   │   └── events/
-│   │       └── {event}.handler.ts
-│   └── infrastructure/           # Framework & external concerns
-│       ├── prisma-{feature}.repository.ts
-│       ├── {feature}.controller.ts
-│       ├── {feature}.module.ts
-│       ├── {feature}.mapper.ts
-│       └── dtos/
-│           ├── create-{feature}.dto.ts
-│           └── {feature}.response.dto.ts
-├── shared/
-│   ├── domain/                   # Base classes
-│   ├── exceptions/               # Exception hierarchy
-│   └── infrastructure/           # Ports (interfaces)
-└── config/                       # Configuration service
-```
-
-### Frontend (React + 3-Tier Architecture)
-
-```
-apps/frontend/src/
-├── api/                          # Layer 3: HTTP client
-│   ├── client.ts                 # Axios instance only
-│   ├── httpService.ts            # ONLY file that imports axios
-│   ├── endpoints.ts              # All API URLs as constants
-│   └── unwrap.ts                 # ApiResponse unwrapper utility
-├── services/                     # Layer 2: Domain logic
-│   ├── authService.ts            # Calls httpService, unwraps ApiResponse
-│   ├── documentService.ts
-│   └── referenceDataService.ts
-├── hooks/                        # Layer 1: UI hooks
-│   ├── useAuth.ts                # Calls authService
-│   ├── useUpload.ts              # Calls documentService
-│   └── useReferenceData.ts       # Calls referenceDataService
-├── pages/                        # Page components
-│   ├── HomePage/
-│   │   ├── HomePage.tsx          # JSX only, max 15 lines
-│   │   ├── useHomePage.ts        # All logic
-│   │   ├── HomePage.module.css   # Styles
-│   │   ├── HomePage.test.tsx     # Tests
-│   │   └── HomePage.stories.tsx  # Storybook
-│   └── UploadPage/
-│       ├── UploadPage.tsx
-│       ├── useUploadPage.ts
-│       ├── UploadPage.module.css
-│       ├── UploadPage.test.tsx
-│       └── UploadPage.stories.tsx
-├── components/
-│   ├── core/                     # Design system components
-│   │   ├── Button/
-│   │   │   ├── Button.tsx
-│   │   │   ├── useButton.ts
-│   │   │   ├── Button.module.css
-│   │   │   ├── Button.test.tsx
-│   │   │   └── Button.stories.tsx
-│   │   ├── Badge/
-│   │   ├── Modal/
-│   │   ├── Tabs/
-│   │   └── icons.tsx             # All SVG icons centralized
-│   └── features/                 # Feature-specific components
-│       ├── home/
-│       │   ├── OrgBanner/
-│       │   ├── GreetingSection/
-│       │   └── KPICards/
-│       └── upload/
-│           ├── UploadDropzone/
-│           ├── ConsentCheckbox/
-│           └── UploadProgress/
-├── config/
-│   └── designTokens.ts           # Single source of truth for design
-├── types/
-│   └── api.ts                    # Shared API types
-└── styles/
-    ├── globals.css
-    └── responsive.css
-```
-
----
 
 ## Implementation Order
 
@@ -3836,3 +3622,250 @@ already on screen.
 - Does Phase 9 need its own spec doc (`risk-scoring-design.md`)?
   Probably yes once 9.0 produces the validated rubric; small ADR for
   the canned-vs-LLM decision either way.
+
+## Phase 10: User Story — Contracts View (Wireframe Screen 7)
+
+**Requirement**: see [Requirement 13: Contracts View (Portfolio)](./requirements.md#requirement-13-contracts-view-portfolio)
+in `requirements.md` for the full epic, the nine child stories
+(US-PORT-1..9), acceptance criteria, and resolved scope decisions.
+
+This section covers **execution only**: the Clean Architecture layer
+map and the engineering task breakdown that implements those
+requirements.
+
+### Phase 10 layer map (Clean Architecture / DDD)
+
+Phase 10 spans four layers. Tasks are ordered so each layer is in
+place before the one above it depends on it. Within a layer, tasks
+can be parallelised.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Interface / UI (frontend)                                    │
+│   10.8 Portfolio page + components                           │
+│   10.9 Layout variants                                       │
+│   10.10 Export CSV                                           │
+│   10.11 E2E                                                  │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Interface / HTTP (backend) + Frontend data adapters          │
+│   10.5 GET /api/documents controller + DTOs                  │
+│   10.6 useDocumentListFilters (URL ⇄ filter state)           │
+│   10.7 useDocumentList (react-query hook)                    │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Application (use cases, query handlers, projections)         │
+│   10.2 Projection event handlers (write-side → read-side)    │
+│   10.3 Backfill use case (one-off projection rebuild)        │
+│   10.4 GetDocumentList + GetDocumentSummary query handlers   │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Domain + Infrastructure                                      │
+│   Domain (unchanged): Document aggregate, ExtractionRun,     │
+│                       Clause, domain events                  │
+│   Infrastructure: 10.1 DocumentListItem read model           │
+│                   (Prisma schema, migration, repository)     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### Why this layering for Phase 10
+
+- **Domain stays untouched.** The `Document` aggregate, its events,
+  and the existing repository contracts are the source of truth. Phase
+  10 does not introduce a `Contract` aggregate (see Glossary
+  decision) and does not change any domain invariants.
+- **Read model is infrastructure, not domain.** `DocumentListItem` is
+  a denormalised cache shaped for a specific query — it has no
+  business rules, no invariants. It lives next to Prisma, not next to
+  the aggregate.
+- **Projection handlers are application services.** They listen to
+  domain events emitted by the write side and translate them into
+  read-model updates. They contain no domain logic — only mapping.
+  Same pattern as the Phase 6 audit module.
+- **Query handlers bypass the aggregate.** Reads of the list go
+  directly from query handler → read-model repository → Prisma. No
+  loading of `Document` aggregates from the write side. This is CQRS
+  in its lightest form: same database, separate read and write
+  paths.
+- **HTTP and UI depend inward, never outward.** The controller
+  depends on application query handlers (not on Prisma). The UI
+  depends on the HTTP contract (DTO), not on backend internals. The
+  URL-state hook is pure and has no React or HTTP coupling beyond a
+  thin wrapper — it is testable in isolation.
+
+#### Dependency rule applied to the task order
+
+1. **10.1** ships the read-model table + repository (infrastructure)
+   first. Nothing in the application layer can reference it
+   otherwise.
+2. **10.2** + **10.3** (application: projections + backfill) bring
+   the read model into a usable state. Without these the table is
+   empty and queries return nothing.
+3. **10.4** (application: query handlers) consumes the now-populated
+   read model. Unit-testable against an in-memory repository — no
+   HTTP, no React.
+4. **10.5** (HTTP boundary) exposes the query handlers. Validates
+   input at the boundary; never re-validates inside handlers.
+5. **10.6** + **10.7** (frontend adapters) sit on the HTTP contract.
+   The URL hook is pure; the data hook is a thin react-query
+   wrapper. Both unit-testable.
+6. **10.8**–**10.11** (UI) compose the hooks into screens. No
+   business logic; purely presentational + responsive behaviour.
+7. **10.12** documents the cross-cutting glossary decision.
+
+#### Test pyramid by layer
+
+| Layer | Test type | Examples |
+|---|---|---|
+| Domain | Unchanged | Existing `Document.spec.ts` |
+| Infrastructure | Repository integration | `document-list-item.repository.spec.ts` against a real Postgres |
+| Application | Unit | Each projection handler + each query handler against an in-memory repo |
+| HTTP | Integration / E2E | Supertest covering `GET /api/documents` |
+| Frontend pure | Unit | `parse.ts` / `serialize.ts` / CSV formatter |
+| Frontend hook | Integration | `useDocumentListFilters` with `MemoryRouter`; `useDocumentList` with MSW |
+| End-to-end | Playwright | Task 10.11 |
+
+---
+
+### Phase 10 tasks
+
+#### Task 10.1: Store contract list data efficiently
+
+- Add `DocumentListItem` Prisma model to `schema.prisma`:
+  - `id` (PK, = documentId), `orgId`, `name`, `type`, `counterparty`,
+    `riskScore` (null), `flagsRed`, `flagsOrange`, `flagsBlue`,
+    `terminationDate` (null), `status`, `uploadedAt`,
+    `hasUnlimitedLiability`, `updatedAt`.
+  - Indexes: `(orgId, riskScore)`, `(orgId, uploadedAt)`,
+    `(orgId, name)`, `(orgId, status)`.
+- Generate migration `phase10_document_list_items`.
+- Repository interface + Prisma adapter
+  (`document-list-item.repository.ts`).
+
+#### Task 10.2: Keep the contract list fresh as documents change
+
+Mirror the Phase 6 audit module's event-handler wiring under
+`modules/documents/application/projections/document-list-item/`:
+
+- `OnDocumentUploadedHandler` → INSERT row with `status='processing'`.
+- `OnExtractionRunCompletedHandler` → UPDATE row with riskScore,
+  flag counts, `hasUnlimitedLiability`, `status='complete'`.
+- `OnDocumentFailedHandler` → UPDATE row with `status='failed'`.
+- Unit-test each handler against an in-memory repository.
+
+#### Task 10.3: Bring existing contracts into the new list
+
+- One-off script `scripts/backfill-document-list-items.ts` that walks
+  every existing `Document`, computes the projection columns from
+  the latest `ExtractionRun` + clauses + parties, and upserts into
+  `document_list_items`.
+- Idempotent (re-runnable). Logs counts. Document in
+  `apps/backend/README.md`.
+
+#### Task 10.4: Filter, sort, and paginate contracts on the server
+
+Under `modules/documents/application/queries/`:
+
+- `GetDocumentListQuery` + handler
+  → `{ items, page, pageSize, total, totalPages }`. Accepts
+  `{ orgId, q, risk, type, sort, page, pageSize }`. Risk-band
+  thresholds (7+, 4–6.99, <4) live in a shared helper alongside
+  `riskHelpers.ts`.
+- `GetDocumentSummaryQuery` + handler → 5 KPI fields. Ignores
+  filters. Scoped to `orgId`.
+- Unit tests for both, including filter composition, sort modes,
+  pagination edges (page=0, page>totalPages), and empty portfolio.
+
+#### Task 10.5: Expose the contract list to the frontend
+
+- `GET /api/documents` controller in `modules/documents/http/`.
+- Compose `GetDocumentListQuery` + `GetDocumentSummaryQuery` and
+  return `{ items, page, pageSize, total, totalPages, summary }` in
+  the standard API envelope.
+- Validate query params (zod): `q` (string, ≤200 chars), `risk`
+  (enum), `type` (enum), `sort` (enum), `page` (int ≥1),
+  `pageSize` (int 1–50, default 8).
+- E2E test covering happy path, filter composition, pagination,
+  empty result.
+
+#### Task 10.6: Make filters shareable and refresh-safe via the URL
+
+Under `apps/frontend/src/lib/documentListFilters/`:
+
+- `parse.ts` — pure `URLSearchParams → DocumentListFilters` with
+  defaults applied and invalid values coerced to defaults.
+- `serialize.ts` — pure `DocumentListFilters → URLSearchParams`
+  omitting defaults so the URL stays clean.
+- `defaults.ts`.
+- `useDocumentListFilters.ts` — thin React Router wrapper that calls
+  `useSearchParams` + parse/serialize, with 250 ms debounce on `q`.
+- Unit tests on `parse`/`serialize` (round-trip, defaults, coercion);
+  one integration test on the hook with `MemoryRouter`.
+
+#### Task 10.7: Fetch contract list data on the page
+
+- `react-query` v3 `useQuery` hook keyed on the URL params.
+- `keepPreviousData: true` so paging doesn't flash a skeleton.
+- Returns `{ items, page, pageSize, total, totalPages, summary,
+  isLoading, isFetching, error, refetch }`.
+- Uses the 3-tier API call stack from the frontend guidelines.
+
+#### Task 10.8: Show the contracts page with KPIs, filters, and table
+
+Under `apps/frontend/src/pages/portfolio/`:
+
+- `PortfolioPage` — route at `/contracts`, owns the hook, renders
+  children. PageShell with title + Export CSV + Upload actions.
+- `KpiStrip` — 5-card grid (US-PORT-1).
+- `FilterStrip` — search + 3 selects (US-PORT-2).
+- `ContractsTableCard` — card header with "{n} shown".
+- `ContractsTable` — 7-column table (US-PORT-3).
+- `ContractRow` — hover/focus/keyboard behaviour (US-PORT-4).
+- `Pagination` — server-side controls (US-PORT-5).
+- Empty / loading / error states per US-PORT-7.
+- Responsive behaviour per US-PORT-8 (existing `ci-*` responsive
+  classes from the wireframe stylesheet).
+
+#### Task 10.9: Support table / cards / minimal layouts
+
+- `layoutVariant` prop (`'table' | 'cards' | 'minimal'`) on
+  `PortfolioPage`, reflected in `?layout=`. Default `table`.
+- `cards` and `minimal` variants per US-PORT-6.
+- Tweaks-panel entry.
+
+#### Task 10.10: Export the filtered list to CSV
+
+- Client-side CSV builder that re-fetches **all** filtered rows
+  (single call with `pageSize=total`, capped at 5000) and triggers a
+  browser download.
+- Columns + formatting per US-PORT-9.
+- Unit test on the CSV-formatting helper (quoting, escaping, ISO
+  dates).
+
+#### Task 10.11: Verify the full Contracts View end-to-end
+
+- Playwright spec covering: navigate to `/contracts`, see KPI strip,
+  apply each filter, change sort, paginate, click a `complete` row
+  → lands on Results, verify `failed` row is non-interactive,
+  refresh preserves URL state, Export CSV downloads the expected
+  file.
+
+#### Task 10.12: Document the Contract = Document decision
+
+- Note "Contract = Document (v1)" in CONTEXT.md.
+- One-line entry in `MEMORY.md` under project memory.
+- Optional small ADR if we expect the equivalence to break later.
+
+---
+
+### MVP slice for cutting the first PR
+
+10.1 → 10.2 → 10.3 → 10.4 → 10.5 → 10.6 → 10.7 → 10.8 ships the
+US-PORT-1..5 + 7 + 8 slice. 10.9 (variants), 10.10 (CSV), 10.11
+(E2E), 10.12 (docs) are follow-ups.
+
+Open scope items (e.g. the 300px side column) are tracked in
+`requirements.md` under Requirement 13 → **Still open**.

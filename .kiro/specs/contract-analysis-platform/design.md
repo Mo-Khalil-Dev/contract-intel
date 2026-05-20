@@ -360,6 +360,10 @@ ComponentName/
 
 Shadcn primitives in `ui/` keep Shadcn's own conventions (single-file, hyphen-cased filenames) — don't refactor them into the custom-component layout.
 
+### Frontend Architecture Rules (pointer)
+
+The mandatory frontend patterns — component structure, the 3-tier API call stack, API response envelope, Shadcn integration, accessibility, mobile-first responsive, centralized icons, file structure reference, and the PR-review enforcement checklist — live in the Architecture Playbook at [`.kiro/steering/architecture.md`](../../steering/architecture.md) under **Frontend Architecture**, **File Structure Reference**, and **Frontend Architecture Enforcement Checklist**. This document does not duplicate those rules; refer to the playbook for canonical definitions and update them there.
+
 ---
 
 ## Authentication

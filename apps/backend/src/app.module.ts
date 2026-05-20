@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ReferenceDataModule } from './modules/reference-data/reference-data.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ClausesModule } from './modules/clauses/clauses.module';
+import { AuditModule } from './modules/audit/infrastructure/audit.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ClausesModule } from './modules/clauses/clauses.module';
     ReferenceDataModule,
     DocumentsModule,
     ClausesModule,
+    AuditModule,
   ],
   providers: [
     {

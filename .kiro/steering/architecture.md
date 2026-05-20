@@ -2555,3 +2555,150 @@ Layer 12: Production Monitoring
 6. **E2E tests are expensive** — 1-3 critical journeys only, not every feature
 7. **Snapshot tests need review** — never auto-update without checking the diff
 8. **Performance budgets** — set render time limits and enforce them in CI
+
+---
+
+## File Structure Reference
+
+### Backend (NestJS + Clean Architecture)
+
+```
+apps/backend/src/
+├── modules/{feature}/
+│   ├── domain/                   # Pure business logic
+│   │   ├── {feature}.aggregate.ts
+│   │   ├── {feature}-id.vo.ts
+│   │   ├── {feature}.events.ts
+│   │   ├── {feature}.factory.ts
+│   │   └── {feature}.repository.ts (interface)
+│   ├── application/              # Use cases (CQRS)
+│   │   ├── commands/
+│   │   │   ├── {action}.command.ts
+│   │   │   └── {action}.handler.ts
+│   │   ├── queries/
+│   │   │   ├── {action}.query.ts
+│   │   │   └── {action}.handler.ts
+│   │   └── events/
+│   │       └── {event}.handler.ts
+│   └── infrastructure/           # Framework & external concerns
+│       ├── prisma-{feature}.repository.ts
+│       ├── {feature}.controller.ts
+│       ├── {feature}.module.ts
+│       ├── {feature}.mapper.ts
+│       └── dtos/
+│           ├── create-{feature}.dto.ts
+│           └── {feature}.response.dto.ts
+├── shared/
+│   ├── domain/                   # Base classes
+│   ├── exceptions/               # Exception hierarchy
+│   └── infrastructure/           # Ports (interfaces)
+└── config/                       # Configuration service
+```
+
+### Frontend (React + 3-Tier Architecture)
+
+```
+apps/frontend/src/
+├── api/                          # Layer 3: HTTP client
+│   ├── client.ts                 # Axios instance only
+│   ├── httpService.ts            # ONLY file that imports axios
+│   ├── endpoints.ts              # All API URLs as constants
+│   └── unwrap.ts                 # ApiResponse unwrapper utility
+├── services/                     # Layer 2: Domain logic
+│   ├── authService.ts            # Calls httpService, unwraps ApiResponse
+│   ├── documentService.ts
+│   └── referenceDataService.ts
+├── hooks/                        # Layer 1: UI hooks
+│   ├── useAuth.ts                # Calls authService
+│   ├── useUpload.ts              # Calls documentService
+│   └── useReferenceData.ts       # Calls referenceDataService
+├── pages/                        # Page components
+│   ├── HomePage/
+│   │   ├── HomePage.tsx          # JSX only, max 15 lines
+│   │   ├── useHomePage.ts        # All logic
+│   │   ├── HomePage.module.css   # Styles
+│   │   ├── HomePage.test.tsx     # Tests
+│   │   └── HomePage.stories.tsx  # Storybook
+│   └── UploadPage/
+│       ├── UploadPage.tsx
+│       ├── useUploadPage.ts
+│       ├── UploadPage.module.css
+│       ├── UploadPage.test.tsx
+│       └── UploadPage.stories.tsx
+├── components/
+│   ├── core/                     # Design system components
+│   │   ├── Button/
+│   │   ├── Badge/
+│   │   ├── Modal/
+│   │   ├── Tabs/
+│   │   └── icons.tsx             # All SVG icons centralized
+│   └── features/                 # Feature-specific components
+│       ├── home/
+│       │   ├── OrgBanner/
+│       │   ├── GreetingSection/
+│       │   └── KPICards/
+│       └── upload/
+│           ├── UploadDropzone/
+│           ├── ConsentCheckbox/
+│           └── UploadProgress/
+├── config/
+│   └── designTokens.ts           # Single source of truth for design
+├── types/
+│   └── api.ts                    # Shared API types
+└── styles/
+    ├── globals.css
+    └── responsive.css
+```
+
+---
+
+## Frontend Architecture Enforcement Checklist
+
+Condensed PR-review checklist. Every frontend task must pass these.
+
+### Component Structure
+- [ ] `ComponentName.tsx` — JSX only, max 15 lines, no logic
+- [ ] `useComponentName.ts` — all UI logic
+- [ ] `ComponentName.module.css` — all styles
+- [ ] `ComponentName.test.tsx` — unit tests
+- [ ] `ComponentName.stories.tsx` — Storybook story
+
+### 3-Tier API Call Stack
+- [ ] UI Hook (`useX.ts`) calls service methods only
+- [ ] Service unwraps `ApiResponse<T>` and owns domain shape
+- [ ] `httpService.ts` is the ONLY file that imports axios
+- [ ] No axios imports outside `httpService.ts`
+- [ ] All API URLs defined in `src/api/endpoints.ts`
+
+### API Response Standard
+- [ ] Backend returns `{ success, data?, error? }`
+- [ ] Service calls `.then(unwrap)` — never returns raw `ApiResponse` to a hook
+
+### Shadcn UI Integration
+- [ ] Use Shadcn primitives for Button, Badge, Input, Card, Dialog, Tabs, Checkbox, Dropdown, Tooltip, Skeleton, Toast, Avatar
+- [ ] Customise via design tokens, not by rewriting
+- [ ] Custom components only for what Shadcn doesn't ship (domain components + layout)
+
+### Centralized Icons
+- [ ] All SVG icons live in `src/components/core/icons.tsx`
+- [ ] No inline `<svg>` elsewhere
+- [ ] Named exports, consistent 24×24 default
+
+### Accessibility
+- [ ] Focus indicators visible (3px outline)
+- [ ] Touch targets ≥44px on mobile
+- [ ] ARIA labels on icon buttons
+- [ ] Keyboard navigation (Tab, Enter, Space, Escape)
+- [ ] Colour contrast ≥4.5:1
+- [ ] axe DevTools: 0 critical violations; Lighthouse a11y ≥95
+
+### Mobile-First Responsive
+- [ ] 320px baseline
+- [ ] `min-width` media queries (not `max-width`)
+- [ ] Tested on real devices
+
+### Testing
+- [ ] Mock at the service boundary, not at axios
+- [ ] Hooks tested against mocked services
+- [ ] Components tested with mocked hooks
+- [ ] One integration test per feature for the full API flow

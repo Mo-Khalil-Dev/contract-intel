@@ -244,3 +244,189 @@ The Contract Analysis Platform is an AI-powered, compliance-grade system for ing
 3. WHEN a Reviewer is @mentioned in an annotation, THE Platform SHALL deliver an in-app notification to the mentioned user within 10 seconds.
 4. WHEN an Engagement deadline is within 24 hours and review is incomplete, THE Platform SHALL send a reminder notification to the Engagement_Manager and all Lead_Reviewers.
 5. THE Platform SHALL support webhook delivery of notification events to external systems configured by the Tenant_Admin.
+
+---
+
+### Requirement 13: Contracts View (Portfolio)
+
+**Wireframe**: `wirframes/version_02/design_handoff_ci_redesign/screens/portfolio.html`
+**Component reference**: `screens-b.jsx:1778` (`PortfolioScreen`)
+**Route**: `/contracts`
+**Layout variants**: `table` (default) | `cards` | `minimal`
+
+**Epic / Parent story**
+
+> **As a** legal/ops user at Northwind
+> **I want** a single screen that lists every contract in our portfolio with risk, flags, status, and quick filters
+> **So that** I can find a specific contract, spot the riskiest deals at a glance, and drill into one for full results.
+
+The epic decomposes into nine child stories. US-PORT-1..5 are the MVP slice; US-PORT-6..9 are follow-ups.
+
+---
+
+#### US-PORT-1 — Page shell, header & KPI strip
+
+**As a** user landing on `/contracts`
+**I want** a header with title/subtitle and a KPI strip summarising my portfolio
+**So that** I get an at-a-glance read on portfolio health before I start filtering.
+
+**Acceptance criteria**
+- AC1: Page renders inside `PageShell` with title **"Contracts"** and subtitle **"{N} contracts on file at {orgName}"** where N = count of contracts whose status is `complete`.
+- AC2: Header has two actions on the right: **Export CSV** (secondary) and **+ Upload** (primary). `+ Upload` navigates to the Upload screen.
+- AC3: KPI strip shows exactly 5 cards in a 5-column grid (collapses to 3 on tablet, 2 on small, 1 on xs):
+  1. **Total contracts** — count of all contracts, sub = "{complete} analysed"
+  2. **Average risk** — mean `riskScore` over analysed contracts, 1 decimal, value tinted by risk colour, sub = "Out of 10.0"
+  3. **Critical flags** — sum of `flags.red` across analysed contracts, value tinted red
+  4. **Unlimited liability** — count of contracts with any risk flag whose title contains "unlimited", value tinted red
+  5. **Urgent renewals** — count of renewals with `daysRemaining < 60`, tinted orange if >0 else green
+- AC4: If the user has zero contracts, KPIs show `0` / `0.0` and the table area shows an empty state with a primary "Upload your first contract" CTA (see US-PORT-7).
+
+---
+
+#### US-PORT-2 — Filter strip (search, risk, type, sort)
+
+**As a** user with many contracts
+**I want** to search by name and filter by risk and type, and choose a sort order
+**So that** I can narrow the list to what I care about right now.
+
+**Acceptance criteria**
+- AC1: Filter strip sits directly under the KPI strip, in a flex row that wraps on narrow viewports.
+- AC2: **Search** is a free-text input (placeholder "Search contracts…"). Matching is case-insensitive substring against `contract.name`. Updates the list as the user types (debounced ~150ms).
+- AC3: **Risk filter** select with options: `All risk`, `High (7+)`, `Medium (4–6.99)`, `Low (<4)`. Default `All`.
+- AC4: **Type filter** select with options: `All types`, `Vendor`, `License`, `Partnership`, `Customer`, `Lease`, `NDA`. Default `All`. Matches `contract.type`.
+- AC5: **Sort** select with options: `Sort: Risk` (riskScore desc), `Sort: Date` (uploadDate desc), `Sort: Name` (A→Z). Default `Sort: Risk`.
+- AC6: Filters compose (search AND risk AND type), then sort is applied. The card header shows **"{filtered.length} shown"**.
+- AC7: Empty filter result shows a "No contracts match these filters" message with a **Clear filters** link that resets all 4 controls to defaults.
+
+---
+
+#### US-PORT-3 — Contract table
+
+**As a** user
+**I want** a scannable table of contracts with key columns
+**So that** I can compare contracts side by side.
+
+**Acceptance criteria**
+- AC1: Table renders inside a bordered card with a header "Contracts by risk score" and the filtered count.
+- AC2: Columns rendered (in this order) match the wireframe: **#, Contract, Type, Risk, Flags, Expiry, Status** — 7 columns. Counterparty is rendered as the second line of the Contract cell (not its own column); Uploaded is not surfaced on this screen.
+- AC3: **#** is a 1-based zero-padded index (`01`, `02`, …) in DM Mono.
+- AC4: **Contract** cell shows the file name (with extension stripped) bold on line 1 and the first counterparty in muted text on line 2. Truncates with ellipsis at ~240px max width.
+- AC5: **Type** renders the `TypePill` component for the contract type.
+- AC6: **Risk** renders the `RiskBar` component for analysed contracts; shows `—` for `processing` / `failed`.
+- AC7: **Flags** renders `FlagsSummary` (red/orange/blue counts) for analysed contracts; `—` otherwise.
+- AC8: **Expiry** renders `terminationDate` in DM Mono; `—` if missing.
+- AC9: **Status** renders:
+  - `complete` → green `Complete` badge
+  - `processing` → blue badge with pulsing dot animation
+  - `failed` → red `Failed` badge. Row is non-interactive for v1 (no navigation, no modal); detailed retry UX is deferred.
+- AC10: On horizontal overflow (≤860px viewport) the table scrolls horizontally with `min-width: 640px`.
+
+---
+
+#### US-PORT-4 — Row interaction & navigation
+
+**As a** user
+**I want** to click a contract row to drill into its results
+**So that** I can review a specific contract in depth.
+
+**Acceptance criteria**
+- AC1: Hovering any row with `status === complete` changes the background to `T.bgAlt` and sets the cursor to pointer.
+- AC2: Hovering a `processing` or `failed` row does **not** change the background and the cursor stays default.
+- AC3: Clicking a `complete` row navigates to the Results screen for that contract (`/contracts/:id`).
+- AC4: Clicking a `processing` or `failed` row is a no-op.
+- AC5: Keyboard: rows are focusable (`tabindex=0`), `Enter` / `Space` activates the same navigation as click, focus ring visible.
+- AC6: Each row has an accessible name (e.g., `aria-label="Open {contract name} — risk {score}, status {status}"`).
+
+---
+
+#### US-PORT-5 — Pagination
+
+**As a** user with a long contract list
+**I want** the table paginated so the page stays performant and scannable
+**So that** I'm not scrolling through hundreds of rows.
+
+**Acceptance criteria**
+- AC1: Pagination is **server-side**: the list endpoint accepts `page` and `pageSize` query params and returns `{ items, page, pageSize, total, totalPages }`. Default `pageSize = 8`.
+- AC2: Filter/search/sort params (`q`, `risk`, `type`, `sort`) are applied **server-side** alongside pagination — the server returns the filtered slice plus the filtered `total`.
+- AC3: Pagination footer shows: `Showing {from}–{to} of {total}` on the left, and `← Prev | 1 2 3 … N | Next →` on the right. `from = (page-1)*pageSize + 1`, `to = from + items.length - 1`.
+- AC4: Changing any filter, search, or sort resets to page 1 and re-fetches.
+- AC5: Page and filter state are reflected in the URL (`?page=2&risk=high&sort=date`) so refresh and deep-links work.
+- AC6: When `total ≤ pageSize`, the pagination footer is hidden.
+- AC7: While a page change is in flight, the table shows a subtle loading overlay; previous rows stay visible to avoid layout jump.
+
+---
+
+#### US-PORT-6 — Layout variants
+
+**As a** product owner
+**I want** the screen to support `table | cards | minimal` layouts
+**So that** we can A/B different densities without rebuilding the screen.
+
+**Acceptance criteria**
+- AC1: `PortfolioScreen` accepts a `layoutVariant` prop with values `table` (default), `cards`, `minimal`.
+- AC2: `table` — current behaviour (US-PORT-3).
+- AC3: `cards` — replaces `<tbody>` with a responsive grid of contract cards (each card shows name, type pill, risk bar, flags, expiry, status badge). All filter/sort/pagination behaviour from US-PORT-2/5 is identical.
+- AC4: `minimal` — single-line rows: name + risk score + status only. No KPI strip rendered.
+- AC5: Variant is settable via the Tweaks panel and via a URL param `?layout=cards`.
+
+---
+
+#### US-PORT-7 — Empty, loading, and error states
+
+**As a** user
+**I want** clear feedback when the list is loading, empty, or broken
+**So that** I never see a blank page and always know what to do next.
+
+**Acceptance criteria**
+- AC1: **Loading** (initial fetch): KPI cards and table show shimmer skeletons; filter strip is disabled.
+- AC2: **Empty (no contracts at all)**: replaces the table card with an empty state — icon, "No contracts yet", "Upload your first contract to get started", primary button → Upload screen. KPIs all render `0`.
+- AC3: **Empty (filters return nothing)**: table card body renders the message in US-PORT-2 AC7.
+- AC4: **Error**: if the list endpoint fails, table card shows an inline error with a **Retry** button; KPI strip stays as last-known-good or renders `—`.
+
+---
+
+#### US-PORT-8 — Responsive behaviour
+
+**As a** user on tablet or phone
+**I want** the screen to adapt cleanly to my viewport
+**So that** the portfolio is usable away from my desk.
+
+**Acceptance criteria**
+- AC1: ≤1100px (lg): KPI grid stays 5-col, side column (if present) compresses.
+- AC2: ≤860px (md): KPI grid → 3 cols; side column collapses below the table (`ci-portfolio-grid` → 1 column); table gains horizontal scroll.
+- AC3: ≤640px (sm): KPI grid → 2 cols; padding reduces to 16px.
+- AC4: ≤420px (xs): KPI grid → 1 col.
+- AC5: Filter strip always wraps cleanly and never overflows horizontally.
+
+---
+
+#### US-PORT-9 — Export CSV
+
+**As a** user
+**I want** to export the currently-filtered list to CSV
+**So that** I can share the slice or work with it offline.
+
+**Acceptance criteria**
+- AC1: Clicking **Export CSV** downloads a CSV named `contracts-{YYYY-MM-DD}.csv`.
+- AC2: Export contains exactly the rows currently visible after filter+search+sort (all pages, not just the current page).
+- AC3: Columns: `Name, Type, Counterparty, Risk Score, Red Flags, Orange Flags, Blue Flags, Expiry, Uploaded, Status`.
+- AC4: Numeric values use `.` as decimal separator; dates ISO `YYYY-MM-DD`; commas in names are properly quoted.
+
+---
+
+#### Resolved scope decisions (2026-05-20)
+
+- **Columns**: match the wireframe — 7 columns, counterparty inline, no Uploaded column.
+- **Pagination**: in-scope, **server-side** (`page` + `pageSize=8`).
+- **Filter/search/sort**: also **server-side**, share the same endpoint as pagination.
+- **`failed` status**: in-scope — red `Failed` badge only. Row is non-interactive for v1; retry/details UX deferred.
+- **KPIs + list bundled**: one endpoint returns both list slice and the 5 KPI values in a single round-trip.
+- **Backend read model**: define a dedicated list projection (`DocumentListItem`) maintained via domain event handlers — do not lazy-map the `Document` aggregate.
+- **URL state**: custom `useDocumentListFilters` hook, unit-testable in isolation from React Router.
+- **Glossary**: "Contract" is the user-facing word; the domain term is `Document`. Every contract is backed by exactly one document (v1). No separate `Contract` aggregate. Route stays `/contracts` (product language); endpoint is `/api/documents` (domain language).
+- **New endpoint**: there is no existing `GET /api/documents` list endpoint — Phase 10 introduces it.
+- **Frontend data layer**: reuse the existing `react-query` v3 package already in `apps/frontend/package.json` — do not add TanStack Query v4/v5.
+
+#### Still open
+
+- **Side column (300px)** — the wireframe has a right-hand side column (`ci-portfolio-grid` is `1fr 300px`). Not covered by any story above; likely "Risk distribution + Upcoming renewals" mini-panels. To be scoped as a US-PORT-10 if/when we want it.

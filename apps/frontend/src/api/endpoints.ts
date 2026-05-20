@@ -18,4 +18,10 @@ export const API = {
   CLAUSES: (id: string) => `/api/v1/documents/${id}/clauses`,
   EXTRACTION_STATUS: (id: string) => `/api/v1/documents/${id}/extraction-status`,
   DOCUMENT_TEXT: (id: string) => `/api/v1/documents/${id}/text`,
+
+  // ── Audit (Phase 6) ─────────────────────────────────────────────
+  AUDIT: {
+    LIST: '/api/v1/audit',
+    EXPORT: '/api/v1/audit/export',
+  },
 };
