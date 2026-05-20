@@ -1,0 +1,84 @@
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink, #0f172a);
+  margin: 0 0 12px;
+}
+
+/* Liability rows */
+.liabilityRow {
+  margin-bottom: 12px;
+}
+
+.liabilityRowHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.liabilityLabel {
+  font-size: 12px;
+  color: var(--color-ink-mid, #334155);
+}
+
+.liabilityCount {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-mono, 'DM Mono', monospace);
+}
+
+.liabilityTrack {
+  height: 5px;
+  background: var(--color-border, #e2e8f0);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.liabilityFill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.alert {
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #dc2626;
+  line-height: 1.5;
+}
+
+/* Renewals */
+.renewalsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.renewalsSub {
+  font-size: 11px;
+  color: var(--color-ink-soft, #64748b);
+}
+
+.empty {
+  font-size: 12px;
+  color: var(--color-ink-mute, #94a3b8);
+  text-align: center;
+  padding: 16px 0 8px;
+}

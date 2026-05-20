@@ -1,7 +1,7 @@
 .card {
   background: var(--color-surface, #fff);
   border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -9,15 +9,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--color-border, #e2e8f0);
 }
 
 .cardTitle {
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-ink);
+  color: var(--color-ink, #0f172a);
   margin: 0;
+}
+
+.shown {
+  font-size: 11px;
+  color: var(--color-ink-soft, #64748b);
 }
 
 .fetching {
@@ -27,24 +32,29 @@
 
 .tableWrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
+  min-width: 640px;
+}
+
+.table thead tr {
+  background: #F8F8F7;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
 }
 
 .table th {
-  padding: 10px 16px;
+  padding: 10px 14px;
   text-align: left;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--color-ink-mute, #94a3b8);
-  background: var(--color-bg, #fafaf9);
-  border-bottom: 1px solid var(--color-border, #e2e8f0);
   white-space: nowrap;
 }
 
@@ -57,40 +67,57 @@
 
 .row:last-child { border-bottom: none; }
 
-.rowClickable {
-  cursor: pointer;
-}
-
-.rowClickable:hover {
-  background: var(--color-bg, #fafaf9);
-}
-
+.rowClickable { cursor: pointer; }
+.rowClickable:hover { background: #F4F3F1; }
 .rowClickable:focus-visible {
-  outline: 2px solid var(--color-blue-dark, #1e40af);
+  outline: 2px solid #2563EB;
   outline-offset: -2px;
 }
 
-.rowFailed {
-  opacity: 0.55;
-}
+.rowFailed { opacity: 0.55; }
 
 .td {
-  padding: 12px 16px;
-  color: var(--color-ink);
+  padding: 11px 14px;
+  color: var(--color-ink, #0f172a);
   vertical-align: middle;
 }
 
-.nameCell {
+/* Row number — DM Mono, muted */
+.rowNum {
+  color: var(--color-ink-mute, #94a3b8);
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 11px;
+  width: 36px;
+}
+
+/* Name cell — stacked: bold name + soft counterparty */
+.nameCell { max-width: 240px; }
+
+.namePrimary {
   font-weight: 600;
-  max-width: 220px;
+  color: var(--color-ink, #0f172a);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.muted {
-  color: var(--color-ink-mute, #94a3b8);
+.nameSecondary {
+  font-size: 11px;
+  color: var(--color-ink-soft, #64748b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
 }
+
+.mono {
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 12px;
+  color: var(--color-ink-soft, #64748b);
+  white-space: nowrap;
+}
+
+.muted { color: var(--color-ink-mute, #94a3b8); }
 
 /* ── Status badge ─────────────────────────────────────────────── */
 
@@ -98,26 +125,15 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: 3px 9px;
+  border-radius: 6px;
 }
 
-.statusComplete {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.statusProcessing {
-  background: #fef9c3;
-  color: #854d0e;
-}
-
-.statusFailed {
-  background: #fee2e2;
-  color: #991b1b;
-}
+.statusComplete  { background: #ECFDF5; color: #059669; }
+.statusProcessing { background: #DBEAFE; color: #2563EB; }
+.statusFailed    { background: #FEF2F2; color: #DC2626; }
 
 /* ── Empty / Loading / Error states ──────────────────────────── */
 
@@ -127,16 +143,19 @@
 }
 
 .stateMsg {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-ink-soft, #64748b);
   margin: 0 0 12px;
 }
 
 .stateLink {
-  font-size: 14px;
-  color: var(--color-blue-dark, #1e40af);
+  font-size: 13px;
+  color: #2563EB;
   font-weight: 600;
   text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .stateLink:hover { text-decoration: underline; }
@@ -147,7 +166,7 @@
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: 4px;
-  height: 14px;
+  height: 13px;
 }
 
 @keyframes shimmer {

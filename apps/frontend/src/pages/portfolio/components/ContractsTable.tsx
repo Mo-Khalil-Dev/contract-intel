@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { DocumentListItem } from '@/types/contracts';
-import { RiskBadge } from '@/components/core/RiskBadge';
+import { RiskBar } from '@/components/core/RiskBar';
 import { FlagsSummary } from '@/components/core/FlagsSummary';
 import styles from './ContractsTable.module.css';
 
@@ -44,7 +44,7 @@ function StatusBadge({ status }: { status: DocumentListItem['status'] }) {
 function SkeletonRow() {
   return (
     <tr className={styles.row}>
-      {[220, 70, 120, 60, 80, 90, 70].map((w, i) => (
+      {[28, 220, 70, 120, 60, 90, 70].map((w, i) => (
         <td key={i} className={styles.td}>
           <span className={styles.skeleton} style={{ width: w }} />
         </td>
@@ -55,7 +55,7 @@ function SkeletonRow() {
 
 // ── ContractRow ───────────────────────────────────────────────────
 
-function ContractRow({ item }: { item: DocumentListItem }) {
+function ContractRow({ item, index }: { item: DocumentListItem; index: number }) {
   const navigate = useNavigate();
   const isComplete = item.status === 'complete';
   const isFailed = item.status === 'failed';
@@ -86,21 +86,26 @@ function ContractRow({ item }: { item: DocumentListItem }) {
       role={isComplete ? 'button' : undefined}
       aria-label={isComplete ? `Open ${item.name}` : undefined}
     >
-      <td className={`${styles.td} ${styles.nameCell}`} title={item.name}>{item.name}</td>
-      <td className={styles.td}><TypeChip type={item.type} /></td>
-      <td className={`${styles.td} ${!item.counterparty ? styles.muted : ''}`}>
-        {item.counterparty || '—'}
+      <td className={`${styles.td} ${styles.rowNum}`}>
+        {String(index + 1).padStart(2, '0')}
       </td>
+      <td className={`${styles.td} ${styles.nameCell}`}>
+        <div className={styles.namePrimary} title={item.name}>{item.name}</div>
+        {item.counterparty && (
+          <div className={styles.nameSecondary}>{item.counterparty}</div>
+        )}
+      </td>
+      <td className={styles.td}><TypeChip type={item.type} /></td>
       <td className={styles.td}>
         {item.riskScore !== null
-          ? <RiskBadge score={item.riskScore} size="sm" />
+          ? <RiskBar score={item.riskScore} max={10} />
           : <span className={styles.muted}>—</span>
         }
       </td>
       <td className={styles.td}>
         <FlagsSummary red={item.flagsRed} orange={item.flagsOrange} green={item.flagsBlue} />
       </td>
-      <td className={`${styles.td} ${styles.muted}`}>{formatDate(item.terminationDate)}</td>
+      <td className={`${styles.td} ${styles.mono}`}>{formatDate(item.terminationDate)}</td>
       <td className={styles.td}><StatusBadge status={item.status} /></td>
     </tr>
   );
@@ -121,22 +126,23 @@ export function ContractsTable({ items, total, isLoading, isFetching, error, onR
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <p className={styles.cardTitle}>
-          {isLoading ? 'Contracts' : `${total} contract${total === 1 ? '' : 's'} found`}
-        </p>
-        {isFetching && !isLoading && <span className={styles.fetching}>Updating…</span>}
+        <p className={styles.cardTitle}>Contracts by risk score</p>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {isFetching && !isLoading && <span className={styles.fetching}>Updating…</span>}
+          {!isLoading && <span className={styles.shown}>{total} shown</span>}
+        </div>
       </div>
 
-      <div className={styles.tableWrap}>
+      <div className={`${styles.tableWrap} ci-table-wrap`}>
         <table className={styles.table} aria-label="Contracts">
           <thead>
             <tr>
-              <th scope="col">Name</th>
+              <th scope="col">#</th>
+              <th scope="col">Contract</th>
               <th scope="col">Type</th>
-              <th scope="col">Counterparty</th>
               <th scope="col">Risk</th>
               <th scope="col">Flags</th>
-              <th scope="col">Termination</th>
+              <th scope="col">Expiry</th>
               <th scope="col">Status</th>
             </tr>
           </thead>
@@ -161,8 +167,8 @@ export function ContractsTable({ items, total, isLoading, isFetching, error, onR
               </tr>
             )}
 
-            {!isLoading && !error && items.map((item) => (
-              <ContractRow key={item.id} item={item} />
+            {!isLoading && !error && items.map((item, i) => (
+              <ContractRow key={item.id} item={item} index={i} />
             ))}
           </tbody>
         </table>
