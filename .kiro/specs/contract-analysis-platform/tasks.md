@@ -3845,7 +3845,7 @@ Under `apps/frontend/src/pages/portfolio/`:
 - Unit test on the CSV-formatting helper (quoting, escaping, ISO
   dates).
 
-#### Task 10.11: Verify the full Contracts View end-to-end
+#### ~~Task 10.11: Verify the full Contracts View end-to-end~~ ✅
 
 - Playwright spec covering: navigate to `/contracts`, see KPI strip,
   apply each filter, change sort, paginate, click a `complete` row
