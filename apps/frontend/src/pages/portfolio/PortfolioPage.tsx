@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useDocumentList } from '@/hooks/useDocumentList';
 import { useDocumentListFilters } from '@/lib/documentListFilters/useDocumentListFilters';
+import { useExportCsv } from '@/hooks/useExportCsv';
 import type { LayoutVariant } from '@/lib/documentListFilters/defaults';
 import { KpiStrip } from './components/KpiStrip';
 import { FilterStrip } from './components/FilterStrip';
@@ -17,6 +18,7 @@ export function PortfolioPage() {
   const { items, total, page, pageSize, totalPages, summary, isLoading, isFetching, error, refetch } =
     useDocumentList(filters);
 
+  const { exportCsv, isExporting } = useExportCsv(filters, total);
   const layout = filters.layout;
 
   function handleLayoutChange(v: LayoutVariant) {
@@ -35,6 +37,14 @@ export function PortfolioPage() {
           </div>
           <div className={styles.actions}>
             <LayoutToggle value={layout} onChange={handleLayoutChange} />
+            <button
+              className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+              onClick={exportCsv}
+              disabled={isExporting || total === 0}
+              aria-label="Export filtered contracts to CSV"
+            >
+              {isExporting ? 'Exporting…' : 'Export CSV'}
+            </button>
             <button
               className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
               onClick={() => navigate('/upload')}

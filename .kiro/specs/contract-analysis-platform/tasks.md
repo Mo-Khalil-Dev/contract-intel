@@ -3836,7 +3836,7 @@ Under `apps/frontend/src/pages/portfolio/`:
 - `cards` and `minimal` variants per US-PORT-6.
 - Tweaks-panel entry.
 
-#### Task 10.10: Export the filtered list to CSV
+#### ~~Task 10.10: Export the filtered list to CSV~~ ✅
 
 - Client-side CSV builder that re-fetches **all** filtered rows
   (single call with `pageSize=total`, capped at 5000) and triggers a
