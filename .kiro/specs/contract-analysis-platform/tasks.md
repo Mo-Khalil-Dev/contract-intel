@@ -3805,7 +3805,7 @@ Under `apps/frontend/src/lib/documentListFilters/`:
 - Unit tests on `parse`/`serialize` (round-trip, defaults, coercion);
   one integration test on the hook with `MemoryRouter`.
 
-#### Task 10.7: Fetch contract list data on the page
+#### ~~Task 10.7: Fetch contract list data on the page~~ ✅
 
 - `react-query` v3 `useQuery` hook keyed on the URL params.
 - `keepPreviousData: true` so paging doesn't flash a skeleton.
