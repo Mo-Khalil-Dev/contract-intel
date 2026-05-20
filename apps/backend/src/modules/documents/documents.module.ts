@@ -62,6 +62,11 @@ import { PrismaDocumentTextRepository } from './infrastructure/prisma-document-t
 // Infrastructure — Phase 10 (Contracts View read model)
 import { PrismaDocumentListItemRepository } from './infrastructure/prisma-document-list-item.repository';
 
+// Application — Phase 10 projection handlers
+import { OnDocumentUploadStartedHandler } from './application/projections/document-list-item/handlers/on-document-upload-started.handler';
+import { OnClauseExtractionCompletedHandler } from './application/projections/document-list-item/handlers/on-clause-extraction-completed.handler';
+import { OnClauseExtractionFailedHandler } from './application/projections/document-list-item/handlers/on-clause-extraction-failed.handler';
+
 /**
  * Documents module — Phase 5.
  *
@@ -126,6 +131,9 @@ import { PrismaDocumentListItemRepository } from './infrastructure/prisma-docume
     ClassifierThenRouter,
     { provide: DOCUMENT_TEXT_REPOSITORY, useClass: PrismaDocumentTextRepository },
     { provide: DOCUMENT_LIST_ITEM_REPOSITORY, useClass: PrismaDocumentListItemRepository },
+    OnDocumentUploadStartedHandler,
+    OnClauseExtractionCompletedHandler,
+    OnClauseExtractionFailedHandler,
     { provide: OCR_SERVICE, useExisting: ClassifierThenRouter },
 
     // Cloud-track driver — env-driven. `mock` for tests/local-dev,

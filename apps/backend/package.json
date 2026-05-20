@@ -20,7 +20,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "backfill:list-items": "ts-node --project tsconfig.scripts.json scripts/backfill-document-list-items.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",

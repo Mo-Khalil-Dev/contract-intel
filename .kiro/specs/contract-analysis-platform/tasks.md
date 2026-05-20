@@ -3732,7 +3732,7 @@ can be parallelised.
 
 ### Phase 10 tasks
 
-#### Task 10.1: Store contract list data efficiently
+#### ~~Task 10.1: Store contract list data efficiently~~ ✅
 
 - Add `DocumentListItem` Prisma model to `schema.prisma`:
   - `id` (PK, = documentId), `orgId`, `name`, `type`, `counterparty`,
@@ -3745,7 +3745,7 @@ can be parallelised.
 - Repository interface + Prisma adapter
   (`document-list-item.repository.ts`).
 
-#### Task 10.2: Keep the contract list fresh as documents change
+#### ~~Task 10.2: Keep the contract list fresh as documents change~~ ✅
 
 Mirror the Phase 6 audit module's event-handler wiring under
 `modules/documents/application/projections/document-list-item/`:
@@ -3756,7 +3756,7 @@ Mirror the Phase 6 audit module's event-handler wiring under
 - `OnDocumentFailedHandler` → UPDATE row with `status='failed'`.
 - Unit-test each handler against an in-memory repository.
 
-#### Task 10.3: Bring existing contracts into the new list
+#### ~~Task 10.3: Bring existing contracts into the new list~~ ✅
 
 - One-off script `scripts/backfill-document-list-items.ts` that walks
   every existing `Document`, computes the projection columns from
