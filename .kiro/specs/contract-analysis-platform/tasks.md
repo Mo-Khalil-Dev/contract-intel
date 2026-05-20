@@ -3791,7 +3791,7 @@ Under `modules/documents/application/queries/`:
 - E2E test covering happy path, filter composition, pagination,
   empty result.
 
-#### Task 10.6: Make filters shareable and refresh-safe via the URL
+#### ~~Task 10.6: Make filters shareable and refresh-safe via the URL~~ ✅
 
 Under `apps/frontend/src/lib/documentListFilters/`:
 
