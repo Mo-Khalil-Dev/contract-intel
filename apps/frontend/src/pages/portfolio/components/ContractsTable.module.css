@@ -1,0 +1,156 @@
+.card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.fetching {
+  font-size: 12px;
+  color: var(--color-ink-mute, #94a3b8);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-ink-mute, #94a3b8);
+  background: var(--color-bg, #fafaf9);
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  white-space: nowrap;
+}
+
+/* ── Rows ─────────────────────────────────────────────────────── */
+
+.row {
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+  transition: background 0.1s;
+}
+
+.row:last-child { border-bottom: none; }
+
+.rowClickable {
+  cursor: pointer;
+}
+
+.rowClickable:hover {
+  background: var(--color-bg, #fafaf9);
+}
+
+.rowClickable:focus-visible {
+  outline: 2px solid var(--color-blue-dark, #1e40af);
+  outline-offset: -2px;
+}
+
+.rowFailed {
+  opacity: 0.55;
+}
+
+.td {
+  padding: 12px 16px;
+  color: var(--color-ink);
+  vertical-align: middle;
+}
+
+.nameCell {
+  font-weight: 600;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--color-ink-mute, #94a3b8);
+}
+
+/* ── Status badge ─────────────────────────────────────────────── */
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.statusComplete {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusProcessing {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.statusFailed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ── Empty / Loading / Error states ──────────────────────────── */
+
+.stateRow td {
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.stateMsg {
+  font-size: 15px;
+  color: var(--color-ink-soft, #64748b);
+  margin: 0 0 12px;
+}
+
+.stateLink {
+  font-size: 14px;
+  color: var(--color-blue-dark, #1e40af);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stateLink:hover { text-decoration: underline; }
+
+.skeleton {
+  display: inline-block;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+  height: 14px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

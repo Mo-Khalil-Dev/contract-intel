@@ -9,6 +9,7 @@ import { HomePageV2Container } from '@/pages/HomePageV2';
 import { UploadPageContainer } from '@/pages/UploadPage';
 import { ProcessingPage } from '@/pages/ProcessingPage/ProcessingPage';
 import { ResultsPage } from '@/pages/ResultsPage/ResultsPage';
+import { PortfolioPage } from '@/pages/portfolio/PortfolioPage';
 
 function App() {
   return (
@@ -48,6 +49,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProcessingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/contracts"
+              element={
+                <ProtectedRoute>
+                  <PortfolioPage />
                 </ProtectedRoute>
               }
             />

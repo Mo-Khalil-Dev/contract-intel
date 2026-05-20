@@ -3813,7 +3813,7 @@ Under `apps/frontend/src/lib/documentListFilters/`:
   isLoading, isFetching, error, refetch }`.
 - Uses the 3-tier API call stack from the frontend guidelines.
 
-#### Task 10.8: Show the contracts page with KPIs, filters, and table
+#### ~~Task 10.8: Show the contracts page with KPIs, filters, and table~~ ✅
 
 Under `apps/frontend/src/pages/portfolio/`:
 
