@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDocumentList } from '@/hooks/useDocumentList';
 import { useDocumentListFilters } from '@/lib/documentListFilters/useDocumentListFilters';
 import { useExportCsv } from '@/hooks/useExportCsv';
+import { useAuth } from '@/hooks/useAuth';
 import type { LayoutVariant } from '@/lib/documentListFilters/defaults';
-import { AppNav } from '@/components/layout/AppNav/AppNav';
+import { TopNav } from '@/pages/HomePageV2/components/TopNav';
 import { KpiStrip } from './components/KpiStrip';
 import { FilterStrip } from './components/FilterStrip';
 import { ContractsTable } from './components/ContractsTable';
@@ -20,6 +22,7 @@ export function PortfolioPage() {
   const { items, total, page, pageSize, totalPages, summary, isLoading, isFetching, error, refetch } =
     useDocumentList(filters);
   const { exportCsv, isExporting } = useExportCsv(filters, total);
+  const { user } = useAuth();
 
   const layout = filters.layout;
 
@@ -27,12 +30,31 @@ export function PortfolioPage() {
     setFilters({ layout: v });
   }
 
+  const userInitials = useMemo(() => {
+    const src = user?.name?.trim() || user?.email || 'U';
+    const parts = src.split(/\s+/).slice(0, 2);
+    return (parts.map((p) => p[0] ?? '').join('').toUpperCase() || 'U').slice(0, 2);
+  }, [user]);
+
+  function handleNav(id: string) {
+    switch (id) {
+      case 'home':      navigate('/v2'); break;
+      case 'portfolio': navigate('/contracts'); break;
+      case 'upload':    navigate('/upload'); break;
+      case 'renewals':  navigate('/renewals'); break;
+      case 'settings':  navigate('/settings'); break;
+      default:
+        // playbook / compare don't have routes yet
+        // eslint-disable-next-line no-console
+        console.info('[PortfolioPage] nav →', id, '(no route yet)');
+    }
+  }
+
   const contentProps = { items, total, isLoading, isFetching, error, onRetry: refetch };
 
   return (
     <div className={styles.shell}>
-      <AppNav />
-
+      <TopNav active="portfolio" userInitials={userInitials} onNav={handleNav} />
       <div className={styles.page}>
         {/* Page header — white bar matching wireframe PageShell */}
         <div className={styles.pageHeader}>

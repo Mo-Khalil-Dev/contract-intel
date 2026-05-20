@@ -54,3 +54,4 @@ storybook-static
 
 # Backend upload directory (local FS storage driver)
 apps/backend/uploads/
+apps/frontend/playwright-report/

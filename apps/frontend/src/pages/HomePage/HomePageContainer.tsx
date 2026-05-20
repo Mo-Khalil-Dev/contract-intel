@@ -16,7 +16,7 @@ export function HomePageContainer() {
         navigate('/upload');
         break;
       case 'portfolio':
-        navigate('/portfolio');
+        navigate('/contracts');
         break;
       case 'results':
         if (params?.contractId) {

@@ -58,8 +58,10 @@ export function HomePageV2Container() {
     if (NAV_DESTINATIONS.includes(id as NavDestination)) {
       track('top_nav_link_clicked', { destination: id as NavDestination });
     }
-    // Sibling routes (portfolio / renewals / etc.) don't exist yet —
-    // log so the user can see clicks register without 404ing the SPA.
+    if (id === 'portfolio') {
+      navigate('/contracts');
+      return;
+    }
     // eslint-disable-next-line no-console
     console.info('[HomePageV2] nav →', id, '(no route yet)');
   }

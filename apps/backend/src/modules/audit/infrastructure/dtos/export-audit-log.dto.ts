@@ -5,7 +5,7 @@ import { AuditActionEnum } from '../../domain/audit-action.vo';
 export class ExportAuditLogDto {
   @ApiProperty({ enum: ['json', 'csv'], description: 'Export format' })
   @IsEnum(['json', 'csv'])
-  format: 'json' | 'csv';
+  format!: 'json' | 'csv';
 
   @ApiPropertyOptional({ description: 'Filter by actor (user) ID' })
   @IsOptional()
