@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
@@ -46,6 +47,11 @@ import { StorageKey } from '../domain/value-objects/storage-key.vo';
 import { IStorageService, STORAGE_SERVICE } from '../domain/ports/storage-service.port';
 import { InitiateUploadDto, UploadResponseDto } from './dtos/initiate-upload.dto';
 import { CompleteUploadDto, UploadStatusDto } from './dtos/complete-upload.dto';
+import { GetDocumentListDto } from './dtos/get-document-list.dto';
+import { GetDocumentListQuery } from '../application/queries/get-document-list.query';
+import { GetDocumentSummaryQuery } from '../application/queries/get-document-summary.query';
+import type { GetDocumentListResult } from '../application/queries/get-document-list.query';
+import type { GetDocumentSummaryResult } from '../application/queries/get-document-summary.query';
 
 @ApiTags('Documents')
 @Controller('documents')
@@ -58,6 +64,33 @@ export class DocumentController {
      *  care which one — it just calls writeStream on the port. */
     @Inject(STORAGE_SERVICE) private readonly storage: IStorageService,
   ) {}
+
+  // ── Contracts View (Phase 10) ────────────────────────────────────
+
+  @Get()
+  async listDocuments(
+    @CurrentUser() user: RequestUser,
+    @Query() dto: GetDocumentListDto,
+  ): Promise<GetDocumentListResult & { summary: GetDocumentSummaryResult }> {
+    const orgId = user.userId;
+    const [list, summary] = await Promise.all([
+      this.queryBus.execute<GetDocumentListQuery, GetDocumentListResult>(
+        new GetDocumentListQuery({
+          orgId,
+          q: dto.q,
+          risk: dto.risk,
+          type: dto.type,
+          sort: dto.sort,
+          page: dto.page,
+          pageSize: dto.pageSize,
+        }),
+      ),
+      this.queryBus.execute<GetDocumentSummaryQuery, GetDocumentSummaryResult>(
+        new GetDocumentSummaryQuery(orgId),
+      ),
+    ]);
+    return { ...list, summary };
+  }
 
   // ── Step 1: initiate ─────────────────────────────────────────────
 

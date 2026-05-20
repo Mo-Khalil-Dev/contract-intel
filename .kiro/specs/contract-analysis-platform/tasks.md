@@ -3779,7 +3779,7 @@ Under `modules/documents/application/queries/`:
 - Unit tests for both, including filter composition, sort modes,
   pagination edges (page=0, page>totalPages), and empty portfolio.
 
-#### Task 10.5: Expose the contract list to the frontend
+#### ~~Task 10.5: Expose the contract list to the frontend~~ ✅
 
 - `GET /api/documents` controller in `modules/documents/http/`.
 - Compose `GetDocumentListQuery` + `GetDocumentSummaryQuery` and
