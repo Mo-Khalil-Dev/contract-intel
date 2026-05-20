@@ -3853,7 +3853,7 @@ Under `apps/frontend/src/pages/portfolio/`:
   refresh preserves URL state, Export CSV downloads the expected
   file.
 
-#### Task 10.12: Document the Contract = Document decision
+#### ~~Task 10.12: Document the Contract = Document decision~~ ✅
 
 - Note "Contract = Document (v1)" in CONTEXT.md.
 - One-line entry in `MEMORY.md` under project memory.
