@@ -91,7 +91,7 @@ describe('parse', () => {
   describe('round-trip with serialize', () => {
     it('parse(serialize(filters)) === filters for non-default values', async () => {
       const { serialize } = await import('../serialize');
-      const filters = { q: 'acme', risk: 'high' as const, type: 'vendor' as const, sort: 'date' as const, page: 3, pageSize: 20 };
+      const filters = { q: 'acme', risk: 'high' as const, type: 'vendor' as const, sort: 'date' as const, layout: 'cards' as const, page: 3, pageSize: 20 };
       expect(parse(serialize(filters))).toEqual(filters);
     });
 

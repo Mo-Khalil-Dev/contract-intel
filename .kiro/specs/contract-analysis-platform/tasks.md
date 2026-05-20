@@ -3829,7 +3829,7 @@ Under `apps/frontend/src/pages/portfolio/`:
 - Responsive behaviour per US-PORT-8 (existing `ci-*` responsive
   classes from the wireframe stylesheet).
 
-#### Task 10.9: Support table / cards / minimal layouts
+#### ~~Task 10.9: Support table / cards / minimal layouts~~ ✅
 
 - `layoutVariant` prop (`'table' | 'cards' | 'minimal'`) on
   `PortfolioPage`, reflected in `?layout=`. Default `table`.

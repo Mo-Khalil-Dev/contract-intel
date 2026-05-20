@@ -1,0 +1,118 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 12px;
+  padding: 18px 20px;
+  cursor: default;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardClickable {
+  cursor: pointer;
+}
+
+.cardClickable:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-color: var(--color-blue-dark, #1e40af);
+}
+
+.cardClickable:focus-visible {
+  outline: 2px solid var(--color-blue-dark, #1e40af);
+  outline-offset: 2px;
+}
+
+.cardFailed {
+  opacity: 0.6;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label {
+  font-size: 11px;
+  color: var(--color-ink-mute, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.value {
+  font-size: 13px;
+  color: var(--color-ink-soft, #64748b);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border, #e2e8f0);
+  margin: 2px 0;
+}
+
+/* Skeleton */
+.skeleton {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  height: 14px;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty / error states */
+.stateCard {
+  grid-column: 1 / -1;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 12px;
+}
+
+.stateMsg {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--color-ink-soft, #64748b);
+}
+
+.stateLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-blue-dark, #1e40af);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: underline;
+}

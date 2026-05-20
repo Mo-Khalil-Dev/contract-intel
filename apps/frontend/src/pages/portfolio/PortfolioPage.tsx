@@ -1,9 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useDocumentList } from '@/hooks/useDocumentList';
 import { useDocumentListFilters } from '@/lib/documentListFilters/useDocumentListFilters';
+import type { LayoutVariant } from '@/lib/documentListFilters/defaults';
 import { KpiStrip } from './components/KpiStrip';
 import { FilterStrip } from './components/FilterStrip';
 import { ContractsTable } from './components/ContractsTable';
+import { ContractCards } from './components/ContractCards';
+import { ContractMinimal } from './components/ContractMinimal';
+import { LayoutToggle } from './components/LayoutToggle';
 import { Pagination } from './components/Pagination';
 import styles from './PortfolioPage.module.css';
 
@@ -12,6 +16,14 @@ export function PortfolioPage() {
   const { filters, setFilters, setQueryText } = useDocumentListFilters();
   const { items, total, page, pageSize, totalPages, summary, isLoading, isFetching, error, refetch } =
     useDocumentList(filters);
+
+  const layout = filters.layout;
+
+  function handleLayoutChange(v: LayoutVariant) {
+    setFilters({ layout: v });
+  }
+
+  const contentProps = { items, total, isLoading, isFetching, error, onRetry: refetch };
 
   return (
     <div className={styles.root}>
@@ -22,6 +34,7 @@ export function PortfolioPage() {
             <p className={styles.subtitle}>Your full contract portfolio</p>
           </div>
           <div className={styles.actions}>
+            <LayoutToggle value={layout} onChange={handleLayoutChange} />
             <button
               className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
               onClick={() => navigate('/upload')}
@@ -31,9 +44,11 @@ export function PortfolioPage() {
           </div>
         </div>
 
-        <div className={styles.section}>
-          <KpiStrip summary={summary} isLoading={isLoading} />
-        </div>
+        {layout !== 'minimal' && (
+          <div className={styles.section}>
+            <KpiStrip summary={summary} isLoading={isLoading} />
+          </div>
+        )}
 
         <div className={styles.section}>
           <FilterStrip
@@ -44,14 +59,9 @@ export function PortfolioPage() {
         </div>
 
         <div className={styles.section}>
-          <ContractsTable
-            items={items}
-            total={total}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            error={error}
-            onRetry={refetch}
-          />
+          {layout === 'table'   && <ContractsTable {...contentProps} />}
+          {layout === 'cards'   && <ContractCards  {...contentProps} />}
+          {layout === 'minimal' && <ContractMinimal {...contentProps} />}
         </div>
 
         <Pagination

@@ -8,6 +8,7 @@ export function serialize(filters: DocumentListFilters): URLSearchParams {
   if (filters.risk !== DEFAULTS.risk) params.set('risk', filters.risk);
   if (filters.type !== DEFAULTS.type) params.set('type', filters.type);
   if (filters.sort !== DEFAULTS.sort) params.set('sort', filters.sort);
+  if (filters.layout !== DEFAULTS.layout) params.set('layout', filters.layout);
   if (filters.page !== DEFAULTS.page) params.set('page', String(filters.page));
   if (filters.pageSize !== DEFAULTS.pageSize) params.set('pageSize', String(filters.pageSize));
 
