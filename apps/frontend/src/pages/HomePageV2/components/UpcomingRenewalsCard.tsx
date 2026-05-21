@@ -1,3 +1,4 @@
+import { track } from '@/analytics';
 import type { UrgentRenewalItem } from '../types';
 import { urgencyColor } from '../tokens';
 import styles from './UpcomingRenewalsCard.module.css';
@@ -29,14 +30,21 @@ export function UpcomingRenewalsCard({
         </button>
       </div>
       {renewals.length === 0 && <div className={styles.empty}>No upcoming renewals.</div>}
-      {renewals.map((r) => {
+      {renewals.map((r, position) => {
         const color = urgencyColor(r.urgency);
         return (
           <div
             key={r.id}
             className={styles.row}
             style={{ borderLeftColor: color }}
-            onClick={() => onRowClick(r)}
+            onClick={() => {
+              track('urgent_renewal_clicked', {
+                position,
+                urgency: r.urgency,
+                days_remaining: r.daysRemaining,
+              });
+              onRowClick(r);
+            }}
           >
             <div className={styles.rowTitle}>{r.contractName}</div>
             <div className={styles.rowMeta}>

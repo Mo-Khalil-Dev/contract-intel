@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReferenceData } from '@/hooks/useReferenceData';
 import { HomePageV2 } from './HomePageV2';
@@ -22,6 +22,16 @@ const NAV_DESTINATIONS: readonly NavDestination[] = [
 export function HomePageV2Container() {
   const { data: vm, isLoading, error } = useReferenceData();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (vm && !isLoading) {
+      track('dashboard_viewed', {
+        critical_flag_count: vm.kpis.criticalFlagCount,
+        urgent_renewal_count: vm.kpis.urgentRenewalCount,
+        active_contract_count: vm.kpis.activeContractCount,
+      });
+    }
+  }, [vm, isLoading]);
 
   const greetingName = useMemo(() => {
     const raw = vm?.user.displayName?.trim() || vm?.user.email || 'there';
