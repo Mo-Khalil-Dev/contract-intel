@@ -3869,3 +3869,399 @@ US-PORT-1..5 + 7 + 8 slice. 10.9 (variants), 10.10 (CSV), 10.11
 
 Open scope items (e.g. the 300px side column) are tracked in
 `requirements.md` under Requirement 13 → **Still open**.
+
+---
+
+## Phase 11: Clause Intelligence (Similar Clauses + Semantic Search)
+
+**Requirement**: see [Requirement 14: Clause Intelligence](./requirements.md#requirement-14-clause-intelligence-similar-clauses--semantic-search)
+in `requirements.md` for the full epic, the three child stories
+(US-CI-0..2), acceptance criteria, and resolved scope decisions.
+
+**Visual specs**: `docs/design/similar-clauses-visual.md`,
+`docs/design/semantic-search-visual.md`.
+
+**Implementation plan**: `docs/design/similar-clauses-impl-plan.md` (US-CI-1).
+
+This section covers **execution only**: the layer map and the
+engineering task breakdown that implements those requirements.
+
+### Phase 11 layer map (Clean Architecture / DDD)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Interface / UI (frontend)                                    │
+│   11.6  Find similar trigger + drawer integration            │
+│   11.7  SimilarClausesDrawer + result-row components         │
+│   11.8  Comparison-mode navigation + highlight               │
+│   11.9  (US-CI-2) Search overlay + /search page              │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Interface / HTTP (backend) + Frontend data adapters          │
+│   11.4  GET /api/v1/clauses/:id/similar controller + DTO     │
+│   11.5  useSimilarClauses hook + service                     │
+│   11.10 (US-CI-2) GET /api/v1/search controller + DTO        │
+│   11.11 (US-CI-2) useSemanticSearch hook                     │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Application (use cases, query handlers)                      │
+│   11.3  GetSimilarClauses query handler                      │
+│   11.12 (US-CI-2) SearchPortfolio query handler + HyDE       │
+│         rewriter port                                        │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Domain + Infrastructure                                      │
+│   Domain (unchanged): Clause aggregate, Document aggregate   │
+│   Infrastructure:                                            │
+│     11.0  Pre-flight: HNSW index migration + embedding       │
+│           backfill script                                    │
+│     11.1  ClauseSimilarityRepository (pgvector raw SQL)      │
+│     11.2  Demo-readiness audit script                        │
+│     11.13 (US-CI-2) HydeQueryRewriter (Claude driver)        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### Why this layering for Phase 11
+
+- **Domain stays untouched.** No new aggregates. The `Clause` aggregate
+  already owns `embedding` and `embeddingModelVersion` from Phase 8;
+  Phase 11 just queries it.
+- **Vector search is infrastructure, not domain.** Cosine kNN is a
+  storage concern (pgvector). It sits behind a repository interface
+  (`ClauseSimilarityRepository`) so the query handler is testable
+  against an in-memory implementation.
+- **Query handlers bypass the aggregate.** Reads do not load `Clause`
+  aggregates — they hit the read-side repository directly, same CQRS
+  shape as Phase 10's contract list.
+- **HyDE rewriting is a port.** The Claude driver implements
+  `HydeQueryRewriter`; the handler depends only on the port. A
+  pass-through stub is used in tests so semantic-search handler tests
+  do not require an LLM.
+
+#### Dependency rule applied to the task order
+
+1. **11.0** ships the HNSW index + the backfill script. Without the
+   index, the kNN query is unusable on real data; without the
+   backfill, clauses ingested while Voyage was disabled are
+   invisible.
+2. **11.1** (infrastructure: repository) wraps pgvector raw SQL behind
+   a domain-language interface.
+3. **11.2** (audit script) verifies demo readiness — fail fast if the
+   dataset cannot support a credible demo.
+4. **11.3** (application: query handler) consumes the repository.
+   Unit-testable against the in-memory implementation.
+5. **11.4** (HTTP boundary) exposes the handler. Boundary validation
+   only; never re-validates inside the handler.
+6. **11.5**–**11.8** (frontend) compose hook → components → page
+   integration. UI has no business logic.
+7. **11.9**–**11.13** (US-CI-2) reuse the index, the result-row
+   components, and the hook pattern from US-CI-1, then add HyDE +
+   the dedicated search surface.
+
+#### Test pyramid by layer
+
+| Layer | Test type | Examples |
+|---|---|---|
+| Domain | Unchanged | Existing `Clause.spec.ts` |
+| Infrastructure | Repository integration | `pgvector-clause-similarity.repository.spec.ts` against real Postgres + seeded embeddings |
+| Application | Unit | `get-similar-clauses.handler.spec.ts` against in-memory repo |
+| HTTP | Integration | Supertest covering `GET /api/v1/clauses/:id/similar` happy + 404 + 409 |
+| Frontend pure | Unit | Similarity-bar formatting; URL-params (US-CI-2) parse/serialise |
+| Frontend hook | Integration | `useSimilarClauses` with MSW |
+| End-to-end | Playwright | Task 11.14 |
+
+---
+
+### Phase 11 tasks
+
+#### Task 11.0: Pre-flight — pgvector index + embedding backfill (US-CI-0)
+
+**Goal**: ensure every existing clause has an embedding and that `Clause.embedding`
+is indexed for sub-300ms kNN, before any feature work begins.
+
+- **HNSW index migration**:
+  `apps/backend/prisma/migrations/20260521000000_phase11_clause_embedding_hnsw_index/migration.sql`
+  creates `Clause_embedding_cosine_idx` using `hnsw (embedding vector_cosine_ops)`,
+  built `CONCURRENTLY` so writes are not blocked. The migration is
+  marked `-- prisma-no-transaction` because `CREATE INDEX CONCURRENTLY`
+  cannot run inside Prisma's default transaction wrapper.
+- **Backfill script**: `apps/backend/scripts/backfill-clause-embeddings.ts`:
+  - Selects every `Clause` with `embedding IS NULL` and non-empty `text`.
+  - Calls the existing `VoyageEmbeddingService` in batches of 128 (the
+    Voyage server-side cap; the driver enforces the same).
+  - Writes back via raw SQL `UPDATE "Clause" SET embedding =
+    $literal::vector, "embeddingModelVersion" = $model WHERE id = $id`
+    — Prisma cannot bind `vector(1024)` directly.
+  - Idempotent (re-run only touches still-null rows).
+  - Flags: `--dry-run` (no Voyage calls, no writes) and `--limit=N`
+    (cap rows in a single run).
+  - Permanent errors abort with exit 1; transient errors log and
+    continue (exit 2 if any transient batches were skipped).
+- **Coverage audit query** (run before and after backfill):
+  ```sql
+  SELECT type,
+         COUNT(*) FILTER (WHERE embedding IS NOT NULL) AS embedded,
+         COUNT(*) AS total
+  FROM "Clause"
+  GROUP BY type
+  ORDER BY total DESC;
+  ```
+  After backfill, `embedded = total` for every clause type. If any
+  clause type used in the demo has fewer than 3 embedded rows,
+  upload supplemental contracts (operational task, not a code
+  change — see US-CI-0 AC7).
+- **Run order**:
+  1. `npx prisma migrate deploy` (creates the HNSW index)
+  2. `npx ts-node --project tsconfig.scripts.json scripts/backfill-clause-embeddings.ts --dry-run`
+     — confirm pending counts look right
+  3. Re-run without `--dry-run` to actually embed
+  4. Re-run the coverage audit; confirm green
+- **Acceptance** (US-CI-0 AC1–AC7): all met before Task 11.1 starts.
+
+**Definition of Done**:
+- [ ] Migration applied to development DB
+- [ ] Coverage audit shows `embedded = total` for every type
+- [ ] Every demo-relevant clause type has ≥3 embedded rows
+- [ ] Backfill script tested with `--dry-run` and `--limit=10` on a real subset
+- [ ] One-line note added to `MEMORY.md` linking to `phase11_status.md` (when created)
+
+---
+
+#### Task 11.1: Vector-search repository (infrastructure)
+
+**Goal**: hide pgvector raw SQL behind a domain-language interface so the
+application layer never touches `$queryRaw`.
+
+- Port: `apps/backend/src/modules/clauses/application/ports/clause-similarity.repository.ts`:
+  ```ts
+  export interface ClauseSimilarityRepository {
+    findSimilar(input: {
+      sourceClauseId: string;
+      sourceDocumentId: string;
+      clauseType: string;
+      limit: number;
+      minSimilarity?: number;
+    }): Promise<SimilarClauseRow[]>;
+  }
+  ```
+- Prisma adapter: `apps/backend/src/modules/clauses/infrastructure/persistence/pgvector-clause-similarity.repository.ts`:
+  - Raw SQL using `<=>` cosine-distance operator.
+  - Excludes self + same-document clauses; filters to same type.
+  - Returns rows joined with `Document` for title + uploadedAt.
+- In-memory adapter for tests: `mock-clause-similarity.repository.ts`
+  with cosine-similarity computed in TS.
+
+**Definition of Done**:
+- [ ] Port exists with a single method, no Prisma types leaking
+- [ ] Prisma adapter passes a real-DB integration test against a
+      seeded fixture
+- [ ] In-memory adapter passes a parity unit test (same input → same
+      ordering as the Prisma adapter)
+
+---
+
+#### Task 11.2: Demo-readiness audit script
+
+**Goal**: a single command that the operator runs before any demo to
+verify the dataset will not embarrass the feature.
+
+- `apps/backend/scripts/check-demo-readiness.ts`:
+  - Reads a fixture file `scripts/fixtures/demo-clauses.json` listing
+    `{ documentId, clauseId, expectedMinResults }` tuples.
+  - For each, calls the `ClauseSimilarityRepository` directly and
+    asserts `results.length >= expectedMinResults`.
+  - Prints a green/red table; exits non-zero on any red row.
+- Run as part of the Friday pre-demo checklist (US-010 implementation
+  plan §6).
+
+**Definition of Done**:
+- [ ] Script exists and runs against the dev DB
+- [ ] Fixture file committed with the demo clauses chosen for the
+      Friday demo
+- [ ] All fixture rows green
+
+---
+
+#### Task 11.3: GetSimilarClauses query handler (application)
+
+**Goal**: a single CQRS query that powers the Similar Clauses endpoint.
+
+- `apps/backend/src/modules/clauses/application/queries/get-similar-clauses.query.ts`:
+  `{ clauseId, limit = 5 }` with validation (`limit ∈ [1, 20]`).
+- `get-similar-clauses.handler.ts`:
+  1. Load source `Clause` by id; throw `ClauseNotFoundError` if
+     missing.
+  2. If `embedding IS NULL`, throw `ClauseNotEmbeddedError`.
+  3. Call `ClauseSimilarityRepository.findSimilar(...)`.
+  4. Map rows to `SimilarClausesResponse` DTO.
+- DTO: `get-similar-clauses.dto.ts` matching the API contract in
+  US-010 §API Contract.
+- Spec: handler unit tests against in-memory repository — happy
+  path, no results, missing source, null-embedding source, type
+  filter applied, self/same-document exclusion.
+
+**Definition of Done**:
+- [ ] All handler-spec branches green
+- [ ] DTO matches US-010 §API Contract exactly
+- [ ] Error classes thrown match what the controller will map
+
+---
+
+#### Task 11.4: GET /api/v1/clauses/:id/similar (HTTP boundary)
+
+**Goal**: expose the query over HTTP with proper error mapping.
+
+- Extend the existing clauses controller (or create one) with the
+  route.
+- Map errors to status codes per US-010 §API Contract:
+  | Status | Code | When |
+  |---|---|---|
+  | 404 | `clause_not_found` | source missing |
+  | 409 | `clause_not_embedded` | `embedding IS NULL` |
+  | 400 | `invalid_limit` | `limit ∉ [1, 20]` |
+- Apply the same auth guard as other clause endpoints.
+- e2e test (supertest) against a docker-compose pgvector instance
+  with seeded data: asserts shape, ordering, status codes.
+
+**Definition of Done**:
+- [ ] Route returns 200 with correct shape on happy path
+- [ ] All error paths return the exact status + code from the spec
+- [ ] p95 latency < 300ms on a portfolio of ≥10k embedded clauses
+
+---
+
+#### Task 11.5: Frontend service + `useSimilarClauses` hook
+
+**Goal**: feed components without coupling them to fetch logic.
+
+- Service: `apps/frontend/src/services/similarClausesService.ts` —
+  thin wrapper over the existing 3-tier API call stack, returning
+  `SimilarClausesResponse`.
+- Hook: `apps/frontend/src/hooks/useSimilarClauses.ts` —
+  `react-query` v3 (project already uses v3; see Phase 10 decision).
+  Keyed on `clauseId`. `enabled: clauseId != null`. Stale time 5
+  minutes.
+
+**Definition of Done**:
+- [ ] Service unit-tested with MSW (happy + 404 + 409)
+- [ ] Hook integration test renders against MSW and a `QueryClient`
+
+---
+
+#### Task 11.6: `FindSimilarButton` + drawer state on Results page
+
+**Goal**: wire the trigger into the existing clauses tab.
+
+- New component: `apps/frontend/src/components/features/similar-clauses/FindSimilarButton/`
+  (5-file structure per `USER_STORY_TEMPLATE.md`).
+- Add the button to the clause card actions area on the Results page
+  (`pages/ResultsPage/tabs/...`).
+- Lift drawer state to the tab page:
+  `const [openForClauseId, setOpenForClauseId] = useState<string | null>(null)`.
+- Render the button only when `clause.embedding` is non-null
+  (US-CI-1 AC6: hidden, not disabled).
+- Wire `F` keyboard shortcut for focused clauses.
+
+**Definition of Done**:
+- [ ] Button renders on every embedded clause
+- [ ] Button is absent (not disabled) on un-embedded clauses
+- [ ] Click and `F` both open the drawer for the right clause
+- [ ] No regressions on the existing clauses tab
+
+---
+
+#### Task 11.7: `SimilarClausesDrawer` + result-row components
+
+**Goal**: build the six components from US-010 §Component Inventory.
+
+Build in this order so each is testable on its own:
+
+1. `SimilarityBar` — `value: number` (0..1), bar + `% match` label.
+2. `PrecedentRow` — bar · type · meta · snippet · arrow; default
+   / hover / active states.
+3. `SourceClauseCard` — muted compact variant of the clause card.
+4. `EmptyPrecedentState` — icon + headline + body copy.
+5. `SimilarClausesDrawer` — 480px right slide-over, header,
+   source block, results list, breadcrumb, all states (loading
+   skeletons / empty / error / loaded / single-result).
+6. Storybook stories for every component covering every state.
+
+Flag `SimilarityBar` and `PrecedentRow` in code comments as
+**reusable infrastructure** — Task 11.9 (US-CI-2) imports them
+unchanged.
+
+**Definition of Done**:
+- [ ] All 5 components built per the 5-file pattern
+- [ ] Storybook covers default / hover / active / loading /
+      empty / single-result states
+- [ ] Unit + a11y tests pass (`role="dialog"`, focus trap, focus
+      return, `aria-modal`, keyboard nav)
+
+---
+
+#### Task 11.8: Comparison-mode navigation + highlight
+
+**Goal**: clicking a result navigates the main view to the target
+clause with a visible highlight, drawer stays open with active state.
+
+- Lift "scroll into view + apply highlight" behaviour to the page
+  (so the drawer doesn't need to know how the main view scrolls).
+- 2-second highlight ring on the target clause; persistent
+  left-border accent until drawer closes.
+- Active row state in the drawer (filled border / accent).
+- Breadcrumb in drawer header: `Similar clauses › {Contract} §{section}`.
+- Clicking the source block returns navigation to source clause and
+  clears active state.
+
+**Definition of Done**:
+- [ ] Navigation works for results in the same contract and in
+      different contracts
+- [ ] Highlight animation does not jank scrolling
+- [ ] Active state matches the visual spec
+- [ ] All US-CI-1 acceptance criteria met
+- [ ] `phase11_status.md` memory note created marking US-CI-1
+      complete
+
+---
+
+### Tasks 11.9–11.13: US-CI-2 (Semantic Search) — start after US-CI-1 DoD
+
+Not detailed here — these begin only after Task 11.8 ships and the
+team confirms US-CI-1 demoed successfully. High-level shape:
+
+- **11.9** Search overlay component + `/search` page route
+- **11.10** `GET /api/v1/search` controller + DTO
+- **11.11** `useSemanticSearch` hook + service
+- **11.12** `SearchPortfolio` query handler (calls HyDE rewriter
+  port → embedding port → similarity repo)
+- **11.13** `HydeQueryRewriter` Claude driver + pass-through stub
+
+These reuse `SimilarityBar` and `PrecedentRow` from Task 11.7
+unchanged.
+
+---
+
+### Task 11.14: Phase 11 E2E
+
+Playwright spec covering: open a contract, click `Find similar` on a
+clause, see precedents in the drawer, click a result, verify
+navigation + highlight, close the drawer, then (after US-CI-2)
+`⌘K` → query → click contract result → land on the matched clause.
+
+---
+
+### MVP slice for cutting the first PR
+
+**US-CI-1 slice**: 11.0 → 11.1 → 11.2 → 11.3 → 11.4 → 11.5 → 11.6 →
+11.7 → 11.8 ships Similar Clauses end-to-end. **Demo target: Fri
+2026-05-22.**
+
+**US-CI-2 slice**: 11.9 → 11.10 → 11.11 → 11.12 → 11.13 follows
+once US-CI-1 reaches DoD. Demo date TBD.
+
+Open scope items (cross-type matching, scoped `⌘K`, similarity
+threshold UX) are tracked in `requirements.md` under
+Requirement 14 → **Still open**.

@@ -430,3 +430,147 @@ The epic decomposes into nine child stories. US-PORT-1..5 are the MVP slice; US-
 #### Still open
 
 - **Side column (300px)** — the wireframe has a right-hand side column (`ci-portfolio-grid` is `1fr 300px`). Not covered by any story above; likely "Risk distribution + Upcoming renewals" mini-panels. To be scoped as a US-PORT-10 if/when we want it.
+
+---
+
+### Requirement 14: Clause Intelligence (Similar Clauses + Semantic Search)
+
+**Phase**: 11
+**Visual spec**: `docs/design/similar-clauses-visual.md`, `docs/design/semantic-search-visual.md`
+**Implementation plan**: `docs/design/similar-clauses-impl-plan.md`
+**User stories**: `USER_STORIES/US-010_Similar_Clauses.md`, `USER_STORIES/US-011_Semantic_Search.md`
+**Depends on**: Requirement 3 (Clause Extraction and Classification) — clauses must be embedded.
+
+**Epic / Parent story**
+
+> **As a** legal reviewer at Northwind
+> **I want** to leverage the clause embeddings we already produce — both by surfacing precedent for a clause I'm reading and by searching my portfolio in plain English
+> **So that** I can negotiate from precedent instead of from memory, and find relevant contracts without remembering exact wording.
+
+The epic decomposes into two child stories. **US-CI-1 (Similar Clauses) ships first** and lays the index + result-row components that **US-CI-2 (Semantic Search)** reuses. Both reduce to the same primitive: kNN over `Clause.embedding` via pgvector cosine distance.
+
+---
+
+#### US-CI-0 — Pre-flight: embedding coverage and pgvector index
+
+**As a** platform engineer about to build clause-intelligence features
+**I want** the database to have an HNSW index on `Clause.embedding` and every existing clause's embedding populated
+**So that** the kNN queries that power Similar Clauses and Semantic Search return results in <300ms and so that no clause is silently invisible to those features.
+
+**Acceptance criteria**
+- AC1: Migration `20260521000000_phase11_clause_embedding_hnsw_index` creates `Clause_embedding_cosine_idx` as an HNSW index using `vector_cosine_ops`, built `CONCURRENTLY` so writes are not blocked.
+- AC2: A backfill script `apps/backend/scripts/backfill-clause-embeddings.ts` exists and, when run, populates `embedding` (and `embeddingModelVersion`) on every clause where `embedding IS NULL` and `text` is non-empty.
+- AC3: The backfill script is **idempotent** — re-running it after a partial failure only touches clauses still missing an embedding.
+- AC4: The backfill script supports `--dry-run` (report what would change, no Voyage calls, no writes) and `--limit=N` (cap rows processed in this run).
+- AC5: Permanent Voyage errors (auth / invalid request) abort the script with a non-zero exit code; transient errors (429 / 5xx / network) log the failing batch and continue, so a single retryable batch does not block the rest.
+- AC6: After backfill, `SELECT type, COUNT(*) FILTER (WHERE embedding IS NOT NULL) AS embedded, COUNT(*) AS total FROM "Clause" GROUP BY type` reports `embedded = total` for every clause type present in the dataset.
+- AC7: Every clause type intended to be clicked during the demo has **≥3 embedded rows in the portfolio** so the Similar Clauses drawer never falls flat on "no precedent found" during the demo. (If sparse, supplemental contracts are uploaded to satisfy this AC; satisfaction is *not* a code change.)
+
+---
+
+#### US-CI-1 — Similar Clauses (precedent lookup)
+
+**As a** legal reviewer reading a clause in any contract
+**I want** to click a button and see the 5 most semantically similar clauses we've signed across our portfolio
+**So that** I can use precedent to decide whether the clause is acceptable, unusual, or worth pushing back on — without asking a paralegal or grepping PDFs.
+
+**Acceptance criteria**
+
+*Backend*
+- AC1: `GET /api/v1/clauses/:id/similar?limit=5` returns the source clause summary plus a ranked list of up to `limit` (default 5, max 20) most-similar clauses by cosine similarity.
+- AC2: Results exclude the source clause itself and exclude any other clause from the same `documentId`.
+- AC3: Results are filtered to the same `clause.type` as the source (cross-type matches are out of scope for v1).
+- AC4: Endpoint returns `404 clause_not_found` if the source clause does not exist, and `409 clause_not_embedded` if the source has `embedding IS NULL`.
+- AC5: p95 latency < 300ms on a portfolio of ≥ 10,000 embedded clauses, measured against the HNSW index from US-CI-0.
+
+*Frontend — trigger*
+- AC6: A `Find similar` button appears on every clause card whose `embedding` is non-null. Clauses without an embedding render no trigger (not a disabled trigger).
+- AC7: Pressing `F` while a clause is focused opens the drawer for that clause; the trigger button shows a loading state while the request is in flight.
+
+*Frontend — drawer*
+- AC8: A 480px right slide-over drawer opens with a 180ms ease-out animation, dims the background to ~20% opacity, and closes on `Esc`, backdrop click, or `✕`.
+- AC9: The drawer header shows "Similar clauses"; a sticky **source block** at the top shows the user's clause (type, contract + section, 2-line snippet) visually de-emphasised.
+- AC10: Each result row contains: similarity bar + `{n}% match`, clause type, `{document title} · {month YYYY}`, 2–3 line snippet, arrow icon. The entire row is one click target.
+- AC11: Clicking a result row scrolls the main content to the target clause, applies a 2-second highlight ring, and the drawer stays open with the row marked `active` and a breadcrumb `Similar clauses › {Contract name} §{section}`.
+- AC12: Clicking the source block at the top returns navigation to the source clause and clears the active row.
+
+*States*
+- AC13: **Loading** renders skeleton rows inside the drawer (no spinner).
+- AC14: **Empty (no results)** renders a centred empty state with icon, headline "No similar clauses found yet", and explanation copy — see visual spec §4.2.
+- AC15: **Single result** renders identically to multi-result but the header reads "1 similar clause".
+- AC16: **Error** renders a plain message ("Couldn't load similar clauses") with a `Retry` button.
+
+*Accessibility*
+- AC17: Drawer has `role="dialog"`, `aria-modal="true"`, traps focus while open, and returns focus to the trigger button on close.
+- AC18: Result rows are keyboard navigable: `↓`/`↑` move focus between rows; `Enter` activates the focused row.
+- AC19: All interactive elements meet WCAG 2.1 AA (3px focus indicator, ≥4.5:1 contrast). Similarity bar exposes `aria-label="{n} percent match"`.
+
+---
+
+#### US-CI-2 — Semantic Contract Search
+
+**As a** legal reviewer or contracts manager
+**I want** to search my contracts in plain English from anywhere in the app
+**So that** I can find relevant contracts and clauses by meaning, not by keyword, even when I don't remember the exact wording.
+
+**Acceptance criteria**
+
+*Backend*
+- AC1: `GET /api/v1/search?q=...&limit=50` accepts a natural-language query and returns ranked `contracts` (max-clause similarity per document, with the matched clause as evidence) and `clauses` (raw similarity, regardless of document).
+- AC2: The query pipeline is **HyDE**: an LLM call rewrites the user's query into a hypothetical clause; the rewritten text is embedded; kNN runs over `Clause.embedding`.
+- AC3: If the HyDE LLM call fails, the endpoint gracefully degrades to embedding the raw query text directly — it does not return 5xx for this case.
+- AC4: The response includes a `confidence` field equal to the top result's similarity. The frontend renders the low-confidence banner when `confidence < 0.55`.
+- AC5: Results respect auth scope — only the requesting user's own portfolio is searched.
+- AC6: p95 latency < 1.5s on a portfolio of ≥ 10,000 embedded clauses.
+
+*Frontend — top-bar input*
+- AC7: A persistent search input lives in the app header on every page with placeholder *"Search your contracts in plain English…"* and a right-aligned `⌘K` hint when unfocused.
+- AC8: `⌘K` / `Ctrl+K` opens the overlay with the input focused from anywhere in the app.
+
+*Frontend — overlay*
+- AC9: The overlay slides down from the search bar with a strong backdrop (~50% opacity), closes on `Esc` / backdrop / `✕`, and debounces input by 600ms before firing the request.
+- AC10: The overlay renders **two sections**: "Top contracts" (3 rows) and "Top clauses (across contracts)" (5 rows), each with a `See all ({n}) →` link that opens `/search?q=...&tab={contracts|clauses}`.
+- AC11: Contract row anatomy: similarity bar · contract title · meta (signed date · deal size · counterparty) · "Matched on: {clause type} §{section}" · 2-line snippet. Clause row reuses `PrecedentRow` from US-CI-1 unchanged.
+- AC12: Keyboard navigation: `↓`/`↑` move focus across all rows in both sections; `Enter` activates the focused row.
+
+*Frontend — `/search` page*
+- AC13: Reachable via the overlay's `See all →` link or by direct navigation; URL is the source of truth (`?q=...&tab=...&counterparty=...&from=...&to=...&sort=...`).
+- AC14: Two tabs above results: `Contracts ({n})` and `Clauses ({n})`. Filter chip row offers Counterparty (multi-select) and Date range; sort dropdown offers `Best match` (default) · `Most recent` · `Largest deal`.
+- AC15: Results paginate via "Load more" infinite scroll at 20 per page.
+
+*Overlay states*
+- AC16: **Empty (no query)** renders three suggested example queries; clicking one populates the input and fires the search.
+- AC17: **Loading** renders skeleton rows in both sections.
+- AC18: **Low confidence** renders a banner above the results: *"We didn't find a strong match. Showing closest results."*
+- AC19: **No results** renders a centred empty state with a `Browse all contracts` CTA.
+- AC20: **Error** renders a plain message with a `Retry` button.
+
+*Accessibility*
+- AC21: Overlay has `role="dialog"`, `aria-modal="true"`, traps focus while open, and returns focus to the header input on close.
+- AC22: `/search` page tabs follow the WAI-ARIA tabs pattern; all result rows are focusable buttons with proper labels; search input has `role="searchbox"` and stays wired to URL state.
+
+---
+
+#### Resolved scope decisions (2026-05-21)
+
+- **Sequencing**: hard gate — US-CI-2 does not start until US-CI-1 reaches Definition of Done. US-CI-2 explicitly reuses `SimilarityBar` and `PrecedentRow` from US-CI-1.
+- **Index choice**: HNSW (not IVFFlat). No training step required and better recall at our scale.
+- **Same-type filter in US-CI-1**: in-scope for v1. Cross-type matches are noisy and not worth the surface area.
+- **HyDE in US-CI-2**: in-scope. Without it, short conversational queries score poorly against long formal clauses. The low-confidence banner (AC18) is the UX safety valve for poor HyDE rewrites.
+- **Empty state for un-embedded clauses**: the `Find similar` trigger is **hidden, not disabled**, on un-embedded clauses. A disabled trigger advertises a feature the user cannot use.
+- **Backfill before launch**: US-CI-0 must complete before either US-CI-1 or US-CI-2 ships. The pre-flight script + HNSW index migration are blocking dependencies.
+- **Demo data density**: every clause type to be clicked during the demo requires ≥3 plausible precedents in the portfolio (US-CI-0 AC7). If sparse, supplemental contracts are uploaded — *not* a code change.
+
+#### Out of scope (Phase 11) — deferred to later phases
+
+- **Outlier detection** — Phase 12. Uses the same kNN primitive plus per-type centroid + percentile scoring.
+- **Playbook matching** — Phase 13. Compares clauses against tiered "ideal / acceptable / fallback / red-line" reference embeddings.
+- **Cross-type clause matching** — v2 of US-CI-1.
+- **Accepted vs redlined status on results** — requires a negotiation outcome data model we don't have yet.
+- **Highlighted matched phrases in snippets** — the matches are semantic, not lexical; there's no literal substring to highlight.
+- **Saved searches, boolean operators, scoped search** — v2 of US-CI-2.
+
+#### Still open
+
+- **Bias `⌘K` search by current contract context** — e.g. when invoked from inside a contract, prefer matches from the same counterparty. Recommendation in PHASE_11_SPEC.md is *no* for v1; revisit after telemetry from US-CI-2 lands.
+- **Similarity threshold for hiding low-quality matches in US-CI-1** — server-side pre-filter at 0.5? Or always show top 5 regardless? Recommendation: pre-filter at 0.5 in v1, surface "weak match" labelling in v2.
