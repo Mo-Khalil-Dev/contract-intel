@@ -1,0 +1,166 @@
+<!DOCTYPE html><html lang="en"><head>
+
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContractIntel — Redesign</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&amp;family=DM+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body, #root { margin: 0; padding: 0; height: 100%; }
+    body { font-family: 'DM Sans', sans-serif; background: #FAFAF9; }
+  </style>
+  <style id="ci-responsive">
+    /* ---------- Responsive overrides ----------
+       Inline React styles win specificity-wise; use !important to override.
+       Breakpoints: lg ≤ 1100px (tablet landscape), md ≤ 860px (tablet), sm ≤ 640px (phone), xs ≤ 420px */
+
+    .ci-nav-mobile-btn { display: none; }
+    .ci-nav-drawer { display: none; }
+
+    /* Tabs scroll on narrow */
+    @media (max-width: 860px) {
+      .ci-tabs-scroll { overflow-x: auto !important; flex-wrap: nowrap !important; }
+      .ci-tabs-scroll > button { flex-shrink: 0 !important; }
+
+      /* Hide center nav links, show hamburger — prevents nav overflow on tablet */
+      .ci-nav-links { display: none !important; }
+      .ci-nav-mobile-btn { display: inline-flex !important; align-items: center; justify-content: center; }
+      .ci-nav-drawer.open { display: flex !important; flex-direction: column; }
+      .ci-nav-pad { padding-left: 20px !important; padding-right: 20px !important; }
+
+      .ci-pad-32 { padding-left: 20px !important; padding-right: 20px !important; }
+      .ci-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+      .ci-grid-5 { grid-template-columns: repeat(3, 1fr) !important; }
+      .ci-stack-md { grid-template-columns: 1fr !important; }
+      .ci-doc-grid { grid-template-columns: 1fr !important; }
+
+      /* Results screen — split layout becomes vertical */
+      .ci-results-row { flex-direction: column !important; overflow: auto !important; }
+      .ci-results-main { border-right: none !important; overflow: visible !important; }
+      .ci-results-side { width: 100% !important; max-width: 100% !important; flex-shrink: 0 !important; border-left: none !important; border-top: 1px solid #E5E7EB !important; }
+
+      /* Renewals page */
+      .ci-renewals-grid { grid-template-columns: 1fr !important; }
+
+      /* Portfolio side column */
+      .ci-portfolio-grid { grid-template-columns: 1fr !important; }
+
+      /* Tables — allow horizontal scroll */
+      .ci-table-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+      .ci-table-wrap > table { min-width: 640px !important; }
+    }
+
+    @media (max-width: 640px) {
+      .ci-pad-32 { padding-left: 16px !important; padding-right: 16px !important; }
+      .ci-nav-pad { padding-left: 16px !important; padding-right: 16px !important; }
+      .ci-pad-y-lg { padding-top: 24px !important; padding-bottom: 24px !important; }
+
+      /* Stat / KPI grids collapse */
+      .ci-grid-4, .ci-grid-5 { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+      .ci-stack-sm { grid-template-columns: 1fr !important; }
+
+      /* Hero / page titles shrink */
+      .ci-page-h1 { font-size: 24px !important; }
+      .ci-page-h1-lg { font-size: 26px !important; }
+      .ci-page-h2 { font-size: 18px !important; }
+      .ci-risk-mega { font-size: 30px !important; }
+
+      /* Risk snapshot stacks */
+      .ci-risk-snap { flex-direction: column !important; align-items: flex-start !important; gap: 14px !important; flex-wrap: wrap !important; }
+
+      /* Detail rows — label width shrinks */
+      .ci-detail-row > span:first-child { width: 110px !important; }
+
+      /* Breadcrumb row */
+      .ci-breadcrumb { padding-left: 16px !important; padding-right: 16px !important; flex-wrap: wrap !important; gap: 6px !important; }
+      .ci-breadcrumb > span:nth-child(3) { max-width: 100% !important; }
+
+      /* Action button rows wrap */
+      .ci-actions-wrap { flex-wrap: wrap !important; }
+      .ci-actions-wrap > * { flex: 1 1 auto; }
+
+      /* Header (PageShell title + actions) wraps */
+      .ci-page-header { flex-wrap: wrap !important; gap: 12px !important; padding-left: 16px !important; padding-right: 16px !important; }
+
+      /* Top bar inside Home */
+      .ci-home-banner { flex-wrap: wrap !important; gap: 8px !important; }
+
+      /* Reduce big card padding */
+      .ci-card-lg { padding: 18px 18px !important; }
+
+      /* Upload drop zone */
+      .ci-dropzone { padding: 36px 18px !important; }
+
+      /* Modal */
+      .ci-modal { width: calc(100vw - 24px) !important; }
+    }
+
+    @media (max-width: 420px) {
+      .ci-grid-4, .ci-grid-5 { grid-template-columns: 1fr !important; }
+      .ci-stack-xs { grid-template-columns: 1fr !important; }
+      .ci-pad-32 { padding-left: 14px !important; padding-right: 14px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Data -->
+  <script src="data.js"></script>
+
+  <!-- Tokens -->
+  <script src="tokens.js"></script>
+
+  <!-- Components -->
+  <script type="text/babel" src="components.jsx"></script>
+
+  <!-- Tweaks panel -->
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <!-- Screens A: Home, Upload, Processing, Results -->
+  <script type="text/babel" src="screens-a.jsx"></script>
+
+  <!-- Screens B: DeepDive, Compare, Portfolio, Export, Renewals, Settings -->
+  <script type="text/babel" src="screens-b.jsx"></script>
+
+  <!-- Similar Clauses feature (Clauses tab + drawer) -->
+  <script type="text/babel" src="screens-clauses.jsx"></script>
+
+  <!-- Semantic Search feature (global search bar + overlay + page) -->
+  <script type="text/babel" src="screens-search.jsx"></script>
+
+  <!-- App shell -->
+  <script type="text/babel" src="app.jsx"></script>
+
+  <template id="__bundler_thumbnail" data-bg-color="#FAFAF9">
+    <svg viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg" data-om-id="3472b44f:10">
+      <rect width="120" height="84" fill="#FAFAF9" data-om-id="3472b44f:11"></rect>
+      <rect x="0" y="0" width="120" height="13" fill="#0F172A" data-om-id="3472b44f:12"></rect>
+      <rect x="8" y="3" width="18" height="7" rx="2" fill="#2563EB" opacity="0.9" data-om-id="3472b44f:13"></rect>
+      <rect x="30" y="4" width="14" height="5" rx="2" fill="rgba(255,255,255,0.3)" data-om-id="3472b44f:14"></rect>
+      <rect x="48" y="4" width="12" height="5" rx="2" fill="rgba(255,255,255,0.15)" data-om-id="3472b44f:15"></rect>
+      <rect x="8" y="18" width="104" height="28" rx="3" fill="#fff" stroke="#E2E8F0" stroke-width="0.5" data-om-id="3472b44f:16"></rect>
+      <rect x="14" y="24" width="30" height="4" rx="1" fill="#0F172A" data-om-id="3472b44f:17"></rect>
+      <rect x="14" y="32" width="50" height="3" rx="1" fill="#94A3B8" data-om-id="3472b44f:18"></rect>
+      <rect x="70" y="22" width="20" height="8" rx="4" fill="#2563EB" data-om-id="3472b44f:19"></rect>
+      <rect x="8" y="52" width="50" height="6" rx="2" fill="#fff" stroke="#E2E8F0" stroke-width="0.5" data-om-id="3472b44f:20"></rect>
+      <rect x="62" y="52" width="50" height="6" rx="2" fill="#fff" stroke="#E2E8F0" stroke-width="0.5" data-om-id="3472b44f:21"></rect>
+      <rect x="10" y="54" width="4" height="2" rx="1" fill="#EF4444" data-om-id="3472b44f:22"></rect>
+      <rect x="64" y="54" width="4" height="2" rx="1" fill="#10B981" data-om-id="3472b44f:23"></rect>
+      <rect x="8" y="62" width="104" height="6" rx="2" fill="#fff" stroke="#E2E8F0" stroke-width="0.5" data-om-id="3472b44f:24"></rect>
+      <rect x="10" y="64" width="4" height="2" rx="1" fill="#F59E0B" data-om-id="3472b44f:25"></rect>
+      <rect x="8" y="72" width="104" height="6" rx="2" fill="#fff" stroke="#E2E8F0" stroke-width="0.5" data-om-id="3472b44f:26"></rect>
+      <rect x="10" y="74" width="4" height="2" rx="1" fill="#2563EB" data-om-id="3472b44f:27"></rect>
+    </svg>
+  </template>
+
+
+</body></html>
