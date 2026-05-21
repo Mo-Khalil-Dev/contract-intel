@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { GlobalSearchBar } from '@/components/features/semantic-search/GlobalSearchBar';
 import styles from './AppNav.module.css';
 
 const LINKS = [
@@ -69,6 +70,11 @@ export function AppNav() {
               {l.label}
             </button>
           ))}
+        </div>
+
+        {/* Phase 11 US-CI-2 — global semantic search (⌘K) */}
+        <div className={styles.searchSlot}>
+          <GlobalSearchBar />
         </div>
 
         <div className={styles.spacer} />

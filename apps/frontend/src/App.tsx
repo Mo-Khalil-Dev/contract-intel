@@ -10,6 +10,7 @@ import { UploadPageContainer } from '@/pages/UploadPage';
 import { ProcessingPage } from '@/pages/ProcessingPage/ProcessingPage';
 import { ResultsPage } from '@/pages/ResultsPage/ResultsPage';
 import { PortfolioPage } from '@/pages/portfolio/PortfolioPage';
+import { SearchPage } from '@/pages/SearchPage';
 
 function App() {
   return (
@@ -65,6 +66,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ResultsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/search"
+              element={
+                <ProtectedRoute>
+                  <SearchPage />
                 </ProtectedRoute>
               }
             />
