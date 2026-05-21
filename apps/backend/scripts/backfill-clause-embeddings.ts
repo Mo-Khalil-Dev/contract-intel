@@ -31,10 +31,17 @@
  *   npx ts-node --project tsconfig.scripts.json \
  *     scripts/backfill-clause-embeddings.ts [--dry-run] [--limit=N]
  *
- *   --dry-run  Report what would be embedded; make no Voyage calls and
- *              no DB writes.
- *   --limit=N  Cap the number of clauses processed in this run. Useful
- *              for verifying the pipeline on a small subset first.
+ *   --dry-run         Report what would be embedded; make no Voyage
+ *                     calls and no DB writes.
+ *   --limit=N         Cap the number of clauses processed in this run.
+ *                     Useful for verifying the pipeline on a small
+ *                     subset first.
+ *   --re-embed-mock   Also re-embed clauses whose embeddingModelVersion
+ *                     starts with 'mock/' — typically used the first
+ *                     time real Voyage is enabled after running the
+ *                     deterministic mock during development. Without
+ *                     this flag, mock-embedded clauses are treated as
+ *                     already-embedded and skipped.
  *
  * Environment:
  *   DATABASE_URL  required
@@ -69,12 +76,14 @@ interface ClauseRow {
 interface Args {
   dryRun: boolean;
   limit: number | null;
+  reEmbedMock: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
-  const args: Args = { dryRun: false, limit: null };
+  const args: Args = { dryRun: false, limit: null, reEmbedMock: false };
   for (const a of argv.slice(2)) {
     if (a === '--dry-run') args.dryRun = true;
+    else if (a === '--re-embed-mock') args.reEmbedMock = true;
     else if (a.startsWith('--limit=')) {
       const n = Number(a.split('=')[1]);
       if (!Number.isFinite(n) || n <= 0) {
@@ -97,25 +106,28 @@ function chunk<T>(arr: T[], size: number): T[][] {
 async function loadPendingClauses(
   prisma: PrismaClient,
   limit: number | null,
+  reEmbedMock: boolean,
 ): Promise<ClauseRow[]> {
   // Prisma's typed `where` doesn't expose `Unsupported("vector(1024)")`
   // columns — we have to filter via raw SQL. We only select `id` and
   // `text` (never the vector itself), so the cost is just the predicate.
-  if (limit != null) {
-    return prisma.$queryRaw<ClauseRow[]>`
-      SELECT "id", "text"
-      FROM "Clause"
-      WHERE "embedding" IS NULL
-      ORDER BY "createdAt" ASC
-      LIMIT ${limit}
-    `;
-  }
-  return prisma.$queryRaw<ClauseRow[]>`
-    SELECT "id", "text"
-    FROM "Clause"
-    WHERE "embedding" IS NULL
-    ORDER BY "createdAt" ASC
-  `;
+  //
+  // With --re-embed-mock, also include rows whose embedding was
+  // produced by a `mock/*` driver — used when flipping from the dev
+  // mock to real Voyage for the first time.
+  const mockPredicate = reEmbedMock
+    ? `OR "embeddingModelVersion" LIKE 'mock/%'`
+    : '';
+  const limitClause = limit != null ? `LIMIT ${limit}` : '';
+  // String interpolation here is safe: `mockPredicate` and `limitClause`
+  // are constants drawn from validated args, never from user input.
+  return prisma.$queryRawUnsafe<ClauseRow[]>(
+    `SELECT "id", "text"
+     FROM "Clause"
+     WHERE ("embedding" IS NULL ${mockPredicate})
+     ORDER BY "createdAt" ASC
+     ${limitClause}`,
+  );
 }
 
 function buildVoyageService(): VoyageEmbeddingService {
@@ -153,12 +165,19 @@ async function main(): Promise<void> {
   const prisma = new PrismaClient();
 
   try {
-    const pending = await loadPendingClauses(prisma, args.limit);
+    const pending = await loadPendingClauses(
+      prisma,
+      args.limit,
+      args.reEmbedMock,
+    );
     const embeddable = pending.filter((c) => c.text.trim().length > 0);
     const skippedEmpty = pending.length - embeddable.length;
 
+    const scope = args.reEmbedMock
+      ? 'without (Voyage) embeddings — includes mock-embedded rows'
+      : 'without embeddings';
     console.log(
-      `Found ${pending.length} clauses without embeddings ` +
+      `Found ${pending.length} clauses ${scope} ` +
         `(${embeddable.length} embeddable, ${skippedEmpty} skipped: empty text).`,
     );
 
