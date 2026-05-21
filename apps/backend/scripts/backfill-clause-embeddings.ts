@@ -98,14 +98,24 @@ async function loadPendingClauses(
   prisma: PrismaClient,
   limit: number | null,
 ): Promise<ClauseRow[]> {
-  // Prisma cannot SELECT the vector column, but we don't need it — we're
-  // checking IS NULL via WHERE. The standard query builder works fine.
-  return prisma.clause.findMany({
-    where: { embedding: null },
-    select: { id: true, text: true },
-    orderBy: { createdAt: 'asc' },
-    ...(limit != null ? { take: limit } : {}),
-  });
+  // Prisma's typed `where` doesn't expose `Unsupported("vector(1024)")`
+  // columns — we have to filter via raw SQL. We only select `id` and
+  // `text` (never the vector itself), so the cost is just the predicate.
+  if (limit != null) {
+    return prisma.$queryRaw<ClauseRow[]>`
+      SELECT "id", "text"
+      FROM "Clause"
+      WHERE "embedding" IS NULL
+      ORDER BY "createdAt" ASC
+      LIMIT ${limit}
+    `;
+  }
+  return prisma.$queryRaw<ClauseRow[]>`
+    SELECT "id", "text"
+    FROM "Clause"
+    WHERE "embedding" IS NULL
+    ORDER BY "createdAt" ASC
+  `;
 }
 
 function buildVoyageService(): VoyageEmbeddingService {
