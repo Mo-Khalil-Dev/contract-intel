@@ -18,6 +18,7 @@ import { RetryClauseExtractionHandler } from './application/commands/retry-claus
 import { GetClausesForDocumentHandler } from './application/queries/get-clauses-for-document.handler';
 import { GetClauseByIdHandler } from './application/queries/get-clause-by-id.handler';
 import { GetExtractionRunStatusHandler } from './application/queries/get-extraction-run-status.handler';
+import { GetSimilarClausesHandler } from './application/queries/get-similar-clauses.handler';
 
 // Application — event handlers
 import { DocumentOcrCompletedHandler } from './application/event-handlers/document-ocr-completed.handler';
@@ -69,6 +70,7 @@ import { PgvectorClauseSimilarityRepository } from './infrastructure/persistence
     GetClausesForDocumentHandler,
     GetClauseByIdHandler,
     GetExtractionRunStatusHandler,
+    GetSimilarClausesHandler,
     DocumentOcrCompletedHandler,
 
     // Persistence
