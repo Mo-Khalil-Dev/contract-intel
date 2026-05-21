@@ -1,4 +1,5 @@
 import { Button } from './Button';
+import { GlobalSearchBar } from '@/components/features/semantic-search/GlobalSearchBar';
 import styles from './TopNav.module.css';
 
 interface NavLink {
@@ -62,7 +63,10 @@ export function TopNav({ active, userInitials, onNav }: TopNavProps) {
           ))}
         </div>
 
-        <div style={{ flex: 1 }} />
+        {/* Phase 11 US-CI-2 — global semantic search (⌘K) */}
+        <div className={styles.searchSlot}>
+          <GlobalSearchBar />
+        </div>
 
         <div className={styles.right}>
           <Button size="sm" onClick={() => onNav('upload')}>

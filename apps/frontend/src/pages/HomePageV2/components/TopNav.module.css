@@ -99,11 +99,30 @@
   flex-shrink: 0;
 }
 
+.searchSlot {
+  display: flex;
+  flex: 1 1 0;
+  justify-content: center;
+  margin-left: 24px;
+  margin-right: 16px;
+  min-width: 0;
+}
+
 @media (max-width: 860px) {
   .inner {
     padding: 0 16px;
   }
   .links {
+    display: none;
+  }
+  .searchSlot {
+    margin-left: 12px;
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  .searchSlot {
     display: none;
   }
 }
