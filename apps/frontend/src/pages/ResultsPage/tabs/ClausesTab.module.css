@@ -1,0 +1,197 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-alt);
+  font-size: 12.5px;
+  color: var(--color-ink-soft);
+}
+
+.headerBar strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.headerPin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-blue-dark);
+  background: var(--color-blue-light);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── ClauseCard ─────────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 14px 16px 14px 18px;
+  transition: border-color 140ms, box-shadow 140ms;
+  cursor: default;
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--color-blue-mid);
+}
+
+.card.highlighted {
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  animation: clauseRing 1800ms ease-out;
+}
+
+@keyframes clauseRing {
+  0%   { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0.55); }
+  40%  { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25); }
+  100% { box-shadow: 0 0 0 0   rgba(37, 99, 235, 0); }
+}
+
+/* Severity stripe — 4px coloured left border via a pseudo-element so
+ * the card padding stays clean. */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  background: var(--stripe-color, var(--color-border));
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.titleGroup .label {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+.severityBadge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.severityBadge.critical, .severityBadge.high {
+  background: var(--color-red-bg);
+  color: var(--color-red-dark);
+}
+
+.severityBadge.medium {
+  background: var(--color-orange-bg);
+  color: var(--color-orange-dark);
+}
+
+.severityBadge.low {
+  background: var(--color-green-bg);
+  color: var(--color-green-dark);
+}
+
+.snippet {
+  margin: 0 0 10px 0;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-ink-mid);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-ink-soft);
+}
+
+.comparisonEyebrow {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+}
+
+/* ── Empty state ────────────────────────────────────────────────── */
+
+.empty {
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--color-ink-soft);
+  background: var(--color-surface);
+}
+
+.empty h3 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}

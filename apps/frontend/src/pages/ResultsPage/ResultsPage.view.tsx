@@ -5,6 +5,7 @@ import { Tabs } from './components/Tabs';
 import { RightSidebar } from './components/RightSidebar';
 import { OverviewTab } from './tabs/OverviewTab';
 import { RiskFlagsTab } from './tabs/RiskFlagsTab';
+import { ClausesTab } from './tabs/ClausesTab';
 import { DocumentTab } from './tabs/DocumentTab';
 import type {
   ClauseResponse,
@@ -13,7 +14,12 @@ import type {
 } from '@/types/clauses';
 import { documentRiskScore, flagCounts } from '@/lib/riskHelpers';
 
-export type ResultsTabId = 'overview' | 'risks' | 'document' | 'history';
+export type ResultsTabId =
+  | 'overview'
+  | 'risks'
+  | 'clauses'
+  | 'document'
+  | 'history';
 
 export interface ResultsPageViewProps {
   documentId: string | undefined;
@@ -99,6 +105,7 @@ export function ResultsPageView({
             tabs={[
               { id: 'overview', label: 'Overview' },
               { id: 'risks', label: 'Risk Flags', count: riskFlagCount },
+              { id: 'clauses', label: 'Clauses', count: clauses.length },
               { id: 'document', label: 'Document' },
               { id: 'history', label: 'History' },
             ]}
@@ -114,6 +121,7 @@ export function ResultsPageView({
               />
             )}
             {activeTab === 'risks' && <RiskFlagsTab clauses={clauses} />}
+            {activeTab === 'clauses' && <ClausesTab clauses={clauses} />}
             {activeTab === 'document' && (
               <DocumentTab
                 documentId={documentId}
