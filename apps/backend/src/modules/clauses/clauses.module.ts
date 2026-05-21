@@ -46,6 +46,9 @@ import {
   VoyageEmbeddingService,
 } from './infrastructure/embeddings/voyage-embedding-service';
 
+// Infrastructure — HTTP
+import { ClausesController } from './infrastructure/clauses.controller';
+
 // Infrastructure — persistence
 import { PrismaClauseRepository } from './infrastructure/persistence/prisma-clause.repository';
 import { PrismaExtractionRunRepository } from './infrastructure/persistence/prisma-extraction-run.repository';
@@ -62,6 +65,7 @@ import { PgvectorClauseSimilarityRepository } from './infrastructure/persistence
  */
 @Module({
   imports: [CqrsModule, AppConfigModule, PrismaModule, DocumentsModule],
+  controllers: [ClausesController],
   providers: [
     // Application
     StartClauseExtractionHandler,
