@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../HomePageV2/components/Button';
+import { TopNav } from '../HomePageV2/components/TopNav';
 import styles from './ResultsPage.module.css';
 import { Tabs } from './components/Tabs';
 import { RightSidebar } from './components/RightSidebar';
@@ -53,6 +56,8 @@ export function ResultsPageView({
   onShare,
 }: ResultsPageViewProps) {
   const [activeTab, setActiveTab] = useState<ResultsTabId>('overview');
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const metadata: ContractMetadata | null = extraction?.metadata ?? null;
   const riskScore = useMemo(() => documentRiskScore(clauses), [clauses]);
@@ -61,9 +66,30 @@ export function ResultsPageView({
   // informational (low) clauses surface on Overview but aren't flags.
   const riskFlagCount = counts.critical + counts.caution;
 
+  // TopNav wiring — matches PortfolioPage so cross-page nav stays
+  // consistent. "portfolio" is the active item because Results is
+  // reached from the Contracts list.
+  const userInitials = useMemo(() => {
+    const src = user?.name?.trim() || user?.email || 'U';
+    const parts = src.split(/\s+/).slice(0, 2);
+    return (parts.map((p) => p[0] ?? '').join('').toUpperCase() || 'U').slice(0, 2);
+  }, [user]);
+  const handleNav = (id: string) => {
+    switch (id) {
+      case 'home':      navigate('/v2'); break;
+      case 'portfolio': navigate('/contracts'); break;
+      case 'upload':    navigate('/upload'); break;
+      default:
+        // playbook / compare / renewals / settings have no routes yet
+        // eslint-disable-next-line no-console
+        console.info('[ResultsPage] nav →', id, '(no route yet)');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className={styles.root}>
+        <TopNav active="portfolio" userInitials={userInitials} onNav={handleNav} />
         <Breadcrumb
           filename={filename ?? documentId ?? ''}
           onBack={onBackToContracts}
@@ -78,6 +104,7 @@ export function ResultsPageView({
   if (isError || !extraction) {
     return (
       <div className={styles.root}>
+        <TopNav active="portfolio" userInitials={userInitials} onNav={handleNav} />
         <Breadcrumb
           filename={filename ?? documentId ?? ''}
           onBack={onBackToContracts}
@@ -93,6 +120,7 @@ export function ResultsPageView({
 
   return (
     <div className={styles.root}>
+      <TopNav active="portfolio" userInitials={userInitials} onNav={handleNav} />
       <Breadcrumb
         filename={filename ?? documentId ?? ''}
         onBack={onBackToContracts}
