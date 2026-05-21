@@ -18,9 +18,13 @@ describe('EmptyPrecedentState', () => {
   });
 
   it('humanises clauseType into the explanation copy', () => {
-    render(<EmptyPrecedentState clauseType="limitation_of_liability" />);
-    expect(
-      screen.getByText(/This is the first Limitation of liability clause/i),
-    ).toBeInTheDocument();
+    const { container } = render(
+      <EmptyPrecedentState clauseType="limitation_of_liability" />,
+    );
+    // The humanised type is wrapped in a <strong> so the text is split
+    // across nodes; assert on the container's collapsed text instead.
+    expect(container.textContent).toMatch(
+      /This is the first Limitation of liability clause/i,
+    );
   });
 });

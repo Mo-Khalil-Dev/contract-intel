@@ -109,16 +109,17 @@ describe('SimilarClausesDrawer', () => {
       ...baseResponse,
       results: [],
     });
-    renderDrawer();
+    const { container } = renderDrawer();
 
     await waitFor(() => {
       expect(
         screen.getByRole('heading', { name: /No similar clauses found yet/i }),
       ).toBeInTheDocument();
     });
-    expect(
-      screen.getByText(/This is the first Indemnification clause/i),
-    ).toBeInTheDocument();
+    // Personalised copy wraps the type in <strong>, so the body text
+    // is split across nodes — assert against the container's collapsed
+    // textContent rather than getByText.
+    expect(container.textContent).toMatch(/This is the first Indemnification clause/i);
   });
 
   it('renders an error message and retry button on failure', async () => {

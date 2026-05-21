@@ -4,51 +4,91 @@ export interface SourceClauseCardProps {
   type: string;
   textSnippet: string;
   /**
-   * Optional click handler — when set, the card becomes interactive
-   * (used by the drawer to "return to source clause" while a result
-   * row is active). When omitted, it renders as a static block.
+   * Optional contract name + section reference. Renders as the meta
+   * line `<Contract name> · §<section>` in DM Mono. Both pieces are
+   * optional individually.
+   */
+  contractName?: string;
+  sectionRef?: string | null;
+  /**
+   * When set the card becomes interactive: clicking it deselects any
+   * active precedent in the drawer (returning to the "source view"
+   * with no row highlighted). When omitted, renders as a static block.
    */
   onClick?: () => void;
+  /**
+   * Drives the subtle background switch — `active` (no precedent
+   * selected) uses the warmer `bg` colour to read as the "live" focus;
+   * the default `surfaceAlt` reads as resting.
+   */
+  active?: boolean;
 }
 
 /**
- * Muted compact card showing the source clause at the top of the
- * SimilarClausesDrawer. Visually de-emphasised so the result list is
- * the focus, but the user can always glance up to remember what
- * they're researching.
- *
- * Static when `onClick` is absent. Becomes a button (with hover +
- * focus ring) when `onClick` is set — that mode is how the drawer's
- * "click source to return" interaction works while a result row is
- * active.
+ * Source clause card pinned at the top of the SimilarClausesDrawer.
+ * Visually de-emphasised so the result list owns the attention; the
+ * uppercase "SOURCE" eyebrow on the right is the orientation cue —
+ * a glance up always tells the reviewer what they're researching.
  */
 export function SourceClauseCard({
   type,
   textSnippet,
+  contractName,
+  sectionRef,
   onClick,
+  active = false,
 }: SourceClauseCardProps) {
   const humanType = humaniseClauseType(type);
+  const metaLine = [contractName, sectionRef ? `§${sectionRef}` : null]
+    .filter(Boolean)
+    .join(' · ');
+
   const content = (
     <>
-      <div className="text-inkSoft mb-1 text-[10px] font-semibold uppercase tracking-wide">
-        Source
+      {/* ── Eyebrow row: clause label left, SOURCE pin right ── */}
+      <div className="mb-1.5 flex items-start justify-between gap-3">
+        <div className="text-ink-soft text-xs font-bold">{humanType}</div>
+        <div
+          className="text-ink-mute text-[10px] font-bold uppercase"
+          style={{ letterSpacing: '0.06em' }}
+        >
+          Source
+        </div>
       </div>
-      <div className="text-inkMid mb-1 text-sm font-semibold">{humanType}</div>
-      <p className="text-inkSoft line-clamp-2 text-xs leading-snug">
-        {textSnippet}
+
+      {/* ── Meta line ─────────────────────────────────────────── */}
+      {metaLine && (
+        <div className="text-ink-soft font-mono text-[11px] mb-1.5">
+          {metaLine}
+        </div>
+      )}
+
+      {/* ── Snippet (Georgia italic, 2-line clamp) ───────────── */}
+      <p
+        className="m-0 text-ink-mid line-clamp-2"
+        style={{
+          fontFamily: 'Georgia, serif',
+          fontStyle: 'italic',
+          fontSize: 12,
+          lineHeight: 1.55,
+        }}
+      >
+        &ldquo;{textSnippet}&rdquo;
       </p>
     </>
   );
 
-  const baseClass =
-    'block w-full rounded-lg border border-border bg-surfaceAlt px-4 py-3 text-left';
+  const baseClass = [
+    'block w-full rounded-[10px] border border-border px-4 py-3 text-left',
+    active ? 'bg-bg' : 'bg-surface-alt',
+  ].join(' ');
 
   if (onClick) {
     return (
       <button
         type="button"
         onClick={onClick}
-        className={`${baseClass} transition-colors hover:bg-border/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue`}
+        className={`${baseClass} transition-colors hover:bg-bg-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-blue`}
       >
         {content}
       </button>

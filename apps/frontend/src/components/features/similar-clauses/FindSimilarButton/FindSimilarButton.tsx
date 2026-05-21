@@ -1,5 +1,3 @@
-import { SearchIcon } from '@/components/core/icons';
-
 export interface FindSimilarButtonProps {
   onClick: () => void;
   /** Renders a spinner + disables the button while a fetch is in flight. */
@@ -13,10 +11,14 @@ export interface FindSimilarButtonProps {
 }
 
 /**
- * Compact secondary button that lives on each clause card. Opens the
- * SimilarClausesDrawer for that clause. The trigger is intentionally
- * small — clause cards already have other actions, and Similar Clauses
- * is a "research" affordance, not a primary CTA.
+ * Compact secondary button on each ClauseCard. Opens the
+ * SimilarClausesDrawer for that clause. The icon is a small compass —
+ * "find direction" reads better than a magnifier for a precedent-lookup
+ * affordance (the magnifier is reserved for global search).
+ *
+ * Visual matches the Claude Design handoff: transparent surface, blue
+ * text, blue-light hover. Stays small so it doesn't compete with the
+ * clause card's own actions.
  */
 export function FindSimilarButton({
   onClick,
@@ -32,22 +34,48 @@ export function FindSimilarButton({
       disabled={isLoading}
       title="Find 5 most similar clauses across your portfolio (F)"
       className={[
-        'border-border text-inkMid hover:bg-surfaceAlt hover:text-ink',
-        'inline-flex items-center gap-1.5 rounded-md border bg-surface px-2.5 py-1 text-xs font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-[7px] border border-border bg-surface px-2.5 py-1 text-xs font-semibold transition-colors',
+        'text-blue hover:border-blue-mid hover:bg-blue-light',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue',
         'disabled:cursor-wait disabled:opacity-60',
       ].join(' ')}
     >
       {isLoading ? (
         <span
-          className="border-inkMute border-t-blue h-3 w-3 animate-spin rounded-full border-2"
+          className="border-ink-mute border-t-blue h-2.5 w-2.5 animate-spin rounded-full border-[1.5px]"
           role="status"
           aria-label="Finding similar clauses"
         />
       ) : (
-        <SearchIcon className="h-3.5 w-3.5" aria-hidden="true" />
+        <CompassIcon />
       )}
       <span>{isLoading ? 'Finding…' : 'Find similar'}</span>
     </button>
+  );
+}
+
+/**
+ * Inline compass SVG. Inlined (not in the icons module) because it's
+ * scoped to this single trigger and the icons module only re-exports
+ * Lucide. If FindSimilarButton ever needs the icon in another place
+ * we'll promote it.
+ */
+function CompassIcon() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 14 14"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M9.5 4.5 8 8 4.5 9.5 6 6Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

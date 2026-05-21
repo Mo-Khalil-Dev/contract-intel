@@ -18,6 +18,18 @@ export interface UseSimilarClausesDrawerProps {
   limit?: number;
   /** Id of the row currently "active" (last clicked). */
   activeResultId?: string | null;
+  /**
+   * Clears the active row (returns to the "source view" with no row
+   * highlighted). Wired to the source card click when a row is active.
+   * Optional — when omitted, the source card stays static.
+   */
+  onClearActive?: () => void;
+  /**
+   * Vertical pixel offset where the drawer starts — usually the height
+   * of the global top nav (default 56). Pass 0 in tests / Storybook to
+   * render full-height.
+   */
+  navOffset?: number;
 }
 
 export interface UseSimilarClausesDrawerResult {

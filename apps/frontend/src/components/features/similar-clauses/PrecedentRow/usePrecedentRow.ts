@@ -8,9 +8,13 @@ export interface UsePrecedentRowProps {
 
 export interface UsePrecedentRowResult {
   similarity: number;
+  displayPercent: number;
+  /** True at >= 90% — drives the bold blue-dark percent label. */
+  isStrong: boolean;
   type: string;
   textSnippet: string;
-  metaLine: string;
+  contractName: string;
+  contractDate: string;
   isActive: boolean;
   handleClick: () => void;
   handleKeyDown: (e: React.KeyboardEvent) => void;
@@ -28,16 +32,13 @@ export function humaniseClauseType(type: string): string {
 }
 
 /**
- * Format a meta line: `{document title} · {Mon YYYY}`.
- * Date is rendered in the user's locale; for the demo dataset that's
- * en-US, but the formatter respects browser locale.
+ * Format an uploadedAt ISO timestamp as `Mon YYYY`. Defensive against
+ * malformed input — returns empty string rather than 'Invalid Date'.
  */
-export function formatMetaLine(title: string, uploadedAtIso: string): string {
+export function formatContractDate(uploadedAtIso: string): string {
   const date = new Date(uploadedAtIso);
-  const month = Number.isNaN(date.getTime())
-    ? ''
-    : date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-  return month ? `${title} · ${month}` : title;
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 }
 
 export function usePrecedentRow({
@@ -45,11 +46,15 @@ export function usePrecedentRow({
   isActive = false,
   onSelect,
 }: UsePrecedentRowProps): UsePrecedentRowResult {
+  const displayPercent = Math.round(clause.similarity * 100);
   return {
     similarity: clause.similarity,
+    displayPercent,
+    isStrong: displayPercent >= 90,
     type: humaniseClauseType(clause.type),
     textSnippet: clause.textSnippet,
-    metaLine: formatMetaLine(clause.document.title, clause.document.uploadedAt),
+    contractName: clause.document.title,
+    contractDate: formatContractDate(clause.document.uploadedAt),
     isActive,
     handleClick: onSelect,
     handleKeyDown: (e) => {

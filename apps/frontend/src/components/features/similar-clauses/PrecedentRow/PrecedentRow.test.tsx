@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PrecedentRow } from './PrecedentRow';
-import { formatMetaLine, humaniseClauseType } from './usePrecedentRow';
+import { formatContractDate, humaniseClauseType } from './usePrecedentRow';
 import type { SimilarClauseDto } from '@/types/similarClauses';
 
 const clause: SimilarClauseDto = {
@@ -19,17 +19,19 @@ const clause: SimilarClauseDto = {
 };
 
 describe('PrecedentRow', () => {
-  it('renders the humanised clause type, snippet, and meta line', () => {
+  it('renders humanised type, snippet, contract name, and date', () => {
     render(<PrecedentRow clause={clause} onSelect={() => {}} />);
 
     expect(screen.getByText('Limitation of liability')).toBeInTheDocument();
+    // Snippet is wrapped in smart quotes
     expect(
-      screen.getByText('Aggregate liability capped at amounts paid in prior 12 months.'),
+      screen.getByText(/Aggregate liability capped at amounts paid in prior 12 months\./),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Globex MSA · /)).toBeInTheDocument();
+    expect(screen.getByText('Globex MSA')).toBeInTheDocument();
+    expect(screen.getByText(/Mar 2025/)).toBeInTheDocument();
   });
 
-  it('renders the similarity bar with the right percentage', () => {
+  it('renders the percent label', () => {
     render(<PrecedentRow clause={clause} onSelect={() => {}} />);
     expect(screen.getByText('94% match')).toBeInTheDocument();
   });
@@ -60,13 +62,18 @@ describe('PrecedentRow', () => {
     expect(screen.getByRole('button')).not.toHaveAttribute('aria-current');
   });
 
+  it('renders snippet with the Georgia serif italic style', () => {
+    const { container } = render(<PrecedentRow clause={clause} onSelect={() => {}} />);
+    const snippet = container.querySelector('p[style*="Georgia"]');
+    expect(snippet).toBeTruthy();
+    expect(snippet?.getAttribute('style')).toMatch(/font-style: italic/);
+  });
+
   // ── Pure helpers ────────────────────────────────────────────────────
 
   describe('humaniseClauseType', () => {
     it('snake_case → Title-cased space form', () => {
-      expect(humaniseClauseType('limitation_of_liability')).toBe(
-        'Limitation of liability',
-      );
+      expect(humaniseClauseType('limitation_of_liability')).toBe('Limitation of liability');
       expect(humaniseClauseType('indemnification')).toBe('Indemnification');
     });
     it('handles empty input', () => {
@@ -74,13 +81,14 @@ describe('PrecedentRow', () => {
     });
   });
 
-  describe('formatMetaLine', () => {
-    it('appends formatted month/year to the title', () => {
-      const out = formatMetaLine('Acme MSA', '2025-03-14T00:00:00.000Z');
-      expect(out).toMatch(/^Acme MSA · [A-Z][a-z]{2} 2025$/);
+  describe('formatContractDate', () => {
+    it('returns Mon YYYY for a valid ISO date', () => {
+      expect(formatContractDate('2025-03-14T00:00:00.000Z')).toMatch(
+        /^[A-Z][a-z]{2} 2025$/,
+      );
     });
-    it('falls back to just the title on invalid date', () => {
-      expect(formatMetaLine('Acme MSA', 'not-a-date')).toBe('Acme MSA');
+    it('returns empty string for invalid input', () => {
+      expect(formatContractDate('not-a-date')).toBe('');
     });
   });
 });
