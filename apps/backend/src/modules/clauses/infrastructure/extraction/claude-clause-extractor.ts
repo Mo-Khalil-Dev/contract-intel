@@ -102,27 +102,38 @@ export class ClaudeClauseExtractor implements IClauseExtractor {
   private async callOnce(chunkText: string): Promise<ExtractedContract> {
     let response: Anthropic.Messages.Message;
     try {
-      response = await this.client.messages.create({
-        model: this.model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        // System prompt + tool schema are static — cache the prefix.
-        // Per-document content (the chunkText) is NOT cached.
-        system: [
-          {
-            type: 'text',
-            text: CLAUDE_SYSTEM_PROMPT,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-        tools: [EXTRACT_CLAUSES_TOOL],
-        tool_choice: { type: 'tool', name: EXTRACT_CLAUSES_TOOL.name },
-        messages: [
-          {
-            role: 'user',
-            content: [{ type: 'text', text: chunkText }],
-          },
-        ],
-      });
+      // Use the streaming API (`.stream(...).finalMessage()`) rather
+      // than `messages.create(...)`. With max_tokens at 32K the
+      // Anthropic SDK refuses the synchronous call:
+      //   "Streaming is required for operations that may take longer
+      //    than 10 minutes."
+      // `.finalMessage()` accumulates the stream and returns the same
+      // Message object the synchronous call would have produced, so
+      // every downstream consumer (mapper, error handler, logger)
+      // works unchanged.
+      response = await this.client.messages
+        .stream({
+          model: this.model,
+          max_tokens: MAX_OUTPUT_TOKENS,
+          // System prompt + tool schema are static — cache the prefix.
+          // Per-document content (the chunkText) is NOT cached.
+          system: [
+            {
+              type: 'text',
+              text: CLAUDE_SYSTEM_PROMPT,
+              cache_control: { type: 'ephemeral' },
+            },
+          ],
+          tools: [EXTRACT_CLAUSES_TOOL],
+          tool_choice: { type: 'tool', name: EXTRACT_CLAUSES_TOOL.name },
+          messages: [
+            {
+              role: 'user',
+              content: [{ type: 'text', text: chunkText }],
+            },
+          ],
+        })
+        .finalMessage();
     } catch (err) {
       throw this.mapSdkError(err);
     }

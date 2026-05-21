@@ -65,8 +65,20 @@ function validClause(overrides: Record<string, unknown> = {}) {
 }
 
 function fakeClient(impl: jest.Mock): Anthropic {
+  // The extractor uses `messages.stream(params).finalMessage()` rather
+  // than `messages.create(params)` to bypass the SDK's 10-minute
+  // synchronous-call guard at high max_tokens. The mock surface mirrors
+  // that: `stream(params)` returns an object whose `finalMessage()`
+  // delegates to the spec's `impl(params)` — so every existing
+  // `impl.mockResolvedValue(toolUseResponse(...))` call still drives
+  // the right code path, and assertions on `impl.mock.calls` still
+  // inspect the same params.
   return {
-    messages: { create: impl },
+    messages: {
+      stream: (params: unknown) => ({
+        finalMessage: () => Promise.resolve(impl(params)),
+      }),
+    },
   } as unknown as Anthropic;
 }
 
