@@ -3977,7 +3977,7 @@ engineering task breakdown that implements those requirements.
 
 ### Phase 11 tasks
 
-#### Task 11.0: Pre-flight — pgvector index + embedding backfill (US-CI-0)
+#### ~~Task 11.0: Pre-flight — pgvector index + embedding backfill (US-CI-0)~~ ✅
 
 **Goal**: ensure every existing clause has an embedding and that `Clause.embedding`
 is indexed for sub-300ms kNN, before any feature work begins.
@@ -4030,7 +4030,7 @@ is indexed for sub-300ms kNN, before any feature work begins.
 
 ---
 
-#### Task 11.1: Vector-search repository (infrastructure)
+#### ~~Task 11.1: Vector-search repository (infrastructure)~~ ✅
 
 **Goal**: hide pgvector raw SQL behind a domain-language interface so the
 application layer never touches `$queryRaw`.
@@ -4063,7 +4063,7 @@ application layer never touches `$queryRaw`.
 
 ---
 
-#### Task 11.2: Demo-readiness audit script
+#### ~~Task 11.2: Demo-readiness audit script~~ ⏸ deferred
 
 **Goal**: a single command that the operator runs before any demo to
 verify the dataset will not embarrass the feature.
@@ -4085,7 +4085,7 @@ verify the dataset will not embarrass the feature.
 
 ---
 
-#### Task 11.3: GetSimilarClauses query handler (application)
+#### ~~Task 11.3: GetSimilarClauses query handler (application)~~ ✅
 
 **Goal**: a single CQRS query that powers the Similar Clauses endpoint.
 
@@ -4110,7 +4110,7 @@ verify the dataset will not embarrass the feature.
 
 ---
 
-#### Task 11.4: GET /api/v1/clauses/:id/similar (HTTP boundary)
+#### ~~Task 11.4: GET /api/v1/clauses/:id/similar (HTTP boundary)~~ ✅
 
 **Goal**: expose the query over HTTP with proper error mapping.
 
@@ -4133,7 +4133,7 @@ verify the dataset will not embarrass the feature.
 
 ---
 
-#### Task 11.5: Frontend service + `useSimilarClauses` hook
+#### ~~Task 11.5: Frontend service + `useSimilarClauses` hook~~ ✅
 
 **Goal**: feed components without coupling them to fetch logic.
 
@@ -4151,7 +4151,7 @@ verify the dataset will not embarrass the feature.
 
 ---
 
-#### Task 11.6: `FindSimilarButton` + drawer state on Results page
+#### ~~Task 11.6: `FindSimilarButton` + drawer state on Results page~~ ✅
 
 **Goal**: wire the trigger into the existing clauses tab.
 
@@ -4173,7 +4173,7 @@ verify the dataset will not embarrass the feature.
 
 ---
 
-#### Task 11.7: `SimilarClausesDrawer` + result-row components
+#### ~~Task 11.7: `SimilarClausesDrawer` + result-row components~~ ✅
 
 **Goal**: build the six components from US-010 §Component Inventory.
 
@@ -4202,7 +4202,7 @@ unchanged.
 
 ---
 
-#### Task 11.8: Comparison-mode navigation + highlight
+#### ~~Task 11.8: Comparison-mode navigation + highlight~~ ✅ (simplified)
 
 **Goal**: clicking a result navigates the main view to the target
 clause with a visible highlight, drawer stays open with active state.
@@ -4227,29 +4227,125 @@ clause with a visible highlight, drawer stays open with active state.
 
 ---
 
-### Tasks 11.9–11.13: US-CI-2 (Semantic Search) — start after US-CI-1 DoD
+### ~~Tasks 11.9–11.13: US-CI-2 (Semantic Search)~~ ✅ — frontend only (mocked backend)
 
-Not detailed here — these begin only after Task 11.8 ships and the
-team confirms US-CI-1 demoed successfully. High-level shape:
+**What shipped (commit `5d57994`):** complete UX surface, mocked at the
+service boundary. The components, hook, routing, and TopNav wiring are
+all production-final; the search engine itself is hand-curated for
+the 4 canonical suggested queries plus a single low-confidence
+fallback for off-script input.
 
-- **11.9** Search overlay component + `/search` page route
-- **11.10** `GET /api/v1/search` controller + DTO
-- **11.11** `useSemanticSearch` hook + service
-- **11.12** `SearchPortfolio` query handler (calls HyDE rewriter
-  port → embedding port → similarity repo)
-- **11.13** `HydeQueryRewriter` Claude driver + pass-through stub
+- **11.9** ✅ Search overlay component + `/search` page route
+- **11.10** ⏸ `GET /api/v1/search` controller + DTO — **deferred**
+  (mock service stands in)
+- **11.11** ✅ `useSemanticSearch` hook + service (mock)
+- **11.12** ⏸ `SearchPortfolio` query handler (HyDE rewriter →
+  embedding → similarity repo) — **deferred** with the real backend
+- **11.13** ⏸ `HydeQueryRewriter` Claude driver — **deferred** with
+  the real backend
 
-These reuse `SimilarityBar` and `PrecedentRow` from Task 11.7
-unchanged.
+`SimilarityBar` and `PrecedentRow` are reused unchanged from Task 11.7
+as designed. When the real backend lands (next sprint), the only file
+that changes is `services/semanticSearchService.ts` — replace the
+mock body with `httpService.get(API.SEARCH, ...).then(unwrap)`.
 
 ---
 
-### Task 11.14: Phase 11 E2E
+### ~~Task 11.14: Phase 11 E2E~~ ⏸ deferred
 
 Playwright spec covering: open a contract, click `Find similar` on a
 clause, see precedents in the drawer, click a result, verify
 navigation + highlight, close the drawer, then (after US-CI-2)
 `⌘K` → query → click contract result → land on the matched clause.
+
+Deferred — unit + integration coverage is adequate for the demo;
+revisit when US-CI-2 backend lands and the full flow is real.
+
+---
+
+### Additional work (unplanned but completed)
+
+These weren't in the original Phase 11 plan but landed as part of the
+sprint:
+
+- ✅ **Design alignment polish pass** (`27ca517`) — brought the six
+  Similar Clauses components up to the Claude Design handoff spec
+  (threshold-coloured `SimilarityBar` with ticks, Georgia italic
+  snippets, bottom-right arrow, breadcrumbs, footer kbd hints, slide-in
+  animation, top:56px drawer mount). Also fixed a Tailwind v4 class-naming
+  bug — camelCase classes (`text-inkMid`) were silently no-ops; mass
+  rename to kebab-case (`text-ink-mid`).
+- ✅ **Claude Design handoff imported** (`ecef0fc`) into
+  `wirframes/version_02/design_handoff_new_features/` as the canonical
+  reference superseding the lo-fi visual specs in `docs/design/`.
+- ✅ **TopNav integration fixes** (`6e5f099`, `a59e2b3`) — GlobalSearchBar
+  was originally wired into the unused `AppNav`; moved to the active
+  `HomePageV2/components/TopNav`. ResultsPage never had top navigation at
+  all — added it in all three return paths (loading / error / loaded).
+- ✅ **Backend extraction fixes** (`59a76c3`, `e104774`) — dense DPAs
+  (AWS, Salesforce) were failing with `corrupt_response`. Raised
+  `MAX_OUTPUT_TOKENS` from 8192 → 32K and switched the Claude call
+  from `messages.create` to `messages.stream(...).finalMessage()` to
+  bypass the SDK's 10-min synchronous-call guard. Diagnostic log now
+  includes `stop_reason` + `usage` so the next failure variant is
+  unambiguous.
+- ✅ **ProcessingPage demo speed-up** (`72005f4`) — trimmed
+  `STEP_DWELL_MS` 3000→800 and `SUCCESS_DWELL_MS` 5000→1500. The
+  artificial floor on the 6-step animation drops 18s → ~5s; backend
+  reality still gates progression as before.
+- ✅ **`--re-embed-mock` flag** on `backfill-clause-embeddings.ts`
+  (`db4e8ec`) — supports re-embedding clauses whose `embeddingModelVersion`
+  starts with `mock/`, used when switching the dev driver from the
+  deterministic mock to real Voyage.
+- ✅ **10 standard online contract PDFs** added to `test-contracts/online/`
+  (`7649db8`) — AWS DPA, Salesforce DPA, Stripe DPA, Atlassian DPA, and
+  6 Bonterms standards. After upload, demo dataset went from ~65 →
+  119 clauses; `data_protection` from 2 → 42.
+
+---
+
+### Phase 11 outcome (2026-05-21)
+
+**Status: shipped to `Development`**, 18 commits, demo-ready.
+
+**What's live end-to-end:**
+
+- **US-CI-1 (Similar Clauses)** — production: real `voyage-law-2`
+  embeddings on every clause, pgvector HNSW kNN, drawer mounted in
+  the Clauses tab on ResultsPage, `F` keyboard shortcut, click-to-new-tab
+  navigation, all UI states (loading skeletons / empty / error /
+  single / multi-result), threshold-coloured similarity bars, Georgia
+  italic snippets, breadcrumbs, footer kbd hints. p95 latency <300ms.
+- **US-CI-2 (Semantic Search)** — UX-complete, mock-backed: global
+  `⌘K` overlay with two-section results (Top contracts + Top clauses),
+  `/search` page with tabs / filter chips / sort / Load more,
+  suggested-searches idle state, low-confidence banner, no-results
+  fallback. Backend swap-ready (one file).
+
+**Demo dataset:** 119 clauses across 13 contracts, 100% embedded.
+`data_protection` 42 · `termination` 19 · `limitation_of_liability` 11.
+Safe demo clicks: `data_protection`, `limitation_of_liability`,
+`termination`, `indemnification`. Avoid: `change_of_control` (1),
+`representations_warranties` (1) — will hit empty state.
+
+**Tests:** 173 backend (clauses module) + 58 frontend (similar-clauses
++ hook + service). No regressions. Pre-existing 3 jest-syntax failures
+in `authService` / `referenceDataService` / `LogoutButton` specs are
+unrelated to Phase 11 work.
+
+**What's intentionally deferred:**
+
+- Task 11.2 (demo-readiness audit script) — dataset already verified
+  manually; revisit when it grows.
+- Tasks 11.10 / 11.12 / 11.13 (real Semantic Search backend with HyDE)
+  — the highest-leverage post-demo work. UX is finished, swap is one
+  service-body change. Estimated 1.5–2 days.
+- Task 11.14 (Phase 11 E2E Playwright) — defer until the SS backend
+  ships and the full flow is real.
+
+**Open scope items** (cross-type matching, scoped `⌘K`, similarity
+threshold UX) are tracked in `requirements.md` under
+Requirement 14 → **Still open**.
 
 ---
 
@@ -4257,11 +4353,8 @@ navigation + highlight, close the drawer, then (after US-CI-2)
 
 **US-CI-1 slice**: 11.0 → 11.1 → 11.2 → 11.3 → 11.4 → 11.5 → 11.6 →
 11.7 → 11.8 ships Similar Clauses end-to-end. **Demo target: Fri
-2026-05-22.**
+2026-05-22.** ✅ shipped 2026-05-21.
 
 **US-CI-2 slice**: 11.9 → 11.10 → 11.11 → 11.12 → 11.13 follows
-once US-CI-1 reaches DoD. Demo date TBD.
-
-Open scope items (cross-type matching, scoped `⌘K`, similarity
-threshold UX) are tracked in `requirements.md` under
-Requirement 14 → **Still open**.
+once US-CI-1 reaches DoD. ✅ frontend shipped 2026-05-21 with mock
+service; backend deferred.
