@@ -181,5 +181,19 @@ export const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-7';
  */
 export const CHUNK_THRESHOLD_CHARS = 200_000;
 
-/** Max output tokens per call. ~5k tokens covers a 50-clause contract. */
-export const MAX_OUTPUT_TOKENS = 8192;
+/**
+ * Max output tokens per call.
+ *
+ * Dense data-protection addenda (e.g. AWS / Salesforce GDPR DPAs) pack
+ * 15+ clauses with long quoted snippets into a single document. The
+ * JSON-encoded tool_use input + metadata can exceed the previous 8192
+ * cap, after which Anthropic returns a truncated tool_use whose input
+ * has no `clauses` key — surfacing here as
+ * `ExtractionPermanentError('corrupt_response')` rather than a clean
+ * stop_reason: 'max_tokens'.
+ *
+ * Claude 4.7 Opus supports up to 32K output tokens; raising the cap is
+ * the cheap fix. The extractor logs the response's `stop_reason` on
+ * mapper failure so we can confirm when truncation was the cause.
+ */
+export const MAX_OUTPUT_TOKENS = 32_768;

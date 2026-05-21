@@ -129,14 +129,23 @@ export class ClaudeClauseExtractor implements IClauseExtractor {
     try {
       return mapClaudeResponseToClauses(response.content);
     } catch (err) {
-      // Diagnostic: dump the raw Claude response when the mapper
-      // rejects it so we can see what shape was actually returned.
+      // Diagnostic: when the mapper rejects the response, log everything
+      // we'd need to triage without re-running the call:
+      //   - stop_reason: 'max_tokens' → truncation; bump
+      //                  MAX_OUTPUT_TOKENS (claude-prompt.ts).
+      //                  'tool_use' / 'end_turn' → real schema/shape
+      //                  mismatch — inspect the raw content.
+      //   - usage: confirm we actually hit the cap when stop_reason
+      //            says max_tokens.
+      //   - content: the raw shape so we can adjust the mapper's
+      //              unwrapping if Claude's tool_use input is nested
+      //              under a new key.
       this.logger.error(
-        `Mapper rejected Claude response. Raw content:\n${JSON.stringify(
-          response.content,
-          null,
-          2,
-        )}\nMapper error: ${err instanceof Error ? err.message : String(err)}`,
+        `Mapper rejected Claude response.\n` +
+          `  stop_reason: ${response.stop_reason}\n` +
+          `  usage: ${JSON.stringify(response.usage)}\n` +
+          `  mapper error: ${err instanceof Error ? err.message : String(err)}\n` +
+          `  raw content:\n${JSON.stringify(response.content, null, 2)}`,
       );
       throw err;
     }
