@@ -8,10 +8,14 @@ import { ProcessingPageView, PROCESSING_TIPS } from './ProcessingPage.view';
 import type { ProcessingStatusResponse } from '@/types/processing';
 
 // ── Timing constants (UX-only — tune freely) ────────────────────────
-/** Minimum dwell on each step before the next one may light up. */
-const STEP_DWELL_MS = 3000;
-/** How long we hold the "Analysis complete!" page before redirecting. */
-const SUCCESS_DWELL_MS = 5000;
+/** Minimum dwell on each step before the next one may light up.
+ *  Trimmed from 3000ms to keep the demo flow snappy — the 6-step
+ *  animation now caps at ~5s end-to-end instead of 18s. */
+const STEP_DWELL_MS = 800;
+/** How long we hold the "Analysis complete!" page before redirecting.
+ *  Trimmed from 5000ms for the same reason — enough to see the green
+ *  card, not enough to twiddle thumbs. */
+const SUCCESS_DWELL_MS = 1500;
 /** How often the tip banner rotates. */
 const TIP_ROTATE_MS = 4000;
 /** Tick rate for the progress-bar fill — purely aesthetic, independent
