@@ -25,6 +25,7 @@ import { DocumentOcrCompletedHandler } from './application/event-handlers/docume
 // Ports
 import { CLAUSE_EXTRACTOR, IClauseExtractor } from './application/ports/clause-extractor.port';
 import { EMBEDDING_SERVICE, IEmbeddingService } from './application/ports/embedding-service.port';
+import { CLAUSE_SIMILARITY_REPOSITORY } from './application/ports/clause-similarity.repository';
 import { CLAUSE_REPOSITORY } from './domain/clause.repository';
 import { EXTRACTION_RUN_REPOSITORY } from './domain/extraction-run.repository';
 
@@ -47,6 +48,7 @@ import {
 // Infrastructure — persistence
 import { PrismaClauseRepository } from './infrastructure/persistence/prisma-clause.repository';
 import { PrismaExtractionRunRepository } from './infrastructure/persistence/prisma-extraction-run.repository';
+import { PgvectorClauseSimilarityRepository } from './infrastructure/persistence/pgvector-clause-similarity.repository';
 
 /**
  * Clauses module — Phase 8.
@@ -72,6 +74,7 @@ import { PrismaExtractionRunRepository } from './infrastructure/persistence/pris
     // Persistence
     { provide: CLAUSE_REPOSITORY, useClass: PrismaClauseRepository },
     { provide: EXTRACTION_RUN_REPOSITORY, useClass: PrismaExtractionRunRepository },
+    { provide: CLAUSE_SIMILARITY_REPOSITORY, useClass: PgvectorClauseSimilarityRepository },
 
     // Driver candidates — both registered so they can be DI-overridden in
     // tests. The factories below select one at boot based on env.
