@@ -24,6 +24,9 @@ export const API = {
     LIST: '/api/v1/documents',
   },
 
+  // ── Clause Intelligence (Phase 11) ─────────────────────────────
+  SIMILAR_CLAUSES: (id: string) => `/api/v1/clauses/${id}/similar`,
+
   // ── Audit (Phase 6) ─────────────────────────────────────────────
   AUDIT: {
     LIST: '/api/v1/audit',
