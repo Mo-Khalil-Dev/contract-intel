@@ -78,6 +78,7 @@ export function ResultsPageView({
     switch (id) {
       case 'home':      navigate('/v2'); break;
       case 'portfolio': navigate('/contracts'); break;
+      case 'ask':       navigate('/ask'); break;
       case 'upload':    navigate('/upload'); break;
       default:
         // playbook / compare / renewals / settings have no routes yet

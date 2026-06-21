@@ -18,6 +18,9 @@ export function HomePageContainer() {
       case 'portfolio':
         navigate('/contracts');
         break;
+      case 'ask':
+        navigate('/ask');
+        break;
       case 'results':
         if (params?.contractId) {
           navigate(`/results/${params.contractId}`);

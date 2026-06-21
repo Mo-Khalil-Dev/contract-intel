@@ -62,6 +62,10 @@ export function HomePageV2Container() {
       navigate('/contracts');
       return;
     }
+    if (id === 'ask') {
+      navigate('/ask');
+      return;
+    }
     // eslint-disable-next-line no-console
     console.info('[HomePageV2] nav →', id, '(no route yet)');
   }

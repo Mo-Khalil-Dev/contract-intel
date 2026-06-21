@@ -11,6 +11,7 @@ import { ProcessingPage } from '@/pages/ProcessingPage/ProcessingPage';
 import { ResultsPage } from '@/pages/ResultsPage/ResultsPage';
 import { PortfolioPage } from '@/pages/portfolio/PortfolioPage';
 import { SearchPage } from '@/pages/SearchPage';
+import { AskPage } from '@/pages/ask';
 
 function App() {
   return (
@@ -74,6 +75,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SearchPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ask"
+              element={
+                <ProtectedRoute>
+                  <AskPage />
                 </ProtectedRoute>
               }
             />

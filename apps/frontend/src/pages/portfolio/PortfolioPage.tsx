@@ -40,6 +40,7 @@ export function PortfolioPage() {
     switch (id) {
       case 'home':      navigate('/v2'); break;
       case 'portfolio': navigate('/contracts'); break;
+      case 'ask':       navigate('/ask'); break;
       case 'upload':    navigate('/upload'); break;
       case 'renewals':  navigate('/renewals'); break;
       case 'settings':  navigate('/settings'); break;

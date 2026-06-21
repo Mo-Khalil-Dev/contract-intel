@@ -10,6 +10,8 @@ interface NavLink {
 const LINKS: NavLink[] = [
   { id: 'home', label: 'Home' },
   { id: 'portfolio', label: 'Contracts' },
+  // Phase 12 (US-AP-1): entry point to the Ask Your Portfolio page.
+  { id: 'ask', label: 'Ask' },
   { id: 'playbook', label: 'Playbook' },
   { id: 'compare', label: 'Compare' },
   { id: 'renewals', label: 'Renewals' },
