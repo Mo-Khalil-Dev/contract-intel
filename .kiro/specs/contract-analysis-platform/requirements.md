@@ -574,3 +574,129 @@ The epic decomposes into two child stories. **US-CI-1 (Similar Clauses) ships fi
 
 - **Bias `⌘K` search by current contract context** — e.g. when invoked from inside a contract, prefer matches from the same counterparty. Recommendation in PHASE_11_SPEC.md is *no* for v1; revisit after telemetry from US-CI-2 lands.
 - **Similarity threshold for hiding low-quality matches in US-CI-1** — server-side pre-filter at 0.5? Or always show top 5 regardless? Recommendation: pre-filter at 0.5 in v1, surface "weak match" labelling in v2.
+
+---
+
+### Requirement 15: Ask Your Portfolio (Conversational AI)
+
+**Phase**: 12
+**Visual spec**: `WIREFRAMES_ASK_PAGE.md`, `WIREFRAMES_CHAT_RESPONSE_TYPES.md`, interactive prototype `wirframes/ask-page/ask-page.html`
+**Design / flow**: `DESIGN_PORTFOLIO_AI_CHAT.md`, `FLOW_QUESTION_TO_ANSWER.md`
+**Implementation plan**: `PORTFOLIO_AI_CHAT_IMPLEMENTATION_PLAN.md`
+**Depends on**: Requirement 3 (Clause Extraction — supplies clauses, metadata, risk scores), Requirement 4 (Risk Scoring), Requirement 14 (Clause Intelligence — embeddings + kNN reused for context retrieval).
+
+**Epic / Parent story**
+
+> **As a** legal professional managing a portfolio of contracts
+> **I want** to ask questions about my whole portfolio in plain English and get a grounded, cited answer
+> **So that** I can get cross-contract insight (risk, renewals, comparisons, totals) in seconds instead of opening contracts one by one.
+
+The feature is a **dedicated `/ask` page**: a single question box with **answer cards stacked underneath**. Each question is classified into a query type; the matching handler retrieves the relevant slice of the user's already-extracted portfolio data (metadata, clauses, risk scores, embeddings from Phases 3/4/11), sends a query-specific prompt to Claude, and renders a type-specific answer card grounded in — and citing — the user's own contracts. It is **not** the top-nav `⌘K` semantic search; that surface (Requirement 14) is retrieval and stays untouched.
+
+The epic decomposes into four child stories. **US-AP-1 (Ask page shell) and US-AP-2 (one query type end-to-end) ship first** as a vertical slice; **US-AP-3 (remaining query types)** and **US-AP-4 (persistence, history, feedback)** follow.
+
+---
+
+#### US-AP-1 — Ask page shell
+
+**As a** user
+**I want** a dedicated page with one question box and answer cards beneath it
+**So that** I have a clear, focused place to ask about my portfolio.
+
+**Acceptance criteria**
+
+*Frontend — page + ask box*
+- AC1: A route `/ask` renders the Ask page inside the existing `PageShell`, reachable from primary navigation.
+- AC2: On first load (no answers yet) the page shows a time-aware greeting (`Good {morning|afternoon|evening}, {firstName}`), the headline *"What do you want to know about your portfolio?"*, the ask box, and a suggested-questions list.
+- AC3: The ask box is a single-line input with an AI sparkle glyph, placeholder *"Ask anything about your portfolio…"*, a `⌘K` hint, and a gradient **Ask** button. `Enter` or clicking **Ask** submits; `⌘K`/`Ctrl+K` focuses the box while on `/ask`.
+- AC4: Submitting clears the input and mounts a new answer card in a **loading** state at the top of the card stack (newest-on-top).
+- AC5: The suggested-questions list shows one canned question per query type; clicking one fills the box and submits. It reuses the visual treatment of `SuggestedSearches` (Georgia-italic quotes, bordered rows).
+- AC6: Once at least one answer card exists, the hero headline collapses so the ask box stays reachable without scrolling.
+
+*Frontend — answer card shell*
+- AC7: Every answer card has: a header (`YOU ASKED` eyebrow + the question + action icons), a body (prose lead-in + a type-specific result block), and a footer (`Sources: {n} contracts · {m} clauses`, a `Refine` action, and 👍/👎 feedback).
+- AC8: The header action icons are: ask follow-up, share, export, bookmark, expand, and dismiss (`✕` removes the card).
+- AC9: The card body's prose may contain inline citation chips (`[1]`, `[2]`, …); each chip maps to a source listed in the footer and, when clicked, navigates to or scrolls to the cited contract/clause.
+
+*Accessibility*
+- AC10: The ask box has `role="searchbox"` (or an equivalent labelled text input), the Ask button is keyboard-operable, and answer cards are announced to assistive tech when they finish loading (`aria-live="polite"`).
+- AC11: All interactive elements meet WCAG 2.1 AA (≥4.5:1 contrast, visible focus ring).
+
+---
+
+#### US-AP-2 — Query classification + one type end-to-end (risk)
+
+**As a** user
+**I want** my question routed to the right kind of answer and grounded in my real contracts
+**So that** I trust the answer and can act on it.
+
+**Acceptance criteria**
+
+*Backend — classification + chat module*
+- AC1: A `POST /api/v1/ask` (or `POST /api/v1/chat/conversations/:id/messages`) endpoint accepts a natural-language question scoped to the authenticated user and returns a structured answer: `prose`, `format`, `structuredData`, and `citations`.
+- AC2: A query classifier categorises each question into one of: `risk-analysis`, `comparison`, `timeline`, `clause-type-search`, `financial`, `document-specific`, `general`. The classifier is a pure, unit-tested function; an unmatched question falls back to `general`.
+- AC3: The handler retrieves context **only from the requesting user's own portfolio** (auth-scoped); no cross-tenant data is ever included.
+- AC4: For `risk-analysis`, the handler builds context from already-extracted risk scores and critical/high clauses (Phases 3/4) — it does **not** re-run extraction — and returns a ranked list with per-contract risk score, level, and a one-line reason.
+- AC5: The answer is **grounded**: every contract/clause referenced in the response exists in the retrieved context. Citations are validated against the context before the response is returned; a reference with no backing source is dropped rather than shown.
+- AC6: If the LLM call fails, the endpoint returns a structured error (not a 5xx with an empty body) that the UI renders as a retryable error card.
+- AC7: p95 end-to-end latency < 3s for the non-streaming path on a portfolio of ≥ 100 contracts.
+
+*Frontend — risk card*
+- AC8: A `risk-analysis` answer renders as a ranked result table (Ref · Contract · Counterparty · Value · Risk) with a DM-Mono score chip and a risk badge per row, reusing the existing risk-severity palette and `Badge`.
+- AC9: The table truncates to ~5 rows with an `Open in full view →` link that navigates to the contracts list with the equivalent filter pre-applied.
+
+---
+
+#### US-AP-3 — Remaining query types + result blocks
+
+**As a** user
+**I want** comparisons, renewal timelines, clause lookups, totals, and single-contract summaries
+**So that** every common portfolio question has a fit-for-purpose answer.
+
+**Acceptance criteria**
+- AC1: `comparison` renders a table comparing the requested dimension across contracts, with best/worst cells marked (▲ less favorable / ▼ more favorable); on narrow widths it degrades to stacked cards.
+- AC2: `timeline` renders a vertical timeline sorted by urgency, each node showing days-remaining (colour-escalated), expiry date, notice period, and an auto-renewal warning when the clause carries that flag.
+- AC3: `clause-type-search` renders a clause list reusing the existing `ClauseCard`/`PrecedentRow` look (Georgia-italic snippet, severity stripe, section pin); rows deep-link to the clause in the Results view. Context retrieval may reuse the Phase 11 kNN index.
+- AC4: `financial` renders a hero total plus a share-of-total breakdown using the existing `SimilarityBar` geometry; when an amount cannot be parsed verbatim, the contract is excluded and the exclusion is stated.
+- AC5: `document-specific` renders a metadata fact-sheet (parties, dates, term, value, notice) plus a top-risks list for the single named contract, with a primary CTA to open the full contract.
+- AC6: `general` renders well-formatted prose with citation chips and no specialised block.
+- AC7: Each block selects its own columns/fields from `structuredData`; there is no single fixed table schema across types.
+
+---
+
+#### US-AP-4 — Persistence, history, and feedback
+
+**As a** user
+**I want** my questions and answers saved and a way to rate them
+**So that** I can revisit past answers and the system can improve over time.
+
+**Acceptance criteria**
+- AC1: Each question/answer pair is persisted as a user message + assistant message under a `ChatThread` owned by the user (`ChatThread`, `ChatMessage` per `PORTFOLIO_AI_CHAT_IMPLEMENTATION_PLAN.md`). Assistant messages persist their citations and routing/format metadata.
+- AC2: `GET` endpoints list a user's threads and retrieve a thread with its ordered messages; all reads are auth-scoped to the owner.
+- AC3: 👍/👎 feedback on an answer writes a `ChatFeedback` record linked to the assistant message; submitting feedback is idempotent per user per message.
+- AC4: Deleting a thread cascades to its messages and feedback.
+- AC5: A `user_ask` (or equivalent) AuditEvent is logged per question with user ID, timestamp, and the resolved query type, consistent with Requirement 7.
+
+---
+
+#### Resolved scope decisions (2026-06-21)
+
+- **Surface**: a dedicated `/ask` page, **not** the `⌘K` search overlay. The overlay is transient and is for retrieval; conversations/answer cards need a persistent home and room for rich blocks. Semantic search (Requirement 14) is unchanged.
+- **Card model**: ask → answer card → ask again; cards accumulate **newest-on-top**. This is closer to Perplexity/Notion-AI than a chat thread, but is still persisted as thread+messages so the backend model is unchanged.
+- **Grounding over recall**: answers must cite the user's own contracts; unbacked references are dropped (AC US-AP-2/AC5). We prefer "I don't have that" over a plausible hallucination.
+- **Reuse, don't rebuild**: result blocks reuse `Badge`, `TypePill`, `SimilarityBar`, `ClauseCard`/`PrecedentRow`, and the `SuggestedSearches` pattern; context retrieval reuses the Phase 11 embeddings/HNSW index where relevant.
+- **First slice**: US-AP-1 + US-AP-2 (risk only) ship as one vertical slice to prove the full path before fanning out to the other query types.
+
+#### Out of scope (Phase 12) — deferred to later phases
+
+- **Streaming responses (SSE)** — deferred; the first cut is synchronous. Streaming is a UX upgrade once the path is proven.
+- **Context-aware follow-ups / multi-turn memory** — v1 treats each question independently; follow-ups start fresh.
+- **Composite answers for mixed-type questions** (e.g. "highest-risk contracts expiring soon") — v1 picks the dominant type; composite blocks are a later phase.
+- **Export to PDF / share links** — the header affordances are stubbed in v1.
+- **Cross-tenant or org-wide ask** — strictly the requesting user's portfolio in v1.
+
+#### Still open
+
+- **`⌘K` collision** — both the global search and the page ask box want `⌘K`. Recommendation: the `/ask` page takes `⌘K` only while active; revisit if it confuses users, possibly giving Ask a distinct shortcut.
+- **Card ordering** — newest-on-top (recommended) vs. append-and-scroll (chat-style). Confirm with first user feedback.
+- **Classifier approach** — heuristic keyword classifier for v1; revisit an LLM-based classifier if accuracy is insufficient once telemetry lands.
