@@ -4548,6 +4548,16 @@ extract citations → persist messages.
   hero collapses after first answer.
 - **DoD**: renders empty state; submit mounts a loading card.
 
+#### Task 12.7a: TopNav "Ask" entry point
+
+**Goal**: give users a navigation path to `/ask` (US-AP-1).
+
+- Add an **"Ask"** primary link to `TopNav` (existing primary-nav
+  pattern with `aria-current`); routes to `/ask`. No new ⌘K overlay —
+  the design explicitly rejected the tabbed-⌘K approach.
+- **DoD**: link renders in `TopNav`, marks `aria-current="page"` on
+  `/ask`, and navigates there; existing `TopNav` tests updated.
+
 #### Task 12.8: AnswerCard shell (header / body / footer)
 
 **Goal**: the card frame around every answer.

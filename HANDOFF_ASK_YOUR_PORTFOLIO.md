@@ -49,6 +49,7 @@ Build **Tasks 12.0 → 12.8** for the `risk-analysis` type end-to-end before fan
 6. **12.5** `POST /api/v1/ask` controller + DTOs
 7. **12.6** `useAskPortfolio` hook + `askService`
 8. **12.7** `/ask` page (greeting, ask box, card stack)
+8a. **12.7a** `TopNav` "Ask" entry-point link → `/ask` (the only nav path to the page)
 9. **12.8** `AnswerCard` shell + risk result table
 
 Then 12.9 (remaining types/blocks) → 12.10 (suggestions/citations) → 12.11 (history/feedback) → 12.12 (E2E).
