@@ -356,16 +356,23 @@ interface PortfolioContext {
 
 ## UI/UX Design
 
-### Option A: Sidebar Chat Panel (Recommended for MVP)
-- Always-available chat in right sidebar
-- Accessible from any page
-- Quick access to portfolio insights
-- Conversation history available in sidebar
+> **DECIDED (2026-06-21)**: Dedicated **"Ask" page** at `/ask` — a hero greeting,
+> one centered question box, and **answer cards stacked underneath** (Perplexity /
+> Notion-AI style). NOT the top-nav ⌘K search overlay; the existing semantic search
+> box stays untouched. Full layout spec: **`WIREFRAMES_ASK_PAGE.md`**.
+> Per-question-type answer blocks: **`WIREFRAMES_CHAT_RESPONSE_TYPES.md`**.
 
-### Option B: Dedicated Chat Page
-- Full-screen experience at `/portfolio/chat`
-- Richer conversation history view
-- Better for deep analysis sessions
+The chosen direction (see `WIREFRAMES_ASK_PAGE.md`):
+- Route `/ask` with a single AI question box (sparkle glyph, gradient "Ask" button)
+- Each question produces an **answer card**: prose lead-in + inline citations +
+  a type-specific result block (table / ranked list / comparison / timeline / …)
+  + a Sources/Refine/feedback footer
+- First-run shows time-aware greeting + suggested questions
+
+### Rejected alternatives
+- **Sidebar drawer** — too tight (480px) for comparison tables and financial bars.
+- **⌘K overlay (tabbed Search/Ask)** — the overlay is transient (Esc dismisses);
+  a bad home for accumulating answer cards. Keeps search regression-free instead.
 
 ### Chat Message Design
 ```
