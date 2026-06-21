@@ -9,6 +9,7 @@ import {
   PortfolioContext,
   PortfolioContextItem,
 } from './portfolio-context';
+import { parseRequestedCount } from './parse-requested-count';
 
 /** How many contract rows to feed the model for a portfolio-wide question. */
 const MAX_CONTEXT_ITEMS = 25;
@@ -35,8 +36,14 @@ export class ContextBuilder {
     queryType: QueryType,
     question: string,
   ): Promise<PortfolioContext> {
+    // Honour an explicit count in the question ("top 2", "5 riskiest") so
+    // the prose answer and the structured table operate on the same N.
+    // Falls back to the full cap when no count is asked for.
+    const requested = parseRequestedCount(question);
+    const limit = requested ?? MAX_CONTEXT_ITEMS;
+
     const [page, summary] = await Promise.all([
-      this.portfolio.findAll(orgId, {}, 'risk', 1, MAX_CONTEXT_ITEMS),
+      this.portfolio.findAll(orgId, {}, 'risk', 1, limit),
       this.portfolio.summary(orgId),
     ]);
 
