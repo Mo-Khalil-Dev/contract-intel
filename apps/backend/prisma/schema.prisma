@@ -36,7 +36,8 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  sessions Session[]
+  sessions    Session[]
+  chatThreads ChatThread[]
 
   @@index([email])
   @@index([auth0SubjectId])
@@ -264,4 +265,82 @@ model Clause {
   @@index([extractionRunId])
   @@index([type])
   @@index([parentClauseId])
+}
+
+// -----------------------------------------------------------------------------
+// Chat domain (Phase 12 — "Ask Your Portfolio")
+// -----------------------------------------------------------------------------
+
+// Thread aggregates a conversation session between a user and the AI assistant.
+// One row per conversation; a user may have multiple threads.
+model ChatThread {
+  id     String @id // UUID, supplied by the application (ChatThreadId VO)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orgId  String // v1: orgId == userId. Becomes a real Org FK later.
+
+  title  String?
+  status String  @default("active") // active | archived | deleted
+
+  // Document IDs in scope when the thread was created (audit + scope limiting).
+  portfolioSnapshot Json?
+  // Model/settings snapshot at creation, for reproducibility.
+  settingsSnapshot  Json?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Position-anchored message in a thread. Immutable once created.
+// User and assistant messages share the table; `role` disambiguates.
+model ChatMessage {
+  id       String     @id // UUID (ChatMessageId VO)
+  threadId String
+  thread   ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  role     String // "user" | "assistant"
+  content  String @db.Text
+  sequence Int // per-thread ordering (1, 2, 3, ...)
+
+  // user msg: original query for audit/replay; assistant msg: producing query.
+  querySnapshot   Json?
+  // assistant msg: how the question was routed { queryType, clauses, documents }.
+  routingAnalysis Json?
+  // assistant msg: validated source references.
+  citations       Json[] @default([])
+  // execution metadata { llmInputTokens, llmOutputTokens, executionTimeMs }.
+  executionMetadata Json?
+
+  failureReason String?
+  status        String  @default("success") // success | pending | failed
+
+  createdAt DateTime @default(now())
+
+  feedback ChatFeedback?
+
+  @@index([threadId, sequence])
+  @@index([role])
+  @@index([status])
+}
+
+// Thumbs up/down + optional comment on an assistant message. Kept separate so
+// the message row stays immutable.
+model ChatFeedback {
+  id        String      @id // UUID
+  messageId String      @unique
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  score   Int // -1 = unhelpful, 0 = neutral, 1 = helpful
+  comment String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
