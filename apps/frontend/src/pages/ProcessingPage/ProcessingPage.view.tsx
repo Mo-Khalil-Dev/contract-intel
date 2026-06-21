@@ -150,12 +150,21 @@ export function ProcessingPageView({
   }
 
   // ── Active processing (OCR or extraction running) ─────────────────
+  // Clause extraction is the long pole — it can run 1–2 minutes on a
+  // large contract. Without a heads-up the capped progress bar reads as
+  // a frozen spinner, so we surface an honest "this takes a while" note
+  // once we're in the extraction phase.
+  const note =
+    status.extractionStatus === 'extracting'
+      ? 'Analyzing every clause in depth — this can take a minute or two for longer contracts. You can safely leave this page open.'
+      : undefined;
   return (
     <Layout>
       <RunningHeader
         progressPercent={progressPercent}
         title="Analyzing your contract…"
         filename={filename ?? documentId}
+        note={note}
       />
       <StepList displayedStep={displayedStep} />
       <Tip text={PROCESSING_TIPS[tipIndex]} />
@@ -177,10 +186,12 @@ function RunningHeader({
   progressPercent,
   title,
   filename,
+  note,
 }: {
   progressPercent: number;
   title: string;
   filename: string | undefined;
+  note?: string;
 }) {
   const clamped = Math.max(0, Math.min(100, progressPercent));
   return (
@@ -189,6 +200,15 @@ function RunningHeader({
       <h1 className={styles.title}>{title}</h1>
       {filename && <p className={styles.filename}>{filename}</p>}
       <ProgressBar percent={clamped} />
+      {note && (
+        <p
+          className={styles.stepDesc}
+          style={{ marginTop: 12, textAlign: 'center', color: 'var(--color-ink-mid)' }}
+          aria-live="polite"
+        >
+          {note}
+        </p>
+      )}
     </>
   );
 }

@@ -20,6 +20,9 @@ import { SessionInvalidatedHandler } from './application/events/session-invalida
 
 // Infrastructure adapters + controller + guard
 import { Auth0Service } from './infrastructure/auth0.service';
+import { DevOAuthProvider } from './infrastructure/dev-oauth-provider';
+import { AppConfigService } from '../../config/app-config.service';
+import { AuthDriver, NodeEnv } from '../../config/environment-variables';
 import { SessionEncryptionService } from './infrastructure/session-encryption.service';
 import { SessionCookieService } from './infrastructure/session-cookie.service';
 import { StateTokenService } from './infrastructure/state-token.service';
@@ -41,8 +44,24 @@ const EVENT_HANDLERS = [UserLoggedInHandler, SessionInvalidatedHandler];
     ...QUERY_HANDLERS,
     ...EVENT_HANDLERS,
 
-    // Infrastructure adapters wired to domain ports
-    { provide: OAUTH_PROVIDER, useClass: Auth0Service },
+    // Infrastructure adapters wired to domain ports.
+    // OAuth provider is chosen at boot: real Auth0 by default, or a
+    // dev-only bypass when AUTH_DRIVER=dev (refused in production).
+    Auth0Service,
+    DevOAuthProvider,
+    {
+      provide: OAUTH_PROVIDER,
+      inject: [AppConfigService, Auth0Service, DevOAuthProvider],
+      useFactory: (config: AppConfigService, auth0: Auth0Service, dev: DevOAuthProvider) => {
+        if (config.authDriver === AuthDriver.Dev) {
+          if (config.nodeEnv === NodeEnv.Production) {
+            throw new Error('AUTH_DRIVER=dev is not allowed when NODE_ENV=production');
+          }
+          return dev;
+        }
+        return auth0;
+      },
+    },
     { provide: SESSION_ENCRYPTION, useClass: SessionEncryptionService },
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
     { provide: SESSION_REPOSITORY, useClass: PrismaSessionRepository },

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  AuthDriver,
   ClauseExtractorDriver,
   EmbeddingDriver,
   EnvironmentVariables,
@@ -56,6 +57,11 @@ export class AppConfigService {
 
   get encryptionKeyName(): string {
     return this.configService.get('ENCRYPTION_KEY_NAME', { infer: true });
+  }
+
+  // Auth
+  get authDriver(): AuthDriver {
+    return this.configService.get('AUTH_DRIVER', { infer: true });
   }
 
   // Auth0

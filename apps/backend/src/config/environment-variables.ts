@@ -17,6 +17,14 @@ export enum NodeEnv {
   Production = 'production',
 }
 
+export enum AuthDriver {
+  // Real Auth0 Universal Login (production + any real integration test).
+  Auth0 = 'auth0',
+  // Dev-only bypass: skips the external IdP and logs in a fixed local
+  // user. Refused at boot when NODE_ENV=production (see auth.module).
+  Dev = 'dev',
+}
+
 export enum StorageDriver {
   Local = 'local',
   Gcs = 'gcs',
@@ -80,6 +88,11 @@ export class EnvironmentVariables {
 
   @IsString()
   ENCRYPTION_KEY_NAME: string = 'primary';
+
+  // Auth provider selection. Defaults to real Auth0; `dev` enables a
+  // local bypass for running without an Auth0 tenant (non-production only).
+  @IsEnum(AuthDriver)
+  AUTH_DRIVER: AuthDriver = AuthDriver.Auth0;
 
   // Auth0
   @IsString()

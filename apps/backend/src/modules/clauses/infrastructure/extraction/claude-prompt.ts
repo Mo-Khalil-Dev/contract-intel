@@ -56,7 +56,7 @@ CLAUSE rules:
 
 Risk rubric (DRAFT — Phase 9 will refine with legal-SME validation):
 
-  RISK FACTORS to weigh:
+  RISK FACTORS to weigh:                      
     - Unbounded liability (no cap on damages)
     - One-sided obligations (only one party bears the burden)
     - Broad indemnification scope (third-party IP, gross negligence carve-outs)
