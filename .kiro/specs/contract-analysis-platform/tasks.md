@@ -4358,3 +4358,253 @@ Requirement 14 → **Still open**.
 **US-CI-2 slice**: 11.9 → 11.10 → 11.11 → 11.12 → 11.13 follows
 once US-CI-1 reaches DoD. ✅ frontend shipped 2026-05-21 with mock
 service; backend deferred.
+
+---
+
+## Phase 12: Ask Your Portfolio (Conversational AI)
+
+**Requirement**: see [Requirement 15: Ask Your Portfolio](./requirements.md#requirement-15-ask-your-portfolio-conversational-ai)
+in `requirements.md` for the epic, the four child stories (US-AP-1..4),
+acceptance criteria, and resolved scope decisions.
+
+**Visual specs**: `WIREFRAMES_ASK_PAGE.md`,
+`WIREFRAMES_CHAT_RESPONSE_TYPES.md`, interactive prototype
+`wirframes/ask-page/ask-page.html`.
+
+**Design / flow / plan**: `DESIGN_PORTFOLIO_AI_CHAT.md`,
+`FLOW_QUESTION_TO_ANSWER.md`, `PORTFOLIO_AI_CHAT_IMPLEMENTATION_PLAN.md`.
+
+This section covers **execution only**: the layer map and the engineering
+task breakdown that implements those requirements.
+
+### Phase 12 layer map (Clean Architecture / DDD)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Interface / UI (frontend)                                    │
+│   12.7  AskPage route + hero + ask box                       │
+│   12.8  AnswerCard shell (header / body / footer)            │
+│   12.9  Result blocks (risk, comparison, timeline,           │
+│         clause-list, financial, doc-summary, prose)          │
+│   12.10 SuggestedQuestions + Citation chip                   │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Interface / HTTP (backend) + Frontend data adapters          │
+│   12.5  POST /api/v1/ask controller + DTOs                   │
+│   12.6  useAskPortfolio hook + askService                    │
+│   12.11 Thread/message/feedback controllers (US-AP-4)        │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Application (use cases, command/query handlers)              │
+│   12.3  AskPortfolio command handler                         │
+│   12.4  QueryHandlerRegistry + per-type query handlers       │
+│         (risk first; rest in 12.9-parallel)                  │
+└──────────────────────────────────────────────────────────────┘
+                            ▲
+┌──────────────────────────────────────────────────────────────┐
+│ Domain + Infrastructure                                      │
+│   Domain: ChatThread aggregate, ChatMessage entity,          │
+│           ChatFeedback (new, minimal)                        │
+│   Infrastructure:                                            │
+│     12.0  Prisma schema + migration (thread/message/        │
+│           feedback)                                          │
+│     12.1  QueryClassifier (pure) + ContextBuilder           │
+│           (reads documents/clauses/risk, reuses Phase 11     │
+│           kNN for clause-type retrieval)                     │
+│     12.2  ClaudeAnswerService (port + Anthropic driver) +    │
+│           PromptBuilder + CitationExtractor                  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### Why this layering for Phase 12
+
+- **No re-extraction.** Context is assembled from data Phases 3/4/11
+  already produced (metadata, clauses, risk scores, embeddings). The
+  ContextBuilder reads; it never re-runs the pipeline.
+- **Classification + context are infrastructure/pure.** The classifier
+  is a pure function; the context builder is a read-side service behind
+  an interface, so the command handler is unit-testable without a DB.
+- **The LLM is a port.** `ClaudeAnswerService` is an interface with an
+  Anthropic driver; a stub returns canned answers in handler tests so
+  no test needs a live LLM.
+- **Query handlers behind a registry.** Each query type is its own
+  handler implementing a common interface; the registry routes by the
+  classifier's output. Adding a type = adding a handler, no edits to the
+  command handler.
+- **Grounding is enforced at the boundary.** CitationExtractor validates
+  every reference against the retrieved context before the response
+  leaves the application layer; unbacked references are dropped.
+
+#### Dependency rule applied to the task order
+
+1. **12.0** ships the schema + migration (thread / message / feedback).
+2. **12.1** ships the pure classifier and the context builder (reads
+   only). Unit-testable in isolation.
+3. **12.2** ships the Claude port + driver, prompt builder, and citation
+   extractor.
+4. **12.3 / 12.4** (application) compose 12.1 + 12.2 behind the command
+   handler and the query-handler registry — **risk handler first**.
+5. **12.5** (HTTP boundary) exposes the handler; boundary validation only.
+6. **12.6–12.8** (frontend) compose hook → ask box → answer-card shell.
+7. **12.9** adds the remaining result blocks + their query handlers in
+   parallel once the risk slice is green.
+8. **12.10** adds suggestions + citation chips. **12.11** adds thread
+   history + feedback (US-AP-4).
+
+#### Test pyramid by layer
+
+| Layer | Test type | Examples |
+|---|---|---|
+| Domain | Unit | `ChatThread.spec.ts` (message append, ownership) |
+| Infrastructure | Unit / integration | `query-classifier.spec.ts` (pure); `context-builder.spec.ts` against seeded read models |
+| Application | Unit | `ask-portfolio.handler.spec.ts` + per-handler specs against in-memory repos + stub LLM |
+| HTTP | Integration | Supertest on `POST /api/v1/ask` happy + auth-scope + LLM-failure |
+| Frontend pure | Unit | classifier-parity (if mirrored), citation chip mapping |
+| Frontend hook | Integration | `useAskPortfolio` with MSW |
+| End-to-end | Playwright | Task 12.12 |
+
+---
+
+### Phase 12 tasks
+
+#### Task 12.0: Prisma schema + migration — thread / message / feedback
+
+**Goal**: persist conversations so answers survive reloads and feedback can be recorded.
+
+- Add `ChatThread`, `ChatMessage`, `ChatFeedback` models per
+  `PORTFOLIO_AI_CHAT_IMPLEMENTATION_PLAN.md` (owner = user; message
+  stores role, content, sequence, citations JSON, routing/format
+  metadata JSON; feedback links 1:1 to an assistant message).
+- Generate migration; add indexes on `(userId)`, `(threadId, sequence)`.
+- **DoD**: migration applies cleanly; `prisma generate` passes.
+
+#### Task 12.1: QueryClassifier (pure) + ContextBuilder (read-side)
+
+**Goal**: turn a question into a query type and a grounded context slice.
+
+- `QueryClassifier`: pure function → one of the 7 types; `general`
+  fallback. Fully unit-tested across representative phrasings.
+- `ContextBuilder`: per-type read of documents/clauses/risk scoped to
+  the user; reuses Phase 11 kNN for `clause-type-search`. Returns a
+  typed `PortfolioContext`.
+- **DoD**: classifier + context builder unit tests green; no DB writes.
+
+#### Task 12.2: ClaudeAnswerService (port + driver) + PromptBuilder + CitationExtractor
+
+**Goal**: produce a grounded, cited answer from context + question.
+
+- `ClaudeAnswerService` interface + Anthropic driver (uses
+  `CLAUDE_API_KEY`); prompt-cache the system prompt.
+- `PromptBuilder`: per-type system + user prompt from `PortfolioContext`.
+- `CitationExtractor`: parse references, **validate against context**,
+  drop unbacked ones.
+- Stub driver for tests.
+- **DoD**: extractor drops unbacked citations in tests; driver isolated
+  behind the port.
+
+#### Task 12.3: AskPortfolio command handler
+
+**Goal**: orchestrate classify → build context → prompt → answer →
+extract citations → persist messages.
+
+- Persists user + assistant messages (Task 12.0); auth-scoped.
+- **DoD**: handler unit test (in-memory repos + stub LLM) covers happy
+  path + LLM-failure → structured error.
+
+#### Task 12.4: QueryHandlerRegistry + risk handler
+
+**Goal**: route by query type; implement `risk-analysis` end-to-end.
+
+- Common `QueryHandler` interface (buildContext / buildPrompt /
+  extractCitations / formatResponse); registry resolves by type.
+- Risk handler returns ranked `structuredData` (format `ranked-list`).
+- **DoD**: registry routing test; risk handler spec green.
+
+#### Task 12.5: POST /api/v1/ask controller + DTOs
+
+**Goal**: expose the handler over HTTP.
+
+- Request/response DTOs (`prose`, `format`, `structuredData`,
+  `citations`); boundary validation only; `@CurrentUser` scope.
+- **DoD**: Supertest happy + auth-scope + LLM-failure (structured
+  error, not 5xx).
+
+#### Task 12.6: useAskPortfolio hook + askService
+
+**Goal**: frontend data layer.
+
+- React Query mutation; `askService` posts to `/api/v1/ask`; types
+  mirror the DTOs.
+- **DoD**: hook integration test with MSW.
+
+#### Task 12.7: AskPage route + hero + ask box
+
+**Goal**: the page shell (US-AP-1).
+
+- `/ask` in `PageShell`; time-aware greeting; ask box (sparkle,
+  placeholder, `⌘K` focus, gradient Ask button); newest-on-top stack;
+  hero collapses after first answer.
+- **DoD**: renders empty state; submit mounts a loading card.
+
+#### Task 12.8: AnswerCard shell (header / body / footer)
+
+**Goal**: the card frame around every answer.
+
+- Header (`YOU ASKED` + question + action icons incl. dismiss); body
+  (prose + block slot); footer (sources + Refine + 👍/👎).
+- `aria-live="polite"` on load completion.
+- **DoD**: shell renders with the risk block; dismiss removes the card.
+
+#### Task 12.9: Result blocks + remaining query handlers (US-AP-3)
+
+**Goal**: fan out from risk to all types.
+
+- Blocks: `ResultTableBlock` (risk/general list), `ComparisonTableBlock`,
+  `TimelineBlock`, `ClauseListBlock` (reuse `ClauseCard`/`PrecedentRow`),
+  `FinancialSummaryBlock` (reuse `SimilarityBar`), `DocSummaryBlock`,
+  `ProseBlock`; paired backend handlers.
+- `ChatMessage`-style renderer picks the block from `metadata.format`.
+- **DoD**: each block renders from canned `structuredData`; each handler
+  spec green.
+
+#### Task 12.10: SuggestedQuestions + Citation chip
+
+**Goal**: first-run guidance + inline grounding.
+
+- Suggestions (one per type, reuse `SuggestedSearches` look) fill +
+  submit; citation chips map to footer sources and navigate on click.
+- **DoD**: clicking a suggestion submits; clicking a chip navigates.
+
+#### Task 12.11: Thread history + feedback (US-AP-4)
+
+**Goal**: persistence-backed history and ratings.
+
+- `GET` threads / thread-with-messages (auth-scoped); 👍/👎 →
+  `ChatFeedback` (idempotent); delete cascades; `user_ask` AuditEvent.
+- **DoD**: integration tests for list/get/feedback/delete + audit entry.
+
+#### Task 12.12: Phase 12 E2E (Playwright)
+
+**Goal**: prove the full path.
+
+- Navigate to `/ask` → ask the risk question → assert a ranked card with
+  citations → submit 👍 → reload and see the answer persisted.
+- **DoD**: green in CI (defer until the risk slice is real).
+
+---
+
+### MVP slice for cutting the first PR
+
+**US-AP vertical slice (risk only)**: 12.0 → 12.1 → 12.2 → 12.3 → 12.4 →
+12.5 → 12.6 → 12.7 → 12.8 ships Ask Your Portfolio end-to-end for the
+`risk-analysis` type — proving classify → context → Claude → grounded
+cited card → persisted message.
+
+**Fan-out**: 12.9 → 12.10 adds the remaining query types + suggestions
+once the risk slice is green. **12.11** (history + feedback) and **12.12**
+(E2E) follow.
+
+**Deferred** (see Requirement 15 → Out of scope): SSE streaming,
+multi-turn memory, composite mixed-type answers, PDF export/share.
