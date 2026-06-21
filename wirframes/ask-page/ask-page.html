@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ContractIntel — Ask your portfolio (prototype)</title>
+    <style>
+      /* ── ContractIntel design tokens (subset) ───────────────────── */
+      :root {
+        --ink: #0f172a;
+        --ink-mid: #334155;
+        --ink-soft: #64748b;
+        --ink-mute: #94a3b8;
+        --border: #e2e8f0;
+        --border-mid: #cbd5e1;
+        --bg: #f8f8f7;
+        --bg-alt: #f4f3f1;
+        --surface: #ffffff;
+        --blue: #2563eb;
+        --blue-dark: #1d4ed8;
+        --blue-bg: #dbeafe;
+        --violet-bg: #f5f3ff;
+        --red: #ef4444;
+        --red-bg: #fee2e2;
+        --amber: #f59e0b;
+        --amber-bg: #fef3c7;
+        --green: #10b981;
+        --green-bg: #dcfce7;
+        --radius: 10px;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+      .mono { font-family: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace; }
+      .serif { font-family: Georgia, serif; font-style: italic; }
+
+      /* ── Top context bar ────────────────────────────────────────── */
+      .nav {
+        height: 56px; background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; gap: 16px;
+        padding: 0 24px; position: sticky; top: 0; z-index: 10;
+      }
+      .crumb { font-size: 14px; color: var(--ink-soft); }
+      .crumb b { color: var(--ink); }
+      .pill {
+        font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+        background: var(--green-bg); color: #047857; display: inline-flex; gap: 6px; align-items: center;
+      }
+      .pill .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--green); }
+      .chip-select {
+        font-size: 13px; color: var(--ink-mid); border: 1px solid var(--border);
+        background: var(--surface); border-radius: 8px; padding: 5px 10px;
+      }
+      .nav-search {
+        margin-left: auto; height: 34px; width: 280px; border: 1px solid var(--border);
+        border-radius: 8px; display: flex; align-items: center; gap: 8px; padding: 0 10px;
+        color: var(--ink-mute); font-size: 13px; background: var(--bg);
+      }
+      .nav-search kbd {
+        margin-left: auto; font-size: 10px; background: var(--bg-alt); border: 1px solid var(--border);
+        border-radius: 4px; padding: 1px 5px;
+      }
+      .btn-new {
+        height: 34px; background: #0f172a; color: #fff; border: 0; border-radius: 8px;
+        padding: 0 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+      }
+
+      /* ── Page shell ─────────────────────────────────────────────── */
+      .shell { max-width: 880px; margin: 0 auto; padding: 48px 24px 120px; }
+      .hero { text-align: center; transition: all 0.3s ease; }
+      .hero.shrunk { padding-top: 0; }
+      .greet {
+        font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--ink-mute); font-weight: 700; margin-bottom: 10px;
+      }
+      .headline { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 28px; }
+      .hero.shrunk .headline { font-size: 18px; margin-bottom: 16px; opacity: 0.7; }
+
+      /* ── Ask box ────────────────────────────────────────────────── */
+      .askwrap { max-width: 720px; margin: 0 auto; }
+      .askbox {
+        display: flex; align-items: center; gap: 12px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px 10px 16px;
+        box-shadow: 0 4px 16px rgba(15,23,42,0.05);
+      }
+      .askbox:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+      .spark {
+        width: 24px; height: 24px; border-radius: 999px; flex-shrink: 0;
+        background: linear-gradient(135deg, #6366f1, #2563eb); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: 13px;
+      }
+      .askbox input {
+        flex: 1; border: 0; outline: 0; font-size: 16px; color: var(--ink);
+        font-family: inherit; background: transparent;
+      }
+      .askbox input::placeholder { color: var(--ink-mute); }
+      .ask-kbd { font-size: 10px; color: var(--ink-mute); background: var(--bg-alt);
+        border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; }
+      .btn-ask {
+        background: linear-gradient(135deg, #6366f1, #2563eb); color: #fff; border: 0;
+        border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 700; cursor: pointer;
+      }
+      .btn-ask:hover { filter: brightness(1.05); }
+
+      /* ── Suggestions ────────────────────────────────────────────── */
+      .suggest { max-width: 720px; margin: 24px auto 0; }
+      .suggest .lbl {
+        font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+        color: var(--ink-mute); font-weight: 700; margin-bottom: 10px;
+      }
+      .suggest button {
+        width: 100%; text-align: left; display: flex; align-items: center; gap: 12px;
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s;
+      }
+      .suggest button:hover { background: var(--bg-alt); }
+      .suggest .q { font-family: Georgia, serif; font-style: italic; font-size: 13.5px; color: var(--ink-mid); }
+      .suggest .tag { margin-left: auto; font-size: 10px; color: var(--ink-mute); }
+      .suggest .mini-spark { color: var(--blue); }
+
+      /* ── Answer cards ───────────────────────────────────────────── */
+      .cards { max-width: 760px; margin: 32px auto 0; display: flex; flex-direction: column; gap: 20px; }
+      .card {
+        background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+        overflow: hidden; animation: rise 0.3s cubic-bezier(0.22,1,0.36,1) both;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+      }
+      @keyframes rise { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      .card-head {
+        background: var(--violet-bg); padding: 14px 18px; display: flex; align-items: flex-start; gap: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      .card-head .spark { width: 22px; height: 22px; font-size: 12px; }
+      .card-head .eyebrow { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+        color: #7c6fce; font-weight: 700; }
+      .card-head .q { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin-top: 2px; }
+      .card-head .actions { margin-left: auto; display: flex; gap: 4px; color: var(--ink-mute); }
+      .card-head .actions span {
+        width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center;
+        justify-content: center; cursor: pointer; font-size: 13px;
+      }
+      .card-head .actions span:hover { background: rgba(255,255,255,0.6); color: var(--ink); }
+      .card-body { padding: 16px 18px; }
+      .prose { font-size: 14px; line-height: 1.6; color: var(--ink-mid); margin: 0 0 14px; }
+      .cite { color: var(--blue); font-weight: 700; font-size: 10px; vertical-align: super; cursor: pointer;
+        background: var(--blue-bg); border-radius: 3px; padding: 0 3px; margin: 0 1px; }
+      .card-foot {
+        border-top: 1px solid var(--border); padding: 10px 18px; display: flex; align-items: center;
+        gap: 16px; font-size: 12px; color: var(--ink-soft);
+      }
+      .card-foot .src b { color: var(--ink-mid); }
+      .card-foot .spacer { margin-left: auto; }
+      .card-foot .link { color: var(--blue); font-weight: 600; cursor: pointer; }
+      .card-foot .fb { cursor: pointer; opacity: 0.7; }
+      .card-foot .fb:hover { opacity: 1; }
+
+      /* ── Result table ───────────────────────────────────────────── */
+      table.result { width: 100%; border-collapse: collapse; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+      table.result thead th {
+        font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+        color: var(--ink-soft); text-align: left; padding: 9px 12px; background: var(--bg); font-weight: 500;
+      }
+      table.result tbody td { padding: 11px 12px; font-size: 13px; border-top: 1px solid var(--border); }
+      table.result tbody tr:hover { background: var(--bg); }
+      td.ref { font-family: 'DM Mono', monospace; color: var(--ink-mute); font-size: 12px; }
+      td.name { font-weight: 600; color: var(--ink); }
+      td.num { font-family: 'DM Mono', monospace; text-align: right; }
+      .badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
+      .badge .d { width: 6px; height: 6px; border-radius: 999px; }
+      .b-crit { background: var(--red-bg); color: #b91c1c; }   .b-crit .d { background: var(--red); }
+      .b-high { background: var(--amber-bg); color: #b45309; } .b-high .d { background: var(--amber); }
+      .b-low  { background: var(--green-bg); color: #047857; } .b-low  .d { background: var(--green); }
+      .b-new  { background: var(--blue-bg); color: var(--blue-dark); } .b-new .d { background: var(--blue); }
+      .table-foot { display: flex; align-items: center; padding: 9px 12px; font-size: 12px; color: var(--ink-soft); background: var(--bg); border-top: 1px solid var(--border); }
+      .table-foot .link { margin-left: auto; color: var(--blue); font-weight: 600; cursor: pointer; }
+
+      /* ── Comparison favorability ────────────────────────────────── */
+      .mark-bad { background: var(--amber-bg); color: #b45309; padding: 1px 5px; border-radius: 4px; }
+      .mark-good { background: var(--green-bg); color: #047857; padding: 1px 5px; border-radius: 4px; }
+      .legend { font-size: 11px; color: var(--ink-soft); margin-top: 8px; }
+
+      /* ── Timeline ───────────────────────────────────────────────── */
+      .timeline { position: relative; padding-left: 28px; }
+      .timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: var(--border); }
+      .tl-node { position: relative; padding-bottom: 18px; }
+      .tl-node:last-child { padding-bottom: 0; }
+      .tl-dot { position: absolute; left: -28px; top: 2px; width: 16px; height: 16px; border-radius: 999px;
+        background: var(--surface); border: 3px solid var(--ink-mute); }
+      .tl-node.urgent .tl-dot { border-color: var(--red); }
+      .tl-node.soon .tl-dot { border-color: var(--amber); }
+      .tl-days { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+      .tl-node.urgent .tl-days { color: var(--red); }
+      .tl-node.soon .tl-days { color: var(--amber); }
+      .tl-name { font-weight: 600; }
+      .tl-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+      .tl-warn { font-size: 12px; color: #b45309; margin-top: 3px; }
+      .urgent-pill { font-size: 10px; font-weight: 700; color: #b91c1c; background: var(--red-bg); padding: 1px 7px; border-radius: 999px; margin-left: 8px; }
+
+      /* ── Financial ──────────────────────────────────────────────── */
+      .total-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+        padding: 16px 18px; text-align: center; margin-bottom: 16px; }
+      .total-card .lbl { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+      .total-card .num { font-family: 'DM Mono', monospace; font-size: 30px; font-weight: 500; color: var(--ink); margin: 4px 0 2px; }
+      .total-card .sub { font-size: 12px; color: var(--ink-soft); }
+      .fin-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; font-size: 13px; }
+      .fin-row .fname { width: 200px; font-weight: 500; }
+      .fin-row .fval { width: 64px; font-family: 'DM Mono', monospace; text-align: right; }
+      .fin-bar { flex: 1; height: 6px; background: var(--bg-alt); border-radius: 6px; overflow: hidden; }
+      .fin-bar i { display: block; height: 100%; background: var(--blue); border-radius: 6px; }
+      .fin-row .fpct { width: 40px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink-soft); text-align: right; }
+
+      /* ── Clause list ────────────────────────────────────────────── */
+      .clause { border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+      .clause.crit { border-left-color: var(--red); }
+      .clause.high { border-left-color: var(--amber); }
+      .clause.low { border-left-color: var(--green); }
+      .clause .top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .clause .lbl { font-size: 13px; font-weight: 700; }
+      .clause .sec { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-soft); }
+      .clause .snip { font-family: Georgia, serif; font-style: italic; font-size: 13px; line-height: 1.55; color: var(--ink-mid); }
+      .clause .meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+      .show-more { width: 100%; border: 1px dashed var(--border); background: transparent; color: var(--ink-soft);
+        border-radius: 8px; padding: 8px; font-size: 12px; cursor: pointer; }
+
+      /* ── Doc summary ────────────────────────────────────────────── */
+      .doc-grid { display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; font-size: 13px; margin-bottom: 14px; }
+      .doc-grid .k { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink-soft); text-transform: uppercase; }
+      .doc-risks { border-top: 1px solid var(--border); padding-top: 12px; }
+      .doc-risks .h { font-size: 12px; font-weight: 700; color: #b45309; margin-bottom: 8px; }
+      .doc-risks li { font-size: 13px; color: var(--ink-mid); margin-bottom: 4px; }
+
+      /* loading */
+      .loading { display: flex; gap: 6px; padding: 8px 0; align-items: center; color: var(--ink-mute); font-size: 13px; }
+      .loading .d { width: 7px; height: 7px; border-radius: 999px; background: var(--border-mid); animation: pulse 1s infinite; }
+      .loading .d:nth-child(2) { animation-delay: 0.15s; } .loading .d:nth-child(3) { animation-delay: 0.3s; }
+      @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+      .score-chip { font-family: 'DM Mono', monospace; font-weight: 500; }
+    </style>
+  </head>
+  <body>
+    <!-- Top context bar (mirrors existing nav) -->
+    <div class="nav">
+      <div class="crumb">Portfolio / <b>ContractIntel</b></div>
+      <span class="pill"><span class="dot"></span>Live · 1,027 contracts</span>
+      <span class="chip-select">All contracts ▾</span>
+      <div class="nav-search">🔍 Search contracts… <kbd>⌘K</kbd></div>
+      <button class="btn-new">+ New contract</button>
+    </div>
+
+    <div class="shell">
+      <!-- Hero -->
+      <div class="hero" id="hero">
+        <div class="greet" id="greet">Good afternoon, Phil</div>
+        <h1 class="headline">What do you want to know about your portfolio?</h1>
+
+        <!-- Ask box -->
+        <div class="askwrap">
+          <div class="askbox">
+            <div class="spark">✦</div>
+            <input id="ask" placeholder="Ask anything about your portfolio…" autocomplete="off" />
+            <span class="ask-kbd">⌘K</span>
+            <button class="btn-ask" onclick="submitAsk()">Ask</button>
+          </div>
+        </div>
+
+        <!-- Suggestions (first-run) -->
+        <div class="suggest" id="suggest">
+          <div class="lbl">Try asking…</div>
+          <button onclick="pick('risk')"><span class="mini-spark">✦</span><span class="q">"What are my highest risk contracts?"</span><span class="tag">risk</span></button>
+          <button onclick="pick('timeline')"><span class="mini-spark">✦</span><span class="q">"Which contracts expire in the next 90 days?"</span><span class="tag">timeline</span></button>
+          <button onclick="pick('comparison')"><span class="mini-spark">✦</span><span class="q">"Compare payment terms across my contracts"</span><span class="tag">comparison</span></button>
+          <button onclick="pick('clause')"><span class="mini-spark">✦</span><span class="q">"Show me all unlimited liability clauses"</span><span class="tag">clause</span></button>
+          <button onclick="pick('financial')"><span class="mini-spark">✦</span><span class="q">"What's my total payment obligation?"</span><span class="tag">financial</span></button>
+          <button onclick="pick('doc')"><span class="mini-spark">✦</span><span class="q">"Summarize the SaaS Vendor agreement"</span><span class="tag">document</span></button>
+        </div>
+      </div>
+
+      <!-- Answer cards stack here (newest on top) -->
+      <div class="cards" id="cards"></div>
+    </div>
+
+    <script>
+      // ── Greeting (time-aware) ──────────────────────────────────────
+      (function () {
+        const h = new Date().getHours();
+        const part = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+        document.getElementById('greet').textContent = 'Good ' + part + ', Phil';
+      })();
+
+      const QUESTIONS = {
+        risk: 'What are my highest risk contracts?',
+        timeline: 'Which contracts expire in the next 90 days?',
+        comparison: 'Compare payment terms across my contracts',
+        clause: 'Show me all unlimited liability clauses',
+        financial: "What's my total payment obligation?",
+        doc: 'Summarize the SaaS Vendor agreement',
+      };
+
+      // Naive client-side classifier (mirrors QueryClassifierService)
+      function classify(q) {
+        const s = q.toLowerCase();
+        if (/risk|critical|dangerous|exposure/.test(s)) return 'risk';
+        if (/expire|renew|deadline|90 days|when/.test(s)) return 'timeline';
+        if (/compare|vs|difference|across/.test(s)) return 'comparison';
+        if (/all .*(claus|liabilit|indemnif|terminat)/.test(s)) return 'clause';
+        if (/total|payment|cost|obligation|spend|\$/.test(s)) return 'financial';
+        if (/summar|tell me about|overview of/.test(s)) return 'doc';
+        return 'risk'; // demo fallback
+      }
+
+      function pick(type) {
+        document.getElementById('ask').value = QUESTIONS[type];
+        submitAsk(type);
+      }
+
+      function submitAsk(forcedType) {
+        const input = document.getElementById('ask');
+        const q = input.value.trim();
+        if (!q) return;
+        const type = forcedType || classify(q);
+
+        // Shrink hero, hide suggestions after first ask
+        document.getElementById('hero').classList.add('shrunk');
+        document.getElementById('suggest').style.display = 'none';
+
+        // Mount loading card on top
+        const cards = document.getElementById('cards');
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = cardShell(q, '<div class="loading"><span class="d"></span><span class="d"></span><span class="d"></span> Searching your portfolio…</div>', '');
+        cards.prepend(card);
+        input.value = '';
+
+        // Simulate latency, then render the type-specific body
+        setTimeout(() => {
+          const r = RENDERERS[type]();
+          card.innerHTML = cardShell(q, r.body, r.foot);
+        }, 650);
+      }
+
+      function cardShell(q, body, foot) {
+        return `
+          <div class="card-head">
+            <div class="spark">✦</div>
+            <div>
+              <div class="eyebrow">You asked</div>
+              <div class="q">${q}</div>
+            </div>
+            <div class="actions">
+              <span title="Ask follow-up">→</span>
+              <span title="Share">↗</span>
+              <span title="Export">↓</span>
+              <span title="Bookmark">🔖</span>
+              <span title="Expand">⤢</span>
+              <span title="Dismiss" onclick="this.closest('.card').remove()">✕</span>
+            </div>
+          </div>
+          <div class="card-body">${body}</div>
+          ${foot || ''}`;
+      }
+
+      function foot(sources) {
+        return `<div class="card-foot">
+          <span class="src">Sources: <b>${sources}</b></span>
+          <span class="spacer" style="margin-left:auto"></span>
+          <span class="link">Refine</span>
+          <span>Was this helpful?</span>
+          <span class="fb">👍</span><span class="fb">👎</span>
+        </div>`;
+      }
+
+      // ── Per-type renderers ─────────────────────────────────────────
+      const RENDERERS = {
+        risk() {
+          return {
+            body: `
+              <p class="prose">Found <b>3 contracts</b> with critical or high risk exposure<span class="cite">1</span><span class="cite">2</span>. All are MSAs signed in 2026; two carry uncapped liability<span class="cite">3</span>.</p>
+              <table class="result">
+                <thead><tr><th>Ref</th><th>Contract</th><th>Counterparty</th><th>Value</th><th>Risk</th></tr></thead>
+                <tbody>
+                  <tr><td class="ref">CT-204</td><td class="name">SaaS Vendor — Risky Variant</td><td>Acme Inc.</td><td class="num">$2.4M</td><td><span class="score-chip">85</span> <span class="badge b-crit"><span class="d"></span>Critical</span></td></tr>
+                  <tr><td class="ref">CT-219</td><td class="name">Globex MSA</td><td>Globex Corp.</td><td class="num">$1.1M</td><td><span class="score-chip">72</span> <span class="badge b-high"><span class="d"></span>High</span></td></tr>
+                  <tr><td class="ref">CT-227</td><td class="name">Initech Master Services</td><td>Initech Ltd.</td><td class="num">$480K</td><td><span class="score-chip">68</span> <span class="badge b-high"><span class="d"></span>High</span></td></tr>
+                </tbody>
+              </table>
+              <div class="table-foot">Showing 3 of 3 · sorted by risk <span class="link">Open in full view →</span></div>`,
+            foot: foot('3 contracts · 5 clauses'),
+          };
+        },
+
+        timeline() {
+          return {
+            body: `
+              <p class="prose"><b>3 contracts</b> need attention in the next 90 days<span class="cite">1</span>. The SaaS Vendor agreement is urgent — its 15-day notice window closes in 3 days.</p>
+              <div class="timeline">
+                <div class="tl-node urgent"><div class="tl-dot"></div>
+                  <span class="tl-days">18 days</span> · <span class="tl-name">SaaS Vendor — Risky Variant</span><span class="urgent-pill">URGENT</span>
+                  <div class="tl-meta">Expires 09 Jul 2026 · 15-day notice</div>
+                  <div class="tl-warn">⚠ Act by 06 Jul to avoid auto-renewal</div>
+                </div>
+                <div class="tl-node soon"><div class="tl-dot"></div>
+                  <span class="tl-days">44 days</span> · <span class="tl-name">Hooli Order Form</span>
+                  <div class="tl-meta">Expires 04 Aug 2026 · 30-day notice</div>
+                  <div class="tl-warn">⚠ Act by 05 Jul to prevent auto-renewal</div>
+                </div>
+                <div class="tl-node"><div class="tl-dot"></div>
+                  <span class="tl-days">71 days</span> · <span class="tl-name">Globex MSA</span>
+                  <div class="tl-meta">Expires 31 Aug 2026 · 60-day notice · act by 02 Jul</div>
+                </div>
+              </div>`,
+            foot: foot('3 contracts · 3 leases'),
+          };
+        },
+
+        comparison() {
+          return {
+            body: `
+              <p class="prose">Here's how payment terms compare across <b>4 contracts</b><span class="cite">1</span>. Initech offers the most favorable terms; SaaS Vendor the least.</p>
+              <table class="result">
+                <thead><tr><th>Contract</th><th>Amount</th><th>Terms</th><th>Escalation</th></tr></thead>
+                <tbody>
+                  <tr><td class="name">SaaS Vendor</td><td class="num">$2.4M</td><td><span class="mark-bad">Net 15 ▲</span></td><td><span class="mark-bad">7% annual ▲</span></td></tr>
+                  <tr><td class="name">Globex MSA</td><td class="num">$1.1M</td><td>Net 30</td><td>3% annual</td></tr>
+                  <tr><td class="name">Initech Master</td><td class="num">$480K</td><td><span class="mark-good">Net 45 ▼</span></td><td><span class="mark-good">None ▼</span></td></tr>
+                  <tr><td class="name">Hooli Order Form</td><td class="num">$680K</td><td>Net 30</td><td>CPI-linked</td></tr>
+                </tbody>
+              </table>
+              <div class="legend">▲ less favorable to you · ▼ more favorable to you</div>`,
+            foot: foot('4 contracts · 4 clauses'),
+          };
+        },
+
+        clause() {
+          return {
+            body: `
+              <p class="prose">Found <b>4 unlimited-liability clauses</b> across your portfolio<span class="cite">1</span><span class="cite">2</span>. Two are critical — both waive any cap on damages.</p>
+              <div class="clause crit">
+                <div class="top"><span class="lbl">Limitation of Liability</span><span class="badge b-crit"><span class="d"></span>High risk</span><span class="sec">§9.2</span></div>
+                <div class="snip">"Vendor's liability under this Agreement shall be unlimited for any breach. Buyer accepts no cap on damages, consequential or otherwise."</div>
+                <div class="meta">SaaS Vendor — Risky Variant · Apr 2026</div>
+              </div>
+              <div class="clause high">
+                <div class="top"><span class="lbl">Indemnification</span><span class="badge b-high"><span class="d"></span>Caution</span><span class="sec">§11.1</span></div>
+                <div class="snip">"Buyer shall defend, indemnify, and hold harmless Vendor from any and all claims arising under this Agreement, without cap or limitation."</div>
+                <div class="meta">Globex MSA · Mar 2026</div>
+              </div>
+              <button class="show-more">Show 2 more</button>`,
+            foot: foot('4 clauses · 3 contracts'),
+          };
+        },
+
+        financial() {
+          return {
+            body: `
+              <p class="prose">Your total committed spend across <b>4 active contracts</b><span class="cite">1</span>:</p>
+              <div class="total-card">
+                <div class="lbl">Total obligation</div>
+                <div class="num">$4.66M</div>
+                <div class="sub">across 4 contracts</div>
+              </div>
+              ${finRow('SaaS Vendor — Risky Variant', '$2.4M', 52)}
+              ${finRow('Globex MSA', '$1.1M', 24)}
+              ${finRow('Hooli Order Form', '$680K', 15)}
+              ${finRow('Initech Master Services', '$480K', 10)}`,
+            foot: foot('4 contracts'),
+          };
+        },
+
+        doc() {
+          return {
+            body: `
+              <p class="prose">Here's a summary of <b>SaaS Vendor — Risky Variant</b><span class="cite">1</span>. It's an MSA with Acme Inc., flagged critical overall.</p>
+              <div class="doc-grid">
+                <div class="k">Type</div><div>MSA · <span class="score-chip">85</span> <span class="badge b-crit"><span class="d"></span>Critical</span></div>
+                <div class="k">Parties</div><div>Acme Inc. (Vendor) · YourCo (Buyer)</div>
+                <div class="k">Effective</div><div>12 Apr 2026</div>
+                <div class="k">Term</div><div>1 year, auto-renews</div>
+                <div class="k">Value</div><div>$2.4M · Net 15</div>
+                <div class="k">Notice</div><div>15 days</div>
+              </div>
+              <div class="doc-risks">
+                <div class="h">⚠ Top risks</div>
+                <ul>
+                  <li>Uncapped liability (§9.2) — <b>critical</b></li>
+                  <li>Auto-renewal, 15-day notice (§3.2) — high</li>
+                  <li>Vendor-only termination right (§12.1) — high</li>
+                </ul>
+              </div>`,
+            foot: foot('1 contract · 6 clauses'),
+          };
+        },
+      };
+
+      function finRow(name, val, pct) {
+        return `<div class="fin-row">
+          <span class="fname">${name}</span>
+          <span class="fval">${val}</span>
+          <span class="fin-bar"><i style="width:${pct}%"></i></span>
+          <span class="fpct">${pct}%</span>
+        </div>`;
+      }
+
+      // Enter submits
+      document.getElementById('ask').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitAsk();
+      });
+      // ⌘K / Ctrl+K focuses the ask box (page-scoped)
+      window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          document.getElementById('ask').focus();
+        }
+      });
+    </script>
+  </body>
+</html>
