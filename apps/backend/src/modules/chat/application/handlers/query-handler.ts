@@ -41,8 +41,16 @@ export abstract class QueryHandler {
   /** The result format this handler emits. */
   abstract readonly format: AnswerFormat;
 
-  /** Shape the structured payload (e.g. ranked rows) from the context. */
-  protected abstract formatResponse(context: PortfolioContext): StructuredData;
+  /**
+   * Shape the structured payload (e.g. ranked rows) from the context and
+   * the validated citations. Handlers should scope the payload to the
+   * cited contracts so the table mirrors what the prose answer actually
+   * references — see the risk handler.
+   */
+  protected abstract formatResponse(
+    context: PortfolioContext,
+    citations: Citation[],
+  ): StructuredData;
 
   /** Per-type prompt. Overridable; defaults to the shared builder. */
   protected buildPrompt(context: PortfolioContext): AnswerRequest {
@@ -62,7 +70,7 @@ export abstract class QueryHandler {
     return {
       prose: result.text,
       format: this.format,
-      structuredData: this.formatResponse(context),
+      structuredData: this.formatResponse(context, citations),
       citations,
     };
   }
