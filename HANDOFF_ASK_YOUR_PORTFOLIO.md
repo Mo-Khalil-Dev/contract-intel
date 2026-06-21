@@ -3,12 +3,27 @@
 ## What this feature is
 A dedicated **`/ask` page** for the ContractIntel platform: a single plain-English question box with **answer cards stacked underneath**. Each question is classified into a query type, grounded in the user's already-extracted portfolio data, answered by Claude, and rendered as a type-specific card with validated citations. It is **separate** from the existing `⌘K` semantic search (that's retrieval and stays untouched).
 
-## Current status: design + spec complete, no code yet
-All planning/design is done and merged. Implementation has **not** started.
+## Current status: MVP risk-analysis slice BUILT (Tasks 12.0–12.8 + 12.7a)
+Design + spec merged. The risk-analysis vertical slice is implemented end-to-end
+on `feature/phase-12-ask-your-portfolio`:
+- **Backend** (`apps/backend/src/modules/chat/`): chat Prisma schema + migration;
+  heuristic QueryClassifier; ContextBuilder (reuses the Phase 10 portfolio
+  projection — no re-extraction); ClaudeAnswerService port + Anthropic driver +
+  deterministic stub (auto-selected when no Claude key); PromptBuilder +
+  CitationExtractor (drops unbacked refs); QueryHandler base/registry +
+  RiskAnalysisHandler + General fallback; AskPortfolio command/handler;
+  `POST /api/v1/ask`. 25 unit tests passing.
+- **Frontend**: `types/ask`, `askService`, `useAskPortfolio` hook, `/ask` page
+  (greeting + ask box + newest-on-top card stack), `AnswerCard` + `RiskResultTable`,
+  TopNav "Ask" link. tsc/eslint clean, production build green.
+- **Not yet done**: Tasks 12.9 (remaining query types/blocks), 12.10
+  (suggestions + inline citation chips), 12.11 (history/feedback), 12.12 (E2E +
+  real browser verification behind auth with seeded contracts).
 
 ## Git state
 - **Work branch**: `feature/phase-12-ask-your-portfolio` (branched off `Development`)
-- **Everything is merged into `Development`** (latest: `06edc8d`); working tree clean
+- Spec/design merged into `Development` (`06edc8d`); the MVP code slice lives on
+  `feature/phase-12-ask-your-portfolio` (not yet merged)
 - Repo: `Mo-Khalil-Dev/contract-intel`. Commit only when asked; use the session's branch.
 
 ## Key documents (all on `Development`)
