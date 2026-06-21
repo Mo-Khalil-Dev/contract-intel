@@ -184,6 +184,13 @@ import { OnClauseExtractionFailedHandler } from './application/projections/docum
   // reads documents + document texts through the application-layer ports.
   // Re-exporting CqrsModule lets the events propagate; exporting the two
   // repository symbols gives the clauses application layer a typed handle.
-  exports: [CqrsModule, DOCUMENT_REPOSITORY, DOCUMENT_TEXT_REPOSITORY],
+  exports: [
+    CqrsModule,
+    DOCUMENT_REPOSITORY,
+    DOCUMENT_TEXT_REPOSITORY,
+    // Phase 12: the chat ContextBuilder reads the portfolio projection to
+    // ground risk answers without re-running extraction.
+    DOCUMENT_LIST_ITEM_REPOSITORY,
+  ],
 })
 export class DocumentsModule {}

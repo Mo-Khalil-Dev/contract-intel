@@ -10,6 +10,7 @@ import { ReferenceDataModule } from './modules/reference-data/reference-data.mod
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ClausesModule } from './modules/clauses/clauses.module';
 import { AuditModule } from './modules/audit/infrastructure/audit.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuditModule } from './modules/audit/infrastructure/audit.module';
     DocumentsModule,
     ClausesModule,
     AuditModule,
+    ChatModule,
   ],
   providers: [
     {
