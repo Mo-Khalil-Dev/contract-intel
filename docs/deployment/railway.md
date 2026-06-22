@@ -78,9 +78,9 @@ GCS_SERVICE_ACCOUNT_KEY=<paste base64 here>
 # AI — Ask Your Portfolio (Phase 12) + clause extraction (Phase 8).
 # Without CLAUDE_API_KEY the Ask feature silently falls back to a stub
 # answer and clause extraction uses the mock driver. CLAUDE_MODEL has a
-# safe default (claude-opus-4-7) so it's optional.
+# safe default (claude-sonnet-4-6) so it's optional.
 CLAUDE_API_KEY=<your Anthropic key>
-CLAUDE_MODEL=claude-opus-4-7
+CLAUDE_MODEL=claude-sonnet-4-6
 # To use the real drivers (not mocks) in prod:
 CLAUSE_EXTRACTOR=anthropic
 EMBEDDING_DRIVER=voyage

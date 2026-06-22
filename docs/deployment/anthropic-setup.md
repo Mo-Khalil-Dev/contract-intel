@@ -15,7 +15,7 @@ Add to `apps/backend/.env`:
 ```bash
 CLAUSE_EXTRACTOR=anthropic
 CLAUDE_API_KEY=sk-ant-...
-CLAUDE_MODEL=claude-opus-4-7   # default; cost-optimise with claude-sonnet-4-6
+CLAUDE_MODEL=claude-sonnet-4-6   # default; pin claude-opus-4-7 for max quality
 ```
 
 Restart the backend; the boot-time DI factory wires `CLAUSE_EXTRACTOR` to

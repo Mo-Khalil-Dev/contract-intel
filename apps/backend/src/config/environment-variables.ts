@@ -192,12 +192,12 @@ export class EnvironmentVariables {
   CLAUDE_API_KEY?: string;
 
   /**
-   * Claude model id used by the clause extractor (Phase 8, Task 8.4).
-   * Defaults to claude-opus-4-7 — the design baseline. Switching to
-   * Sonnet for cost reduction is a one-env-flip operation.
+   * Claude model id used by the clause extractor (Phase 8) and the Ask
+   * Your Portfolio chat (Phase 12). Defaults to claude-sonnet-4-6 for
+   * cost/latency; override per env to pin a different model.
    */
   @IsString()
-  CLAUDE_MODEL: string = 'claude-opus-4-7';
+  CLAUDE_MODEL: string = 'claude-sonnet-4-6';
 
   // Voyage embeddings (Phase 8, Task 8.5). Required when
   // EMBEDDING_DRIVER=voyage. Vector dim is locked at 1024 in the
