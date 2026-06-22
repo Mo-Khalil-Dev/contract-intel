@@ -1,3 +1,9 @@
+// Side-effect import — MUST be first. Forces gaxios (GCS / google-auth) to
+// use native fetch instead of node-fetch, which throws
+// ERR_STREAM_PREMATURE_CLOSE on Node 22 and breaks GCS uploads. See the
+// patch file for the full rationale.
+import './shared/infrastructure/http/gaxios-native-fetch.patch';
+
 import { NestFactory } from '@nestjs/core';
 import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';

@@ -43,6 +43,7 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.3.1",
     "franc-min": "^6.2.0",
+    "gaxios": "^6.7.1",
     "nestjs-pino": "^4.6.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
