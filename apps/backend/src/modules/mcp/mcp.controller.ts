@@ -11,6 +11,7 @@ import { QueryBus } from '@nestjs/cqrs';
 import type { Request, Response } from 'express';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 
+import { Public } from '../auth/infrastructure/decorators/public.decorator';
 import { McpBearerGuard } from './mcp-bearer.guard';
 import { createContractReviewMcpServer } from './contract-review-mcp-server';
 
@@ -32,6 +33,10 @@ import { createContractReviewMcpServer } from './contract-review-mcp-server';
  * Mounted at `/mcp` (excluded from the global `api/v1` prefix in main.ts)
  * so the MCP URL is clean for the runtime/vault config and tunnel.
  */
+// @Public() exempts the controller from the global SessionAuthGuard (Auth0
+// session cookie) — the MCP caller is a machine runtime, not a logged-in
+// user. McpBearerGuard is the trust boundary instead (static bearer token).
+@Public()
 @ApiExcludeController()
 @UseGuards(McpBearerGuard)
 @Controller('mcp')
