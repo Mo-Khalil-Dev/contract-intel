@@ -700,3 +700,83 @@ The epic decomposes into four child stories. **US-AP-1 (Ask page shell) and US-A
 - **`⌘K` collision** — both the global search and the page ask box want `⌘K`. Recommendation: the `/ask` page takes `⌘K` only while active; revisit if it confuses users, possibly giving Ask a distinct shortcut.
 - **Card ordering** — newest-on-top (recommended) vs. append-and-scroll (chat-style). Confirm with first user feedback.
 - **Classifier approach** — heuristic keyword classifier for v1; revisit an LLM-based classifier if accuracy is insufficient once telemetry lands.
+
+---
+
+### Requirement 16: Playbook-Driven Contract Review Agent (MCP + Managed Agents)
+
+**Phase**: 13
+**Handoff / spec**: `docs/handoff-contract-review-agent.md`
+**Ruleset / agent spec**: `docs/legal-playbook.md` (v1.0)
+**Target output / quality bar (Outcome rubric)**: `docs/sample-risk-report.md`
+**Depends on**: Requirement 3 (Clause Extraction — supplies the stored clauses, risk flags, and verbatim text the agent reads), Requirement 4 (Risk Scoring), Requirement 14 (Clause Intelligence — Voyage embeddings reused by `find_similar_clauses`).
+
+**Epic / Parent story**
+
+> **As a** legal team
+> **I want** an AI agent that reviews an already-ingested contract against our company Legal Playbook and produces a risk report (risks + severities + recommended rephrases, dual-cited to clause ref AND playbook rule ID)
+> **So that** counterparty paper is triaged against our standard positions automatically, with a consistent, auditable report and clear approval routing.
+
+The agent reads the contract analysis the ingestion pipeline already stored (it does **not** re-analyse) and evaluates it clause-by-clause against the playbook. Clean separation of concerns: the **playbook is static, versioned knowledge** (agent system prompt → later an Anthropic Skill); the **contract is dynamic per-run data, reached through one MCP server** over the existing CQRS read side; the **report** (§4 schema of the playbook) is the output. The same MCP tool layer underpins **two runtimes** — Anthropic Managed Agents (Track A) and AWS Bedrock AgentCore (Track B) — "one tool layer, two runtimes; MCP is a portable interface."
+
+The epic decomposes into child stories aligned to the handoff build order. **US-CR-1 (the MCP server) ships first** and is independently testable (MCP Inspector); the agent runtimes build on top of it.
+
+---
+
+#### US-CR-1 — Contract-Review MCP server ✅ (built)
+
+**As a** contract-review agent runtime (Managed Agents or AgentCore)
+**I want** typed MCP tools that return a contract's stored clauses (with risk fields) and portfolio precedent
+**So that** I can read the ingested analysis at run-time without re-extracting, over a transport both runtimes can reach.
+
+**Acceptance criteria**
+
+- AC1: An MCP server is served over **Streamable HTTP** at `POST /mcp` (excluded from the `api/v1` prefix), reachable by both agent runtimes and by MCP Inspector. ✅
+- AC2: It exposes three tools, each wrapping an existing CQRS query handler 1:1 with no new business logic: `get_document_clauses(documentId)` → `GetClausesForDocumentQuery`; `get_clause(clauseId)` → `GetClauseByIdQuery`; `find_similar_clauses(clauseId, limit?)` → `GetSimilarClausesQuery` (live Voyage embeddings). ✅
+- AC3: Tools return the **full stored record** as JSON — verbatim text, type, confidence, page number, and pre-computed risk fields (score, level, flags, explanation) — so the agent can match `risk.flags` to playbook rule IDs and derive the clause section ref from the verbatim text (section ref is not yet a stored field — noted as future work). ✅
+- AC4: Each tool surfaces handler/domain errors (e.g. malformed UUID, unknown id) as MCP tool errors (`isError`) rather than crashing, so the model can recover. ✅
+- AC5: The endpoint is guarded by a static bearer token (`MCP_BEARER_TOKEN`), supplied to the runtimes as a `static_bearer` vault credential; when the token is unset (local dev / Inspector) the guard allows requests and logs a warning. ✅
+- AC6: The server is **stateless** — a fresh MCP server + transport per request, wired to the shared QueryBus — so it is trivially scalable and leaks no cross-request state. ✅
+
+---
+
+#### US-CR-2 — Track A: Anthropic Managed Agents review (planned)
+
+**As a** legal team
+**I want** to kick off a playbook review of a contract and get the §4 risk report back
+**So that** counterparty paper is triaged without manual clause-by-clause work.
+
+**Acceptance criteria (planned)**
+
+- AC1: An Agent is created **once** (system prompt = playbook + the 8-step algorithm; `mcp_servers` + `mcp_toolset` pointing at the MCP server; `agent_toolset` for writing the report) and reused across runs by ID.
+- AC2: A vault holds the MCP `static_bearer` credential; sessions attach it via `vault_ids`.
+- AC3: Each review is one session: `sessions.create` → `user.define_outcome` with the rubric = `docs/sample-risk-report.md` schema → stream to completion → fetch the report from `/mnt/session/outputs/` via session-scoped `files.list`.
+- AC4: Kickoff is wired to `POST /documents/:id/review`; a CLI script is kept as a bulletproof backup.
+- AC5: The report conforms to the §4 schema and reproduces the sophisticated behaviours in the sample (e.g. COM-02 elevated to Critical via the §E hard-stop override; tier = max(value band, highest finding severity)).
+
+#### US-CR-3 — Track B: AWS Bedrock AgentCore review (planned)
+
+**As a** platform owner
+**I want** the same review available on AWS Bedrock AgentCore (Claude via Bedrock), against the same MCP server
+**So that** the tool layer is proven portable across runtimes (CMA is not available on Bedrock).
+
+**Acceptance criteria (planned)**
+
+- AC1: AgentCore runtime/gateway reaches the **same** MCP URL; the tool layer is unchanged.
+- AC2: Claude runs via Bedrock; the playbook is delivered as the agent's instruction/knowledge.
+- AC3: A review produces a report conforming to the §4 schema, demonstrating one tool layer under two runtimes.
+
+---
+
+#### Out of scope (Phase 13, v1)
+
+- **Re-extraction / re-analysis** — the agent reads stored analysis only; clause extraction stays at ingestion write-time (Requirement 3).
+- **Adding `sectionRef` to the clause schema** — would require re-extraction; the agent derives the section number from verbatim clause text, falling back to pageNumber + clause id. Noted as future work.
+- **Promoting the playbook to an Anthropic Skill and a `docx` report** — flex upgrades after Track A works with the system-prompt playbook + markdown report.
+- **CMA scheduled deployment (cron review)** — mentioned as an autonomous-flex option, not demoed.
+
+#### Still open
+
+- **Data perimeter** — cloud environment with `limited` networking allowlist (ngrok tunnel to the MCP server) vs. a self-hosted environment so contract text never leaves the infra. Undecided.
+- **Playbook delivery v1** — system prompt (simple, prompt-cached) vs. Skill (flex). Recommendation: start system-prompt, promote to Skill.
+- **Report format v1** — markdown vs. `docx` Skill. Recommendation: start markdown.

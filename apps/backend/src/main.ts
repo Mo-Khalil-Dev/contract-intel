@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
@@ -24,7 +24,12 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1');
+  // The MCP server (Phase 12) is served at a clean `/mcp` URL — excluded
+  // from the api/v1 prefix so the agent runtimes / vault config point at a
+  // stable transport URL, not a versioned REST path.
+  app.setGlobalPrefix(process.env.API_PREFIX || 'api/v1', {
+    exclude: [{ path: 'mcp', method: RequestMethod.ALL }],
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Contract Analysis Platform API')

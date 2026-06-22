@@ -209,6 +209,21 @@ export class EnvironmentVariables {
   @IsString()
   VOYAGE_MODEL: string = 'voyage-law-2';
 
+  /**
+   * Static bearer token guarding the MCP server endpoint (Phase 12 —
+   * Playbook-Driven Contract Review agent). The contract-review agent
+   * (Anthropic Managed Agents / AWS AgentCore) reaches the MCP tools
+   * over Streamable HTTP and authenticates with this token, supplied to
+   * the runtime as a `static_bearer` vault credential.
+   *
+   * Optional so local dev / MCP Inspector can hit the endpoint without a
+   * token. When unset the MCP guard allows all requests; set it the
+   * moment the endpoint is exposed via a tunnel.
+   */
+  @IsString()
+  @IsOptional()
+  MCP_BEARER_TOKEN?: string;
+
   // Queue
   @IsEnum(QueueDriver)
   QUEUE_DRIVER: QueueDriver = QueueDriver.Memory;

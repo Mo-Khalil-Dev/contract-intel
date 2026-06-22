@@ -11,6 +11,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
 import { ClausesModule } from './modules/clauses/clauses.module';
 import { AuditModule } from './modules/audit/infrastructure/audit.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { McpModule } from './modules/mcp/mcp.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ChatModule } from './modules/chat/chat.module';
     ClausesModule,
     AuditModule,
     ChatModule,
+    McpModule,
   ],
   providers: [
     {

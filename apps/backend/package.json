@@ -27,6 +27,7 @@
     "@anthropic-ai/sdk": "^0.96.0",
     "@google-cloud/documentai": "^9.6.1",
     "@google-cloud/storage": "^7.19.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@nestjs/common": "^11.1.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.1.0",
@@ -53,7 +54,8 @@
     "rxjs": "^7.8.1",
     "uuid": "^9.0.1",
     "voyageai": "^0.2.1",
-    "wordlist-english": "^1.2.1"
+    "wordlist-english": "^1.2.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",

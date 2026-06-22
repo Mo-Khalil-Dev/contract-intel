@@ -168,6 +168,11 @@ export class AppConfigService {
     return this.configService.get('VOYAGE_MODEL', { infer: true });
   }
 
+  // MCP server (Phase 12) — static bearer guarding the tool endpoint.
+  get mcpBearerToken(): string | undefined {
+    return this.configService.get('MCP_BEARER_TOKEN', { infer: true });
+  }
+
   // Queue
   get queueDriver(): QueueDriver {
     return this.configService.get('QUEUE_DRIVER', { infer: true });

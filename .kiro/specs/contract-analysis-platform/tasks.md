@@ -4618,3 +4618,105 @@ once the risk slice is green. **12.11** (history + feedback) and **12.12**
 
 **Deferred** (see Requirement 15 → Out of scope): SSE streaming,
 multi-turn memory, composite mixed-type answers, PDF export/share.
+
+---
+
+## Phase 13: Playbook-Driven Contract Review Agent (MCP + Managed Agents)
+
+**Requirement**: see [Requirement 16: Playbook-Driven Contract Review Agent](./requirements.md#requirement-16-playbook-driven-contract-review-agent-mcp--managed-agents)
+in `requirements.md` for the epic, child stories (US-CR-1..3), and
+acceptance criteria.
+
+**Handoff / spec**: `docs/handoff-contract-review-agent.md`.
+**Ruleset (agent spec)**: `docs/legal-playbook.md` (v1.0).
+**Target output (Outcome rubric)**: `docs/sample-risk-report.md`.
+
+The agent reads the *already-ingested* contract analysis and evaluates it
+against the playbook — it does **not** re-extract. Architecture:
+**playbook = static knowledge** (system prompt → later a Skill),
+**contract = dynamic data via one MCP server** over the existing CQRS read
+side, **report = §4 schema output**. One MCP tool layer underpins two
+runtimes (Anthropic Managed Agents, AWS Bedrock AgentCore).
+
+### Phase 13 layer map
+
+```
+PLAYBOOK (static, versioned) ──► agent KNOWLEDGE (system prompt → Skill)
+CONTRACT (dynamic, per-run)  ──► agent DATA via MCP server ─┐
+                                                            │ wraps QueryBus 1:1
+   GetClausesForDocumentQuery ◄── get_document_clauses ─────┤  (no new logic)
+   GetClauseByIdQuery         ◄── get_clause             ───┤
+   GetSimilarClausesQuery     ◄── find_similar_clauses   ───┘  (live Voyage)
+OUTPUT (the report)          ──► §4 schema → /mnt/session/outputs/ (markdown → docx)
+KICKOFF                      ──► POST /documents/:id/review  (CLI backup)
+```
+
+#### Why this layering
+
+- **No re-extraction.** Two uses of Claude stay separate: the pipeline at
+  write-time (Requirement 3), the agent at read-time. The MCP tools are the
+  read-time door.
+- **Thin tool layer.** Each MCP tool wraps an existing query handler 1:1;
+  correctness, org/format validation, and error mapping stay in the handlers.
+- **Portable interface.** The same Streamable-HTTP MCP URL serves both
+  runtimes — the architectural through-line of the demo.
+
+### Phase 13 tasks
+
+#### ~~Task 13.1: Contract-Review MCP server (build-order step 1)~~ ✅ (US-CR-1)
+
+**Goal**: stand up the shared tool layer over the existing QueryBus.
+
+- `McpModule` (`apps/backend/src/modules/mcp/`) imports `ClausesModule` +
+  `CqrsModule`; `createContractReviewMcpServer(queryBus)` registers three
+  tools (`get_document_clauses`, `get_clause`, `find_similar_clauses`)
+  wrapping `GetClausesForDocumentQuery` / `GetClauseByIdQuery` /
+  `GetSimilarClausesQuery` 1:1.
+- `McpController` serves **Streamable HTTP** at `POST /mcp` (stateless: fresh
+  server + transport per request), excluded from the `api/v1` prefix in
+  `main.ts`. `McpBearerGuard` checks `MCP_BEARER_TOKEN` (permissive + warns
+  when unset, for Inspector/local).
+- Tools return the full stored DTO as JSON (verbatim text, risk fields,
+  pageNumber); handler/domain errors surface as `isError` tool results.
+- **DoD**: `tsc` clean; in-memory MCP client lists all three tools and calls
+  one through the QueryBus successfully. ✅ Next: verify round-trip with MCP
+  Inspector against a seeded contract, then expose via ngrok.
+
+#### Task 13.2: Track A — Anthropic Managed Agents review (US-CR-2)
+
+**Goal**: agent created once; one session per review; §4 report out.
+
+- Env + vault (`static_bearer` for the MCP server) + Agent created once
+  (system = playbook + 8-step algorithm; `mcp_servers` + `mcp_toolset` +
+  `agent_toolset` for writing the report); store the agent id.
+- Runtime: `sessions.create` → `user.define_outcome` (rubric =
+  `docs/sample-risk-report.md` schema) → stream to completion →
+  `files.list({scope_id})` to fetch the report from `/mnt/session/outputs/`.
+- Wire to `POST /documents/:id/review`; keep a CLI script as backup.
+- **DoD**: a seeded counterparty contract produces a §4-conformant report
+  reproducing the sample's hard-stop override + tier logic.
+
+#### Task 13.2b: Flex — playbook → Skill + `docx` report
+
+**Goal**: promote static knowledge to a Skill and emit a Word report.
+
+- Once 13.2 works: package the playbook as an Anthropic Skill; add the
+  `docx` Skill so the report ships as `.docx` instead of markdown.
+- **DoD**: same review runs with the playbook as a Skill and yields a `.docx`.
+
+#### Task 13.3: Track B — AWS Bedrock AgentCore review (US-CR-3)
+
+**Goal**: same MCP URL, second runtime (Claude via Bedrock).
+
+- AgentCore runtime/gateway points at the **same** MCP URL; playbook
+  delivered as the agent's instruction/knowledge.
+- **DoD**: a review produces a §4-conformant report — one tool layer, two
+  runtimes. (Second sprint — keep Track A green first.)
+
+### Build order / slice
+
+**Step 1 (done)**: 13.1 — the MCP server, independently testable.
+**Then**: 13.2 (Track A) → 13.2b (Skill + docx flex) → 13.3 (Track B).
+
+**Deferred** (see Requirement 16 → Out of scope): re-extraction, adding
+`sectionRef` to the schema, CMA scheduled (cron) deployment.
