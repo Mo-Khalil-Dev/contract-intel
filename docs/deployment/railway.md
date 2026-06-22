@@ -74,6 +74,21 @@ GCS_BUCKET_NAME=contractintel-uploads-12345
 # Base64 of the JSON service account key. The setup-gcs.sh script prints
 # this value at the end — copy the long string after the comment line.
 GCS_SERVICE_ACCOUNT_KEY=<paste base64 here>
+
+# AI — Ask Your Portfolio (Phase 12) + clause extraction (Phase 8).
+# Without CLAUDE_API_KEY the Ask feature silently falls back to a stub
+# answer and clause extraction uses the mock driver. CLAUDE_MODEL has a
+# safe default (claude-opus-4-7) so it's optional.
+CLAUDE_API_KEY=<your Anthropic key>
+CLAUDE_MODEL=claude-opus-4-7
+# To use the real drivers (not mocks) in prod:
+CLAUSE_EXTRACTOR=anthropic
+EMBEDDING_DRIVER=voyage
+VOYAGE_API_KEY=<your Voyage key>
+
+# MCP server (Phase 12) — static bearer guarding POST /mcp. If unset the
+# endpoint is UNAUTHENTICATED (allows all). Set it before exposing /mcp.
+MCP_BEARER_TOKEN=<generate fresh, e.g. openssl rand -hex 32>
 ```
 
 ### `frontend` service
