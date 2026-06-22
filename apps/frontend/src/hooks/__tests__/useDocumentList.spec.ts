@@ -52,7 +52,9 @@ const MOCK_RESPONSE: DocumentListResponse = {
 const mockGetDocumentList = vi.mocked(documentListService.getDocumentList);
 
 describe('useDocumentList', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('returns loading state initially', () => {
     mockGetDocumentList.mockImplementation(() => new Promise(() => {}));

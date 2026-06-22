@@ -11,7 +11,9 @@ function wrapper(initialEntries: string[] = ['/']) {
 }
 
 describe('useDocumentListFilters (integration)', () => {
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('returns defaults when URL has no params', () => {
     const { result } = renderHook(() => useDocumentListFilters(), { wrapper: wrapper() });
