@@ -41,6 +41,10 @@ import {
   RunContractReviewCommand,
   RunContractReviewResult,
 } from '../application/commands/run-contract-review.command';
+import {
+  GetContractReviewQuery,
+  GetContractReviewResult,
+} from '../application/queries/get-contract-review.query';
 import { GetClausesForDocumentQuery } from '../../clauses/application/queries/get-clauses-for-document.query';
 import type { ClauseDto } from '../../clauses/application/queries/clause.dto';
 import {
@@ -242,14 +246,14 @@ export class DocumentController {
    */
   // ── Playbook-Driven Contract Review agent ────────────────────────
   //
-  // Runs the review agent (Anthropic Managed Agents or AWS AgentCore,
-  // per CONTRACT_REVIEW_RUNTIME) against the already-analysed contract
-  // and returns the §4 risk report as markdown. Synchronous — the agent
-  // run takes tens of seconds, so the request blocks until the report is
-  // ready. The agent reads the clauses itself via the MCP server.
+  // The review agent (Anthropic Managed Agents or AWS AgentCore, per
+  // CONTRACT_REVIEW_RUNTIME) grades the already-analysed contract against
+  // the Company Legal Playbook and writes a §4 risk report. The run can
+  // exceed the HTTP window, so it's ASYNCHRONOUS: POST starts it and
+  // returns 'running' immediately; the client polls GET for the result.
 
   @Post(':documentId/review')
-  async review(
+  async startReview(
     @CurrentUser() user: RequestUser,
     @Param('documentId') documentId: string,
   ): Promise<RunContractReviewResult> {
@@ -257,6 +261,17 @@ export class DocumentController {
       RunContractReviewCommand,
       RunContractReviewResult
     >(new RunContractReviewCommand(documentId, user.userId));
+  }
+
+  @Get(':documentId/review')
+  async getReview(
+    @CurrentUser() user: RequestUser,
+    @Param('documentId') documentId: string,
+  ): Promise<GetContractReviewResult> {
+    return this.queryBus.execute<
+      GetContractReviewQuery,
+      GetContractReviewResult
+    >(new GetContractReviewQuery(documentId, user.userId));
   }
 
   @Get(':documentId/text')

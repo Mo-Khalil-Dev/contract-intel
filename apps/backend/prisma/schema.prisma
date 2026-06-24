@@ -84,6 +84,15 @@ model Document {
   extractionStatus       String  @default("not_started") // not_started | extracting | extraction_complete | extraction_failed
   currentExtractionRunId String?
 
+  // Playbook-Driven Contract Review agent. The review runs asynchronously
+  // (can exceed the HTTP request window), so its state lives here and the
+  // frontend polls for it.
+  reviewStatus   String    @default("not_started") // not_started | running | complete | failed
+  reviewMarkdown String? // the §4 risk report
+  reviewRuntime  String? // anthropic | agentcore — which runtime produced it
+  reviewError    String? // failure reason when reviewStatus=failed
+  reviewedAt     DateTime?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   completedAt DateTime?

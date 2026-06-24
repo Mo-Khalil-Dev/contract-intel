@@ -30,11 +30,14 @@ import { DocumentUploadCompletedHandler } from './application/event-handlers/doc
 
 // Application layer — Contract Review agent (Playbook-Driven Contract Review)
 import { RunContractReviewHandler } from './application/commands/run-contract-review.handler';
+import { GetContractReviewHandler } from './application/queries/get-contract-review.handler';
 
-// Contract Review — port + runtime adapters
+// Contract Review — ports + runtime adapters + store
 import { CONTRACT_REVIEW_RUNNER } from './domain/ports/contract-review-runner.port';
+import { CONTRACT_REVIEW_STORE } from './domain/ports/contract-review-store.port';
 import { AnthropicManagedAgentRunner } from './infrastructure/review/anthropic-managed-agent.runner';
 import { AgentCoreRunner } from './infrastructure/review/agentcore.runner';
+import { PrismaContractReviewStore } from './infrastructure/review/prisma-contract-review.store';
 
 // Ports
 import { DOCUMENT_REPOSITORY } from './domain/document.repository';
@@ -156,6 +159,8 @@ import { OnClauseExtractionFailedHandler } from './application/projections/docum
     // exactly like the OCR_CLOUD_DRIVER factory above. Swapping runtimes
     // is a one-line .env change with zero app-code change.
     RunContractReviewHandler,
+    GetContractReviewHandler,
+    { provide: CONTRACT_REVIEW_STORE, useClass: PrismaContractReviewStore },
     AnthropicManagedAgentRunner,
     AgentCoreRunner,
     {

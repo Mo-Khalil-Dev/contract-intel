@@ -55,6 +55,15 @@ export class DocumentMapper {
       updatedAt: doc.updatedAt,
       completedAt: doc.completedAt,
       failureReason: doc.failureReason,
+      // Contract review lifecycle is not owned by the Document aggregate —
+      // it's written directly by the review store. On create we seed the
+      // defaults; the store's updates are never overwritten because save()
+      // only updates an explicit field list (see PrismaDocumentRepository).
+      reviewStatus: 'not_started',
+      reviewMarkdown: null,
+      reviewRuntime: null,
+      reviewError: null,
+      reviewedAt: null,
     };
   }
 }

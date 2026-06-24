@@ -1,5 +1,6 @@
-import type { ContractReviewRuntime } from '../../domain/ports/contract-review-runner.port';
+import type { ContractReviewStatus } from '../../domain/ports/contract-review-store.port';
 
+/** Starts an asynchronous review run and returns immediately. */
 export class RunContractReviewCommand {
   constructor(
     public readonly documentId: string,
@@ -9,7 +10,6 @@ export class RunContractReviewCommand {
 
 export interface RunContractReviewResult {
   documentId: string;
-  markdown: string;
-  runtime: ContractReviewRuntime;
-  runId?: string;
+  /** Always 'running' on a fresh start; the client then polls the query. */
+  status: ContractReviewStatus;
 }
