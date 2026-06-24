@@ -37,6 +37,10 @@ import {
   GetDocumentTextResult,
 } from '../application/queries/get-document-text.query';
 import { RetryOcrProcessingCommand } from '../application/commands/retry-ocr-processing.command';
+import {
+  RunContractReviewCommand,
+  RunContractReviewResult,
+} from '../application/commands/run-contract-review.command';
 import { GetClausesForDocumentQuery } from '../../clauses/application/queries/get-clauses-for-document.query';
 import type { ClauseDto } from '../../clauses/application/queries/clause.dto';
 import {
@@ -236,6 +240,25 @@ export class DocumentController {
    *
    * Scoped to the requesting user via the underlying query handler.
    */
+  // ── Playbook-Driven Contract Review agent ────────────────────────
+  //
+  // Runs the review agent (Anthropic Managed Agents or AWS AgentCore,
+  // per CONTRACT_REVIEW_RUNTIME) against the already-analysed contract
+  // and returns the §4 risk report as markdown. Synchronous — the agent
+  // run takes tens of seconds, so the request blocks until the report is
+  // ready. The agent reads the clauses itself via the MCP server.
+
+  @Post(':documentId/review')
+  async review(
+    @CurrentUser() user: RequestUser,
+    @Param('documentId') documentId: string,
+  ): Promise<RunContractReviewResult> {
+    return this.commandBus.execute<
+      RunContractReviewCommand,
+      RunContractReviewResult
+    >(new RunContractReviewCommand(documentId, user.userId));
+  }
+
   @Get(':documentId/text')
   async documentText(
     @CurrentUser() user: RequestUser,

@@ -10,6 +10,7 @@ import { OverviewTab } from './tabs/OverviewTab';
 import { RiskFlagsTab } from './tabs/RiskFlagsTab';
 import { ClausesTab } from './tabs/ClausesTab';
 import { DocumentTab } from './tabs/DocumentTab';
+import { RiskReportTab } from './tabs/RiskReportTab';
 import type {
   ClauseResponse,
   ContractMetadata,
@@ -20,6 +21,7 @@ import { documentRiskScore, flagCounts } from '@/lib/riskHelpers';
 export type ResultsTabId =
   | 'overview'
   | 'risks'
+  | 'report'
   | 'clauses'
   | 'document'
   | 'history';
@@ -134,6 +136,7 @@ export function ResultsPageView({
             tabs={[
               { id: 'overview', label: 'Overview' },
               { id: 'risks', label: 'Risk Flags', count: riskFlagCount },
+              { id: 'report', label: 'Risk Report' },
               { id: 'clauses', label: 'Clauses', count: clauses.length },
               { id: 'document', label: 'Document' },
               { id: 'history', label: 'History' },
@@ -150,6 +153,7 @@ export function ResultsPageView({
               />
             )}
             {activeTab === 'risks' && <RiskFlagsTab clauses={clauses} />}
+            {activeTab === 'report' && <RiskReportTab documentId={documentId} />}
             {activeTab === 'clauses' && <ClausesTab clauses={clauses} />}
             {activeTab === 'document' && (
               <DocumentTab

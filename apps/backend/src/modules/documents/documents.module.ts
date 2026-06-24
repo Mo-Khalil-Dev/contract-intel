@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { AppConfigModule } from '../../config/app-config.module';
 import { AppConfigService } from '../../config/app-config.service';
 import {
+  ContractReviewRuntime,
   OcrDriver as OcrDriverEnum,
   StorageDriver,
 } from '../../config/environment-variables';
@@ -26,6 +27,14 @@ import { RetryOcrProcessingHandler } from './application/commands/retry-ocr-proc
 import { GetDocumentTextHandler } from './application/queries/get-document-text.handler';
 import { GetProcessingStatusHandler } from './application/queries/get-processing-status.handler';
 import { DocumentUploadCompletedHandler } from './application/event-handlers/document-upload-completed.handler';
+
+// Application layer — Contract Review agent (Playbook-Driven Contract Review)
+import { RunContractReviewHandler } from './application/commands/run-contract-review.handler';
+
+// Contract Review — port + runtime adapters
+import { CONTRACT_REVIEW_RUNNER } from './domain/ports/contract-review-runner.port';
+import { AnthropicManagedAgentRunner } from './infrastructure/review/anthropic-managed-agent.runner';
+import { AgentCoreRunner } from './infrastructure/review/agentcore.runner';
 
 // Ports
 import { DOCUMENT_REPOSITORY } from './domain/document.repository';
@@ -141,6 +150,26 @@ import { OnClauseExtractionFailedHandler } from './application/projections/docum
     OnClauseExtractionCompletedHandler,
     OnClauseExtractionFailedHandler,
     { provide: OCR_SERVICE, useExisting: ClassifierThenRouter },
+
+    // ── Contract Review agent — one tool layer (MCP), two runtimes.
+    // The active runner is chosen at boot from CONTRACT_REVIEW_RUNTIME,
+    // exactly like the OCR_CLOUD_DRIVER factory above. Swapping runtimes
+    // is a one-line .env change with zero app-code change.
+    RunContractReviewHandler,
+    AnthropicManagedAgentRunner,
+    AgentCoreRunner,
+    {
+      provide: CONTRACT_REVIEW_RUNNER,
+      inject: [AppConfigService, AnthropicManagedAgentRunner, AgentCoreRunner],
+      useFactory: (
+        config: AppConfigService,
+        anthropic: AnthropicManagedAgentRunner,
+        agentcore: AgentCoreRunner,
+      ) =>
+        config.contractReviewRuntime === ContractReviewRuntime.AgentCore
+          ? agentcore
+          : anthropic,
+    },
 
     // Cloud-track driver — env-driven. `mock` for tests/local-dev,
     // `google-document-ai` for prod. Adding a third driver later means

@@ -45,6 +45,13 @@ export enum EmbeddingDriver {
   Voyage = 'voyage',
 }
 
+export enum ContractReviewRuntime {
+  // Anthropic Managed Agents (Track A — live).
+  Anthropic = 'anthropic',
+  // AWS Bedrock AgentCore (Track B — stub until built).
+  AgentCore = 'agentcore',
+}
+
 export enum QueueDriver {
   Memory = 'memory',
   PgBoss = 'pg-boss',
@@ -223,6 +230,28 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   MCP_BEARER_TOKEN?: string;
+
+  // Contract Review agent (Playbook-Driven Contract Review). Runtime is
+  // chosen at boot; the MCP server + playbook are identical across both.
+  @IsEnum(ContractReviewRuntime)
+  CONTRACT_REVIEW_RUNTIME: ContractReviewRuntime = ContractReviewRuntime.Anthropic;
+
+  // Track A (Anthropic Managed Agents) — agent + environment are created
+  // ONCE (Console or setup script) and reused per session. Required when
+  // CONTRACT_REVIEW_RUNTIME=anthropic.
+  @IsString()
+  @IsOptional()
+  CONTRACT_REVIEW_AGENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  CONTRACT_REVIEW_ENV_ID?: string;
+
+  // Track B (AWS Bedrock AgentCore) — required when
+  // CONTRACT_REVIEW_RUNTIME=agentcore (not yet implemented).
+  @IsString()
+  @IsOptional()
+  CONTRACT_REVIEW_AGENTCORE_RUNTIME_ARN?: string;
 
   // Queue
   @IsEnum(QueueDriver)

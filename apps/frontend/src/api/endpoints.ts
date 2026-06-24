@@ -19,6 +19,9 @@ export const API = {
   EXTRACTION_STATUS: (id: string) => `/api/v1/documents/${id}/extraction-status`,
   DOCUMENT_TEXT: (id: string) => `/api/v1/documents/${id}/text`,
 
+  // ── Playbook-Driven Contract Review agent ──────────────────────
+  REVIEW: (id: string) => `/api/v1/documents/${id}/review`,
+
   // ── Documents (Phase 10 — Contracts View) ──────────────────────
   DOCUMENTS: {
     LIST: '/api/v1/documents',

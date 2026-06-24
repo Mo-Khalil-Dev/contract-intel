@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   AuthDriver,
   ClauseExtractorDriver,
+  ContractReviewRuntime,
   EmbeddingDriver,
   EnvironmentVariables,
   LogLevel,
@@ -171,6 +172,25 @@ export class AppConfigService {
   // MCP server (Phase 12) — static bearer guarding the tool endpoint.
   get mcpBearerToken(): string | undefined {
     return this.configService.get('MCP_BEARER_TOKEN', { infer: true });
+  }
+
+  // Contract Review agent
+  get contractReviewRuntime(): ContractReviewRuntime {
+    return this.configService.get('CONTRACT_REVIEW_RUNTIME', { infer: true });
+  }
+
+  get contractReviewAgentId(): string | undefined {
+    return this.configService.get('CONTRACT_REVIEW_AGENT_ID', { infer: true });
+  }
+
+  get contractReviewEnvId(): string | undefined {
+    return this.configService.get('CONTRACT_REVIEW_ENV_ID', { infer: true });
+  }
+
+  get contractReviewAgentCoreRuntimeArn(): string | undefined {
+    return this.configService.get('CONTRACT_REVIEW_AGENTCORE_RUNTIME_ARN', {
+      infer: true,
+    });
   }
 
   // Queue
