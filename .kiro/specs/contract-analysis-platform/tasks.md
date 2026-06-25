@@ -4682,19 +4682,28 @@ KICKOFF                      ──► POST /documents/:id/review  (CLI backup)
   one through the QueryBus successfully. ✅ Next: verify round-trip with MCP
   Inspector against a seeded contract, then expose via ngrok.
 
-#### Task 13.2: Track A — Anthropic Managed Agents review (US-CR-2)
+#### ~~Task 13.2: Track A — Anthropic Managed Agents review (US-CR-2)~~ ✅ (built — deployed)
 
 **Goal**: agent created once; one session per review; §4 report out.
 
-- Env + vault (`static_bearer` for the MCP server) + Agent created once
-  (system = playbook + 8-step algorithm; `mcp_servers` + `mcp_toolset` +
-  `agent_toolset` for writing the report); store the agent id.
-- Runtime: `sessions.create` → `user.define_outcome` (rubric =
-  `docs/sample-risk-report.md` schema) → stream to completion →
-  `files.list({scope_id})` to fetch the report from `/mnt/session/outputs/`.
-- Wire to `POST /documents/:id/review`; keep a CLI script as backup.
-- **DoD**: a seeded counterparty contract produces a §4-conformant report
-  reproducing the sample's hard-stop override + tier logic.
+**As built** (deviated from the original plan, see US-CR-2 ACs):
+
+- Agent created once in the Console (playbook system prompt + MCP connector),
+  reused by id via `CONTRACT_REVIEW_AGENT_ID` / `CONTRACT_REVIEW_ENV_ID`. ✅
+- Runtime port + adapter: `IContractReviewRunner` (`CONTRACT_REVIEW_RUNNER`)
+  with `AnthropicManagedAgentRunner` — `sessions.create` → stream kickoff →
+  drain to terminal idle → capture **final message** as the markdown report.
+  (No `define_outcome` / `/mnt/session/outputs` — final-message capture.) ✅
+- **Async + persisted** (fixes a 300s timeout): `POST /documents/:id/review`
+  starts a background run, returns `running`; result persists on Document
+  (`reviewStatus/reviewMarkdown/reviewRuntime/reviewError/reviewedAt`, +migration);
+  `GET /documents/:id/review` + 3s frontend polling. ✅
+- Env-driven factory binds the runner on `CONTRACT_REVIEW_RUNTIME`
+  (anthropic | agentcore) — mirrors `OCR_CLOUD_DRIVER`. ✅
+- Frontend: **Risk Report** tab (Run/Re-run, runtime badge, `react-markdown`
+  + `remark-gfm`). ✅
+- **DoD**: ✅ a real counterparty contract produces a §4 Critical report,
+  persisted and rendered; deployed to Railway.
 
 #### Task 13.2b: Flex — playbook → Skill + `docx` report
 
@@ -4704,19 +4713,67 @@ KICKOFF                      ──► POST /documents/:id/review  (CLI backup)
   `docx` Skill so the report ships as `.docx` instead of markdown.
 - **DoD**: same review runs with the playbook as a Skill and yields a `.docx`.
 
-#### Task 13.3: Track B — AWS Bedrock AgentCore review (US-CR-3)
+#### Task 13.3: Track B — AWS Bedrock AgentCore review, Strands TS (US-CR-3)
 
-**Goal**: same MCP URL, second runtime (Claude via Bedrock).
+**Goal**: same MCP URL + same playbook, second runtime (Claude via Bedrock),
+agent written with the **Strands Agents TypeScript SDK**. Branch:
+`feature/contract-review-agent-strands`.
 
-- AgentCore runtime/gateway points at the **same** MCP URL; playbook
-  delivered as the agent's instruction/knowledge.
-- **DoD**: a review produces a §4-conformant report — one tool layer, two
-  runtimes. (Second sprint — keep Track A green first.)
+**Layer map (Track B)**
+
+```
+PLAYBOOK  ── same docs/legal-playbook-system-prompt.md (system prompt)
+CONTRACT  ── same /mcp URL, reached by a DIRECT Strands MCP client
+MODEL     ── Claude via Amazon Bedrock (BedrockModel)
+HOST      ── AgentCore Runtime (arm64 container, POST /invocations + GET /ping)
+INVOKE    ── backend AgentCoreRunner → InvokeAgentRuntime → {markdown}
+SWITCH    ── CONTRACT_REVIEW_RUNTIME=agentcore (existing factory; no app change)
+```
+
+**Subtasks**
+
+- [ ] **13.3a — Agent package scaffold.** `agents/contract-review-agentcore/`
+  as its own Node package: `package.json` (`@strands-agents/sdk`,
+  `@modelcontextprotocol/sdk` if needed, `express`, `tsx`, TS types),
+  `tsconfig.json`; copy `docs/legal-playbook-system-prompt.md` →
+  `system_prompt.md` (in the build context; re-copy on playbook change).
+- [ ] **13.3b — Agent loop (Strands TS).** A Strands `Agent` with a
+  `BedrockModel` (model id from `BEDROCK_MODEL_ID`), `system_prompt.md` as the
+  system prompt, and a direct MCP client to `MCP_SERVER_URL` (Streamable HTTP,
+  `Authorization: Bearer ${MCP_BEARER_TOKEN}`). Express server: `GET /ping` →
+  healthy, `POST /invocations` `{documentId}` → run agent → `{markdown, runtime:"agentcore"}`.
+- [ ] **13.3c — Containerize + local smoke test.** `linux/arm64` Dockerfile on
+  `:8080`; `docker run` locally and `curl :8080/invocations -d '{"documentId":"…"}'`
+  against the live MCP server returns a §4 report before any AWS step.
+- [ ] **13.3d — Backend `AgentCoreRunner`.** Replace the stub with
+  `InvokeAgentRuntime` (`@aws-sdk/client-bedrock-agentcore`) using
+  `CONTRACT_REVIEW_AGENTCORE_RUNTIME_ARN` + `AWS_REGION`; parse `{markdown}`.
+  Add `AWS_REGION` to env + AppConfigService; add the AWS SDK dep. (Port,
+  factory, persistence, polling, UI unchanged.) `tsc` clean both apps.
+- [ ] **13.3e — AWS provisioning (manual, requires AWS account).** Enable
+  Bedrock Claude model access in-region (confirm model id); set
+  `MCP_BEARER_TOKEN` on the MCP server; build+push the arm64 image to ECR;
+  create the AgentCore runtime with env (`MCP_SERVER_URL`, `MCP_BEARER_TOKEN`,
+  `BEDROCK_MODEL_ID`) → capture the runtime ARN; IAM for AgentCore + Bedrock.
+- [ ] **13.3f — Wire + verify + deploy.** Set
+  `CONTRACT_REVIEW_AGENTCORE_RUNTIME_ARN`, `AWS_REGION`, AWS creds on the
+  backend; flip `CONTRACT_REVIEW_RUNTIME=agentcore`; run the same contract
+  through both runtimes and confirm both reach the same Critical findings
+  (not byte-identical). Deploy.
+
+- **DoD**: `CONTRACT_REVIEW_RUNTIME=agentcore` yields a §4-conformant report via
+  the same `POST`/`GET /documents/:id/review` flow — one tool layer, two
+  runtimes. (Keep Track A green; the switch is reversible by one env var.)
+
+**Critical path**: 13.3a → 13.3b → 13.3c → 13.3d → 13.3e → 13.3f.
+**Buildable now (no AWS)**: 13.3a–d + the 13.3c local smoke test.
+**Needs AWS account**: 13.3e–f.
 
 ### Build order / slice
 
 **Step 1 (done)**: 13.1 — the MCP server, independently testable.
-**Then**: 13.2 (Track A) → 13.2b (Skill + docx flex) → 13.3 (Track B).
+**Done**: 13.2 (Track A) — built + deployed.
+**Now**: 13.3 (Track B, Strands TS). **Optional flex**: 13.2b (Skill + docx).
 
 **Deferred** (see Requirement 16 → Out of scope): re-extraction, adding
 `sectionRef` to the schema, CMA scheduled (cron) deployment.

@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
+    "@aws-sdk/client-bedrock-agentcore": "^3.1075.0",
     "@google-cloud/documentai": "^9.6.1",
     "@google-cloud/storage": "^7.19.0",
     "@modelcontextprotocol/sdk": "^1.29.0",

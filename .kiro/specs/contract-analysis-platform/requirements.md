@@ -740,31 +740,46 @@ The epic decomposes into child stories aligned to the handoff build order. **US-
 
 ---
 
-#### US-CR-2 — Track A: Anthropic Managed Agents review (planned)
+#### US-CR-2 — Track A: Anthropic Managed Agents review ✅ (built — deployed)
 
 **As a** legal team
 **I want** to kick off a playbook review of a contract and get the §4 risk report back
 **So that** counterparty paper is triaged without manual clause-by-clause work.
 
-**Acceptance criteria (planned)**
+**Acceptance criteria (as built)**
 
-- AC1: An Agent is created **once** (system prompt = playbook + the 8-step algorithm; `mcp_servers` + `mcp_toolset` pointing at the MCP server; `agent_toolset` for writing the report) and reused across runs by ID.
-- AC2: A vault holds the MCP `static_bearer` credential; sessions attach it via `vault_ids`.
-- AC3: Each review is one session: `sessions.create` → `user.define_outcome` with the rubric = `docs/sample-risk-report.md` schema → stream to completion → fetch the report from `/mnt/session/outputs/` via session-scoped `files.list`.
-- AC4: Kickoff is wired to `POST /documents/:id/review`; a CLI script is kept as a bulletproof backup.
-- AC5: The report conforms to the §4 schema and reproduces the sophisticated behaviours in the sample (e.g. COM-02 elevated to Critical via the §E hard-stop override; tier = max(value band, highest finding severity)).
+- AC1: An Agent is created **once** (system prompt = playbook + the 8-step algorithm; MCP server attached as a connector) and reused across runs by id — `CONTRACT_REVIEW_AGENT_ID` + `CONTRACT_REVIEW_ENV_ID`. ✅
+- AC2: The agent reaches the MCP server over Streamable HTTP; auth via `MCP_BEARER_TOKEN` (static bearer). ✅
+- AC3: Each review is one session: `sessions.create` → stream the kickoff (`Review document <id> against the Company Legal Playbook …`) → drain to terminal idle → capture the agent's **final message** as the §4 markdown report. (Final-message capture chosen over `/mnt/session/outputs` file retrieval — simpler, no indexing lag.) ✅
+- AC4: The run is **asynchronous + persisted**: `POST /documents/:id/review` starts a background run and returns immediately; status + report persist on the Document (`reviewStatus / reviewMarkdown / reviewRuntime / reviewError / reviewedAt`); the frontend polls `GET /documents/:id/review` every 3s while running. Forced by a 300s HTTP timeout that aborted long synchronous runs. ✅
+- AC5: Selected behind a runtime port (`CONTRACT_REVIEW_RUNNER`) bound by an env-driven factory on `CONTRACT_REVIEW_RUNTIME`, so Track B swaps in with zero app-code change. ✅
+- AC6: Surfaced on the contract Results screen as a **Risk Report** tab — Run / Re-run, runtime badge, reviewed-at, markdown render (`react-markdown` + `remark-gfm`). ✅
 
-#### US-CR-3 — Track B: AWS Bedrock AgentCore review (planned)
+**Deferred from the original plan**: the `user.define_outcome` rubric-iterate loop and `/mnt/session/outputs` file output (replaced by final-message capture); CLI backup script (not needed); promoting the playbook to a Skill + `docx` report (Task 13.2b — optional flex, still out of scope).
+
+#### US-CR-3 — Track B: AWS Bedrock AgentCore review (designed — branch `feature/contract-review-agent-strands`)
 
 **As a** platform owner
 **I want** the same review available on AWS Bedrock AgentCore (Claude via Bedrock), against the same MCP server
 **So that** the tool layer is proven portable across runtimes (CMA is not available on Bedrock).
 
-**Acceptance criteria (planned)**
+**Design (decided)**
 
-- AC1: AgentCore runtime/gateway reaches the **same** MCP URL; the tool layer is unchanged.
-- AC2: Claude runs via Bedrock; the playbook is delivered as the agent's instruction/knowledge.
-- AC3: A review produces a report conforming to the §4 schema, demonstrating one tool layer under two runtimes.
+- **Framework / language**: **Strands Agents TypeScript SDK** (`@strands-agents/sdk`). TS support went GA in Dec 2025 with a native Amazon Bedrock provider and a native MCP client — so we get the Strands framework *and* a single-language repo (the branch name reflects the framework). Resolves the earlier Strands-vs-TS contradiction.
+- **Agent** (`agents/contract-review-agentcore/`, its own Node package): a Strands `Agent` with a `BedrockModel`, the **same** `docs/legal-playbook-system-prompt.md` as system prompt, and a **direct MCP client** to the live `/mcp` URL (Streamable HTTP + `MCP_BEARER_TOKEN`). Input `{documentId}` → output `{markdown}`.
+- **AgentCore Runtime contract**: a thin Express server exposes `POST /invocations` + `GET /ping` on `:8080`; packaged as a **linux/arm64** container, pushed to ECR, registered as an AgentCore runtime.
+- **Backend invocation**: the existing `AgentCoreRunner` (stub today) calls `InvokeAgentRuntime` (`@aws-sdk/client-bedrock-agentcore`) with `CONTRACT_REVIEW_AGENTCORE_RUNTIME_ARN` + `AWS_REGION`, parsing `{markdown}` back. Persistence, polling, and UI are shared with Track A — unchanged.
+- **Switch**: `CONTRACT_REVIEW_RUNTIME=agentcore` binds this runner via the existing factory — zero app-code change.
+
+**Acceptance criteria**
+
+- AC1: The AgentCore runtime reaches the **same** MCP URL; the tool layer is unchanged from Track A.
+- AC2: Claude runs via Bedrock (newest model with access in-region); the playbook is the agent's system prompt — the same file Track A uses.
+- AC3: With `CONTRACT_REVIEW_RUNTIME=agentcore`, a review produces a §4-conformant report through the same `POST` / `GET /documents/:id/review` flow, persisted identically — one tool layer, two runtimes.
+- AC4: The agent honours the AgentCore HTTP contract (`/invocations`, `/ping`, `:8080`) and is smoke-tested locally before deploy.
+- AC5: The MCP endpoint is authenticated via `MCP_BEARER_TOKEN`, now that a second runtime consumes it.
+
+**Prerequisites (AWS-side)**: Bedrock Claude model access enabled in-region; an ECR repo; AgentCore Runtime + Bedrock invoke IAM; AWS creds available to the backend.
 
 ---
 

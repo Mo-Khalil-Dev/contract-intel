@@ -248,10 +248,15 @@ export class EnvironmentVariables {
   CONTRACT_REVIEW_ENV_ID?: string;
 
   // Track B (AWS Bedrock AgentCore) — required when
-  // CONTRACT_REVIEW_RUNTIME=agentcore (not yet implemented).
+  // CONTRACT_REVIEW_RUNTIME=agentcore. The deployed AgentCore runtime ARN
+  // (from creating the runtime); AWS_REGION + standard AWS creds (env / IAM
+  // role) authenticate the InvokeAgentRuntime call.
   @IsString()
   @IsOptional()
   CONTRACT_REVIEW_AGENTCORE_RUNTIME_ARN?: string;
+
+  @IsString()
+  AWS_REGION: string = 'us-east-1';
 
   // Queue
   @IsEnum(QueueDriver)

@@ -193,6 +193,10 @@ export class AppConfigService {
     });
   }
 
+  get awsRegion(): string {
+    return this.configService.get('AWS_REGION', { infer: true });
+  }
+
   // Queue
   get queueDriver(): QueueDriver {
     return this.configService.get('QUEUE_DRIVER', { infer: true });
