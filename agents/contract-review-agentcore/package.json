@@ -9,8 +9,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@strands-agents/sdk": "^1.6.0",
+    "@aws-sdk/client-bedrock-agentcore": "^3.1075.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@strands-agents/sdk": "^1.6.0",
     "express": "^5.2.1",
     "tsx": "^4.22.4"
   },
