@@ -1,0 +1,22 @@
+{
+  "name": "contract-review-agentcore",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playbook-Driven Contract Review agent — AWS Bedrock AgentCore runtime (Track B), Strands Agents TypeScript SDK",
+  "scripts": {
+    "start": "tsx agent.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@strands-agents/sdk": "^1.6.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.2.1",
+    "tsx": "^4.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.7.3"
+  }
+}
