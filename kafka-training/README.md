@@ -46,7 +46,7 @@ cd kafka-training
 docker compose up -d
 ```
 - Kafka UI → http://localhost:8080  *(✅ you should see a cluster called "local")*
-- Postgres → localhost:5432 (user/pass/db all = `marketplace`)
+- Postgres → localhost:5433 (user/pass/db all = `marketplace`) — host port 5433 to avoid clashing with any Postgres already on 5432
 
 ### 2. Open the project in IntelliJ
 `File → Open` → select the `kafka-training` folder. Let it import the Maven project.

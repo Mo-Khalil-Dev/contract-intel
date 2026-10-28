@@ -22,7 +22,7 @@ spring:
       ack-mode: manual   # GOLDEN RULE: we commit the offset ourselves, only after success
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/marketplace
+    url: jdbc:postgresql://localhost:5433/marketplace   # 5433 = our Docker Postgres (5432 may be taken by a local install)
     username: marketplace
     password: marketplace
   jpa:
