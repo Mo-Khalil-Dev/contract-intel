@@ -1,0 +1,37 @@
+server:
+  port: 8090   # our app's own web port (kafka-ui already uses 8080)
+
+app:
+  topic: contract-events   # our practice topic (stands in for the real LCAP-...-META-EVENT topic)
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092   # the HOST listener from docker-compose
+    consumer:
+      group-id: data-marketplace-subscriber
+      auto-offset-reset: earliest        # read from the start the first time
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.training.ingestion.event"
+        spring.json.value.default.type: com.training.ingestion.event.ContractEvent
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    listener:
+      ack-mode: manual   # GOLDEN RULE: we commit the offset ourselves, only after success
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/marketplace
+    username: marketplace
+    password: marketplace
+  jpa:
+    hibernate:
+      ddl-auto: update   # auto-creates the table for us (fine for practice, NOT for prod)
+    show-sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics   # Phase 9: observability endpoints
