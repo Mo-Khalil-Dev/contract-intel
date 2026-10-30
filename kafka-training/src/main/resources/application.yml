@@ -13,8 +13,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.training.ingestion.event"
-        spring.json.value.default.type: com.training.ingestion.event.ContractEvent
+        spring.json.trusted.packages: "com.training.ingestion.adapter.in.kafka"
+        spring.json.value.default.type: com.training.ingestion.adapter.in.kafka.ContractEventMessage
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

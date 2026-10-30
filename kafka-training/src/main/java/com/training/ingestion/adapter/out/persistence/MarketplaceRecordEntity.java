@@ -1,4 +1,4 @@
-package com.training.ingestion.persistence;
+package com.training.ingestion.adapter.out.persistence;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -7,15 +7,14 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 /**
- * One row in the "Marketplace table" (the right-hand side of the HLD).
+ * JPA ENTITY — an INFRASTRUCTURE detail, NOT the domain model.
  *
- * The primary key is contractId. That is what makes our upsert IDEMPOTENT:
- * processing the same contract twice overwrites the same row instead of
- * inserting a duplicate (GOLDEN RULE 2).
+ * Keeping this separate from the domain's MarketplaceContract means Hibernate/JPA
+ * annotations never leak into the domain. The persistence adapter maps between the two.
  */
 @Entity
 @Table(name = "marketplace_records")
-public class MarketplaceRecord {
+public class MarketplaceRecordEntity {
 
     @Id
     private String contractId;
@@ -24,11 +23,12 @@ public class MarketplaceRecord {
     private String description;
     private Instant updatedAt;
 
-    protected MarketplaceRecord() {
+    protected MarketplaceRecordEntity() {
         // JPA needs a no-arg constructor
     }
 
-    public MarketplaceRecord(String contractId, String version, String name, String description, Instant updatedAt) {
+    public MarketplaceRecordEntity(String contractId, String version, String name,
+                                   String description, Instant updatedAt) {
         this.contractId = contractId;
         this.version = version;
         this.name = name;

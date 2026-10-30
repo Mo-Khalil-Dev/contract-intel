@@ -1,6 +1,6 @@
 package com.training.ingestion.web;
 
-import com.training.ingestion.event.ContractEvent;
+import com.training.ingestion.adapter.in.kafka.ContractEventMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -9,14 +9,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * A tiny REST endpoint so YOU can publish test events (acting as the Contract Store
- * producer). In real life the Contract Store publishes these, not you.
+ * A tiny REST endpoint so YOU can publish test events (standing in for the Contract
+ * Store producer). It publishes the wire DTO (ContractEventMessage) to the topic.
  *
- * Publish a normal event:
+ * Normal event:
  *   curl -X POST localhost:8090/events -H "Content-Type: application/json" \
  *        -d '{"contractId":"C-001","version":"1","eventType":"contract.updated"}'
- *
- * Publish a poison event (to see the DLQ):
+ * Poison event (to see the DLQ):
  *   curl -X POST localhost:8090/events -H "Content-Type: application/json" \
  *        -d '{"contractId":"C-666","version":"1","eventType":"POISON"}'
  */
@@ -34,8 +33,7 @@ public class EventController {
     }
 
     @PostMapping
-    public String publish(@RequestBody ContractEvent event) {
-        // Key the message by contractId so all events for one contract keep their order.
+    public String publish(@RequestBody ContractEventMessage event) {
         template.send(topic, event.contractId(), event);
         return "Published: " + event + "\n";
     }
