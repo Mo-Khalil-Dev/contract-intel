@@ -3,9 +3,16 @@
 Captured from the sibling service `797530-dmp-01-search-service` (`pom.xml` on `main`).
 **Our Kafka consumer must match this stack and these conventions.**
 
-> ⚠️ Correction: the real stack is **Quarkus**, not Spring Boot. The Spring Boot
-> practice project in this folder taught the right *concepts* (Kafka, DI, DDD,
-> idempotency, DLQ) — which transfer unchanged — but the real service is Quarkus.
+> ⚠️ Correction 1 (framework): the real stack is **Quarkus**, not Spring Boot. The
+> Spring Boot practice project taught the right *concepts* (Kafka, DI, idempotency,
+> DLQ) — which transfer unchanged — but the real service is Quarkus.
+>
+> ⚠️ Correction 2 (architecture): the LBG **"Golden Path"** reference service uses a
+> **conventional layered package structure** (services / repositories / dto / entities /
+> mapper / resources …), **NOT** the hexagonal/Clean-Architecture ports-and-adapters
+> layout we built in the practice project for learning. **For the real repo, follow the
+> Golden Path layout** (see §6). The *principles* (thin entry point, constructor DI,
+> idempotency, DLQ) still apply — just inside the team's conventional structure.
 
 ---
 
@@ -112,5 +119,58 @@ not the thinking.
 
 1. Exact `artifactId` and base Java package for our service.
 2. Schema Registry: **Confluent** (confluent-proxy repo) or **Apicurio**? → decides the Avro serde dep.
-3. Is there a **Quarkus service template / archetype** in Backstage we should scaffold from (so we inherit `settings.xml`, `lbgmeta.yaml`, Helm, Harness config)?
-4. What `cortex-devkit` provides (LBG internal shared library).
+3. ~~Is there a Quarkus template to scaffold from?~~ ✅ **YES — the Golden Path** (`797530-dmp-producer-service`). Scaffold from it (see §6).
+4. What `cortex-devkit` / `dmp-commons-lib` provide (LBG internal shared libraries).
+
+---
+
+## 6. The Golden Path template & REAL package structure
+
+**Reference service:** `Green/797530-dmp-producer-service` — every file is tagged
+*"dmp-producer-service Java Quarkus Golden Path"*. This is **the template to clone our
+Kafka service from** (it already carries the correct Dockerfile, Helm, Harness, Backstage,
+cert handling, and layout).
+
+- Its Maven id: `com.lbg.marketplace:dmp-producer-api:0.0.1` (note: repo name ≠ artifactId).
+- `dependencyManagement` imports the Quarkus BOM **and** `com.lbg.marketplace:dmp-commons-lib` (internal shared lib) — use the same.
+
+**Real package layout** (`src/main/java/com/lbg/marketplace/…`) — conventional layered:
+
+```
+com/lbg/marketplace/
+├── client/         outbound REST clients (e.g. the Contract Store v5 client)
+├── config/         configuration classes
+├── constants/      constants
+├── dto/            data transfer objects (wire shapes)
+├── entities/       Panache/JPA entities
+├── exception/      exceptions + handlers
+├── executor/       orchestration / executors
+├── filter/         JAX-RS request/response filters
+├── mapper/         DTO <-> entity/domain mappers
+├── openapi/        OpenAPI config
+├── repositories/   Panache repositories
+├── resources/      JAX-RS REST endpoints (@Path)
+├── services/       business logic
+├── util/           utilities
+├── validation/     validators
+└── XxxServiceApplication.java
+```
+- Tests mirror this under `src/test/java/com/lbg/marketplace/…`.
+- **For our Kafka consumer:** the producer template is REST-first (`resources/` = endpoints).
+  We add a **`messaging/`** (or `consumer/`/`listener/`) package for the `@Incoming` Kafka
+  consumer; everything else (services/repositories/entities/mapper/client) stays as-is.
+
+## 7. Dockerfile & runtime (from the Golden Path)
+
+- **Base image:** `innersource-artefacts-docker.lloydsbanking.cloud/ingested/ubi9/openjdk-17-runtime:1.22-…` (Red Hat UBI9 + OpenJDK 17)
+- Imports `wss.crt` into the Java truststore (`keytool -importcert … cacerts`)
+- **Quarkus fast-jar** layout, copied as **4 layers** (`quarkus-app/lib/`, `*.jar`, `app/`, `quarkus/`) so library layers cache between builds
+- `EXPOSE 8080`, runs as non-root `USER 185`
+- `JAVA_OPTS_APPEND=-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager`
+- `ENTRYPOINT ["/opt/jboss/container/java/run/run-java.sh"]`
+- Local dev: `docker-compose.yml` (app + postgres, `QUARKUS_LOG_FILE_ENABLE=false`) and `compose-devservices.yml` (Quarkus Dev Services)
+
+**Other template files we inherit (don't hand-write these):** `catalog-info.yaml` (Backstage),
+`mkdocs.yml` + `docs/` (docs site), `.harness/orgs/entdp/projects/sinope/…` (pipelines),
+`helm/` (K8s), `lbgmeta.yaml` + `CODEOWNERS` (push-blocked — change via the documented process),
+`ATTESTATION.md`, `INNERSOURCE.md`, `sonar-project.properties`, `settings.xml`, `wss.crt`.
