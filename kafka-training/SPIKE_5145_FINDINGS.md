@@ -1,0 +1,132 @@
+# EDPMARK-5145 — Spike Findings: Non-Production Kafka Stream Subscription
+
+**Spike:** EDPMARK-5145 · **Target story:** EDPMARK-4979 (Verify Non-Production Stream Subscription)
+**Blocks:** EDPMARK-5129 (scaffold consumer + CI/CD), EDPMARK-5130 (configure listener/broker), EDPMARK-5131
+**Author:** Mohamed Khalil · **Date:** <date> · **Status:** Draft findings
+
+> Spike output: documented findings + recommended approach, the requests to raise (with owners
+> & lead times), the recommended consumer config + production-isolation approach, delivery-task
+> impacts, and open risks. Items marked **TO CONFIRM** need a named owner's input before delivery.
+
+Legend: ✅ recommendation/position · ❓ **TO CONFIRM** (owner) · ⛔ blocker/risk
+
+---
+
+## TL;DR — recommended approach
+- **Framework:** Quarkus + **SmallRye Reactive Messaging (Kafka)** — aligns with the DMP "Golden Path" Quarkus services. ✅
+- **Subscription model:** consume contract change events in **non-prod (INT/PRE)**, then fetch the full contract from the Contract Store v5 API, validate, transform, idempotent upsert. ✅
+- **Resilience:** manual ack (commit after success), bounded reconnect/backoff, `@Retry` (fixed backoff v1) → **DLQ** on exhaustion; idempotent upsert. ✅
+- **Isolation:** per-environment cluster/tenant, service identity, RBAC, certs and config — non-prod cannot reach prod. ✅
+- **Biggest unknowns to close:** exact non-prod topic + partition/retention, auth mechanism + cert/rotation, Avro-vs-JSON + schema registry, and how test events get published to non-prod. ❓
+
+---
+
+## Findings by investigation area
+
+### 1. KaaS tenancy & topics
+- ✅ Our tenant is onboarded via KaaS self-service (`contract-store-streaming`, repo `797530-dmp-01-kafka-service`).
+- ✅ Source contract-event stream is produced by **Helios** (topic observed: `LCAP-AL26669-COLLIBRA-WRITE-META-EVENT`).
+- ✅ Design is **bridged (Pattern B)**: our own topic is replicated from the Helios source → **our topic's partition count must match the source**; retention/replication-factor are ours.
+- ❓ **TO CONFIRM (Helios / KaaS):** non-prod (INT/PRE) cluster + bootstrap servers; exact source topic name per env; **partition count**; retention; whether the source topic is already provisioned or needs a KaaS onboarding request; confirm bridged vs direct consume, and whether the source is same-cluster or cross-cluster.
+
+### 2. Identity & credentials
+- ✅ Recommend a **dedicated service identity / service account per environment** (INT, PRE separate).
+- ✅ Consumer group naming: `data-marketplace-subscriber` (per env).
+- ✅ RBAC needed: **READ** on the source topic + consumer group; **PRODUCE** on our own DLT / topics.
+- ✅ Secrets injected into **GKE** via the platform secret store (Vault per onboarding) + K8s Secrets; **no credentials in logs** (structured JSON logging, redaction).
+- ❓ **TO CONFIRM (KaaS / platform / security):** auth mechanism **mTLS vs SASL**; **JKS truststore/keystore issuance** process; **rotation & expiry** process; exact RBAC role bindings; secret store (**Vault** vs GCP Secret Manager).
+
+### 3. Network connectivity
+- ✅ GKE region **europe-west2**; egress to non-prod brokers established via the KaaS **connectivity pipeline** (firewall rules) from onboarding.
+- ❓ **TO CONFIRM (network / KaaS):** non-prod broker **hostnames/ports** (likely TLS 9093); required **firewall rules / network requests**; **DNS** resolution; **lead times**.
+
+### 4. Production isolation
+- ✅ Isolation by construction: separate **cluster/tenant, credentials/service account, RBAC scope, certs, and environment-specific config** (Quarkus profiles) per environment; separate consumer groups; no shared secrets.
+- ✅ Non-prod consumer **physically cannot reach prod** (different bootstrap + creds + network path); the deploy pipeline injects per-env config/secrets.
+- ❓ **TO CONFIRM:** RBAC for non-prod creds is scoped so they have **no prod access**; environment config separation reviewed and signed off.
+
+### 5. Event contract
+- ✅ Envelope + payload schema are being defined (EDPMARK-4991/4992); serialisation likely **Avro + Schema Registry** (Confluent — `confluent-proxy` Nexus repo seen), confirm vs JSON Schema / Apicurio.
+- ❓ **TO CONFIRM (Helios):** obtain **sample events**; envelope fields (incl. **correlation/event id** header); **Avro vs JSON**; **schema registry** type + URL per env; compatibility policy; deserialiser requirements.
+
+### 6. Test event publishing
+- ✅ Options: (a) **Helios produces** to the non-prod topic (preferred for true E2E); (b) we get **producer access** to publish schema-valid test events; (c) **local Dev Services + simulator** for dev-only.
+- ❓ **TO CONFIRM (Helios / KaaS):** who can **publish test events** to the non-prod topic, tooling, producer access, owning team.
+
+### 7. Consumer framework & resilience
+- ✅ **SmallRye Reactive Messaging (Kafka)** recommended over the native client — higher-level, matches Golden Path, gives failure-strategy/DLQ, ack control, health.
+- ✅ **Bounded reconnect/backoff**: configure `reconnect-attempts` / `reconnect-interval` so auth/connection failures don't loop unbounded; **fail-fast + alert** on auth failure.
+- ✅ **Resilience:** manual ack (commit after success); `@Retry` (fixed backoff v1, transient-only) → **DLQ** (`failure-strategy=dead-letter-queue`); idempotent upsert.
+- ✅ **Observability:** consumer lag, **auth-failure alerts**, DLQ metrics, structured JSON logs + **correlation id** (+ OpenTelemetry trace) via `/q/health`, `/q/metrics`.
+- ❓ **TO CONFIRM:** any platform standard mandating native vs SmallRye; alerting/observability expectations (thresholds, channels).
+
+### 8. Dependencies & contacts
+| Area | Team / owner | Needed for | Lead time |
+|---|---|---|---|
+| KaaS / platform | <KaaS team> (via Front Door) | tenant, topics, RBAC, certs | <?> |
+| Contract Store / events | **Helios** (<contact>) | topic, schema, sample + test events | <?> |
+| Network / firewall | <network team> | egress rules, DNS, ports | <?> |
+| CI/CD | <Jenkins/Harness owner> (HG) | pipelines, deploy | <?> |
+| Security / secrets | <security> | Vault, cert issuance/rotation | <?> |
+
+---
+
+## Acceptance-criteria outputs
+
+### A. Requests to raise (owners + lead times)
+| # | Request | Owner | Status | Lead time |
+|---|---|---|---|---|
+| 1 | Confirm non-prod cluster, source topic, partitions, retention; provision if needed | Helios / KaaS | <open> | <?> |
+| 2 | RBAC: READ source topic + group; PRODUCE our DLT | KaaS | <open> | <?> |
+| 3 | Service account + cert (JKS) issuance per env + rotation process | KaaS / security | <open> | <?> |
+| 4 | Firewall/egress rules GKE (europe-west2) → non-prod brokers; DNS/ports | Network / KaaS | <open> | <?> |
+| 5 | Secret injection into GKE (Vault/Secret Manager) | Platform / security | <open> | <?> |
+| 6 | Sample events + schema (Avro/JSON) + registry access | Helios | <open> | <?> |
+| 7 | Test-event publishing route to non-prod topic | Helios / KaaS | <open> | <?> |
+
+### B. Recommended consumer configuration (SmallRye, non-prod)
+```properties
+mp.messaging.incoming.contract-events.connector=smallrye-kafka
+mp.messaging.incoming.contract-events.topic=<non-prod source/replicated topic>
+mp.messaging.incoming.contract-events.group.id=data-marketplace-subscriber
+mp.messaging.incoming.contract-events.auto.offset.reset=earliest
+# security (confirm mTLS vs SASL)
+mp.messaging.incoming.contract-events.security.protocol=SSL
+mp.messaging.incoming.contract-events.ssl.truststore.location=<from Vault/secret>
+mp.messaging.incoming.contract-events.ssl.keystore.location=<from Vault/secret>
+# bounded reconnect
+mp.messaging.incoming.contract-events.reconnect-attempts=<e.g. 10>
+mp.messaging.incoming.contract-events.reconnect-interval=<e.g. 5>   # seconds
+# DLQ
+mp.messaging.incoming.contract-events.failure-strategy=dead-letter-queue
+mp.messaging.incoming.contract-events.dead-letter-queue.topic=contract-events-dlt
+```
+Plus: manual ack (commit after success), `@Retry` fixed backoff (transient-only) → DLQ, idempotent upsert keyed by contractId (+version).
+
+### C. Production-isolation approach
+Per-environment **cluster/tenant + service identity + RBAC scope + certs + Quarkus profile config + consumer group**; secrets per env from Vault; deploy pipeline enforces; non-prod creds have **no** prod RBAC and cannot resolve/reach prod brokers.
+
+### D. Delivery-task impacts (EDPMARK-4979)
+- **5129 (scaffold + CI/CD):** scaffold from the **Quarkus Golden Path** (`dmp-producer-service`); add `quarkus-messaging-kafka` + Avro/registry dep; add a `messaging/` package.
+- **5130 (listener + broker props):** use the recommended SmallRye config above; blocked until auth mechanism + topic + schema confirmed.
+- **5131:** <refine once findings confirmed>.
+- Consider new tasks: Avro serde + schema registry wiring; DLQ + replay runbook; correlation-id/observability.
+
+### E. Risks & blockers
+- ⛔ Delivery (5129–5131) **blocked** until: topic/partition, auth mechanism, and schema/registry are confirmed.
+- ⛔ No existing DMP service consumes Kafka → **we are first**; no internal reference for the messaging wiring (Golden Path covers the rest).
+- ⛔ Cross-team lead times (Helios, network, KaaS) unknown → schedule risk.
+- ⚠️ Bridged design adds a **replication hop** (extra lag + a second lag to monitor).
+- ⚠️ Cert/secret **rotation** process must be confirmed to avoid auth-failure outages.
+
+---
+
+## Reference material (this spike's supporting notes)
+- `STACK_AND_CONVENTIONS.md` — Quarkus Golden Path stack + layout
+- `KAFKA_EVENT_HANDLING_NOTES.md` — partitions, DLQ, problem catalogue, SmallRye cheat-sheet
+- `SCENARIOS.md` — consumer scenario/test matrix
+- `DLQ_RUNBOOK.md` — dead-letter operations
+- (bridge/partition design notes)
+
+> Fill every `<…>` and resolve each ❓ with the named owner, then publish to Confluence and link to EDPMARK-5145 and EDPMARK-4979.
+> Contains internal project names (Helios, Collibra, dmp-*) — handle per LBG data-handling policy.
