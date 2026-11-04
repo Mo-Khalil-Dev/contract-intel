@@ -56,11 +56,22 @@ Enforced by **defence-in-depth** across four independent controls, so the non-pr
 - ❓ **TO CONFIRM / AGREE WITH TEAM:** non-prod creds + **RBAC explicitly scoped with zero production access** (KaaS/security); Golden Path per-env config has **no shared/default pointing to prod** + promotion gating understood; **isolation approach reviewed and signed off** (acceptance criterion).
 
 ### 2. Identity & credentials
-- ✅ Recommend a **dedicated service identity / service account per environment** (INT, PRE separate).
-- ✅ Consumer group naming: `data-marketplace-subscriber` (per env).
-- ✅ RBAC needed: **READ** on the source topic + consumer group; **PRODUCE** on our own DLT / topics.
-- ✅ Secrets injected into **GKE** via the platform secret store (Vault per onboarding) + K8s Secrets; **no credentials in logs** (structured JSON logging, redaction).
-- ❓ **TO CONFIRM (KaaS / platform / security):** auth mechanism **mTLS vs SASL**; **JKS truststore/keystore issuance** process; **rotation & expiry** process; exact RBAC role bindings; secret store (**Vault** vs GCP Secret Manager).
+**Finding:** these are **predominantly KaaS-platform / onboarding concerns** — the authentication model, service identity, certificate issuance, rotation/expiry and RBAC model are **determined by how the KaaS platform is built** and delivered to us via **onboarding (owned by Hari)**. Our job is to **obtain these from the KaaS team and apply them** in our Golden Path config and Vault — not to design them.
+
+**Owned by KaaS / onboarding — we obtain the values (❓ confirm with KaaS / Hari, per env):**
+- Authentication mechanism (**mTLS vs SASL**)
+- Dedicated **service identity / service account** per environment
+- **Certificate / JKS** keystore + truststore issuance
+- Certificate / credential **rotation & expiry** process
+- **RBAC** model + specific role bindings (we raise the request; KaaS grants): READ on topic + consumer group, PRODUCE on our DLT
+
+**Owned by us (small — apply, don't design):**
+- ✅ **Consumer group name** (`data-marketplace-subscriber`), within any KaaS/LBG naming convention
+- ✅ Key the obtained connection/auth values into the **Golden Path per-env config**
+- ✅ Populate/handle secrets in the **Terraform Vault**; **no credentials in logs**
+- ✅ Ensure the consumer **handles secret/cert refresh** (reconnect on rotation) so a renewal doesn't cause an outage
+
+➡️ **Net:** point 2 is largely a **dependency on KaaS onboarding** (obtain + apply), not a design task.
 
 ### 3. Network connectivity
 - ✅ GKE region **europe-west2**; egress to non-prod brokers established via the KaaS **connectivity pipeline** (firewall rules) from onboarding.
