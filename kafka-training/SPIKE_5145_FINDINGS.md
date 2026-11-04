@@ -80,6 +80,8 @@ Enforced by **defence-in-depth** across four independent controls, so the non-pr
 - ✅ Populate/handle secrets in the **Terraform Vault**; **no credentials in logs**
 - ✅ Ensure the consumer **handles secret/cert refresh** (reconnect on rotation) so a renewal doesn't cause an outage
 
+**Framework note (Quarkus is not a blocker):** Quarkus (via the standard Kafka client) supports **all** Kafka authentication — **mTLS** (`security.protocol=SSL` + JKS keystore/truststore) and **SASL** (SCRAM / PLAIN / OAUTHBEARER / Kerberos over `SASL_SSL`). So whichever mechanism KaaS mandates is a **config change** in the per-env YAML (certs/passwords pulled from Vault), **not a code change**. Given the JKS references in onboarding, **mTLS is the most likely**.
+
 ➡️ **Net:** point 2 is largely a **dependency on KaaS onboarding** (obtain + apply), not a design task.
 
 ### 3. Network connectivity
