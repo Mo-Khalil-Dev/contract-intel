@@ -134,15 +134,18 @@ To confirm (Helios):
 
 ### 6. Test event publishing
 
-Options:
+Finding:
 
-- Helios produces events to the non-prod topic (preferred for true end-to-end).
-- We obtain producer access to publish schema-valid test events.
-- Local Dev Services and a simulator for developer-only testing.
+- Local: solved — we can dispatch events to our local Kafka stack (the Dockerfile stack plus a simulator/console producer).
+- INT and PRE: unknown — needs exploration. Candidate approaches:
+  - Manual produce via the Kafka UI / Confluent Control Centre in that environment. Requires produce access/permission; producing to the Helios-owned source topic would need Helios/KaaS permission, whereas producing to our own replicated topic bypasses the replication path.
+  - Trigger a real contract change upstream — create a new contract, or update an existing one, in the Contract Store — so Helios emits a genuine event that flows through replication to our topic (true end-to-end; requires Contract Store / Helios access).
 
 To confirm (Helios / KaaS):
 
-- Who can publish test events to the non-prod topic, the tooling, producer access, and owning team.
+- Whether manual produce via Kafka UI / C3 is available and permitted in INT/PRE, and on which topic.
+- Whether and how we can trigger a real contract create/update from the upstream system, and who owns that.
+- The preferred approach for the acceptance test (true end-to-end via upstream vs an injected test event).
 
 ### 7. Consumer framework and resilience
 
