@@ -65,7 +65,7 @@ Enforced by **defence-in-depth** across four independent controls, so the non-pr
 - ❓ **TO CONFIRM / AGREE WITH TEAM:** non-prod creds + **RBAC explicitly scoped with zero production access** (KaaS/security); Golden Path per-env config has **no shared/default pointing to prod** + promotion gating understood; **isolation approach reviewed and signed off** (acceptance criterion).
 
 ### 2. Identity & credentials
-**Finding:** these are **predominantly KaaS-platform / onboarding concerns** — the authentication model, service identity, certificate issuance, rotation/expiry and RBAC model are **determined by how the KaaS platform is built** and delivered to us via **onboarding (owned by Hari)**. Our job is to **obtain these from the KaaS team and apply them** in our Golden Path config and Vault — not to design them.
+**Finding:** these are **predominantly KaaS-platform / onboarding concerns** — the authentication model, service identity, certificate issuance, rotation/expiry and RBAC model are **determined by how the KaaS platform is built** and delivered to us via **onboarding (owned by Hari)**. Our job is to **obtain these from the KaaS team and apply them** in our Golden Path config and Vault — not to design them. *(Quarkus supports **all** Kafka auth — mTLS and SASL — so whichever mechanism KaaS mandates is a **config change, not code**; **mTLS** is most likely given the JKS references.)*
 
 **Owned by KaaS / onboarding — we obtain the values (❓ confirm with KaaS / Hari, per env):**
 - Authentication mechanism (**mTLS vs SASL**)
@@ -79,8 +79,6 @@ Enforced by **defence-in-depth** across four independent controls, so the non-pr
 - ✅ Key the obtained connection/auth values into the **Golden Path per-env config**
 - ✅ Populate/handle secrets in the **Terraform Vault**; **no credentials in logs**
 - ✅ Ensure the consumer **handles secret/cert refresh** (reconnect on rotation) so a renewal doesn't cause an outage
-
-**Framework note (Quarkus is not a blocker):** Quarkus (via the standard Kafka client) supports **all** Kafka authentication — **mTLS** (`security.protocol=SSL` + JKS keystore/truststore) and **SASL** (SCRAM / PLAIN / OAUTHBEARER / Kerberos over `SASL_SSL`). So whichever mechanism KaaS mandates is a **config change** in the per-env YAML (certs/passwords pulled from Vault), **not a code change**. Given the JKS references in onboarding, **mTLS is the most likely**.
 
 ➡️ **Net:** point 2 is largely a **dependency on KaaS onboarding** (obtain + apply), not a design task.
 
