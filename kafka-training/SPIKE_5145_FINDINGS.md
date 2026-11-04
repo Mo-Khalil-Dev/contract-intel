@@ -107,13 +107,12 @@ Net: point 2 is largely a dependency on KaaS onboarding (obtain and apply), not 
 
 ### 3. Network connectivity
 
-- GKE region is europe-west2; egress to non-prod brokers is established via the KaaS connectivity pipeline (firewall rules) from onboarding.
+Finding: network connectivity is part of KaaS onboarding. The egress path from GKE (europe-west2) to the non-prod brokers — firewall rules, DNS and ports — is established by the KaaS connectivity pipeline during onboarding (owned by Hari), not built by our team. We consume it; the broker endpoints arrive with the per-environment onboarding details.
 
-To confirm (network / KaaS):
+To confirm (owner: Hari / KaaS):
 
 - Non-prod broker hostnames/ports (likely TLS 9093).
-- Required firewall rules / network requests.
-- DNS resolution.
+- That the connectivity pipeline covers our egress (firewall rules/DNS) with no separate network request needed from us.
 - Lead times.
 
 ### 5. Event contract
