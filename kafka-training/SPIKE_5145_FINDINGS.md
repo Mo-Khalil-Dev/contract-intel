@@ -95,11 +95,20 @@ Enforced by **defence-in-depth** across four independent controls, so the non-pr
 - ❓ **TO CONFIRM (Helios / KaaS):** who can **publish test events** to the non-prod topic, tooling, producer access, owning team.
 
 ### 7. Consumer framework & resilience
-- ✅ **SmallRye Reactive Messaging (Kafka)** recommended over the native client — higher-level, matches Golden Path, gives failure-strategy/DLQ, ack control, health.
-- ✅ **Bounded reconnect/backoff**: configure `reconnect-attempts` / `reconnect-interval` so auth/connection failures don't loop unbounded; **fail-fast + alert** on auth failure.
-- ✅ **Resilience:** manual ack (commit after success); `@Retry` (fixed backoff v1, transient-only) → **DLQ** (`failure-strategy=dead-letter-queue`); idempotent upsert.
-- ✅ **Observability:** consumer lag, **auth-failure alerts**, DLQ metrics, structured JSON logs + **correlation id** (+ OpenTelemetry trace) via `/q/health`, `/q/metrics`.
-- ❓ **TO CONFIRM:** any platform standard mandating native vs SmallRye; alerting/observability expectations (thresholds, channels).
+**This is our design decision** (not a KaaS dependency). The spike's three asks:
+
+- ✅ **(1) Client approach → SmallRye Reactive Messaging (Kafka).** Higher-level/declarative (`@Incoming`); gives DLQ (`failure-strategy`), ack control and health out of the box; matches the Golden Path. (Native client only if platform-mandated — no upside here.)
+- ✅ **(2) Bounded reconnect + backoff.** `reconnect-attempts` / `reconnect-interval` so a lost connection retries a **limited** number of times with a wait, then **fails fast and alerts** rather than looping forever.
+- ✅ **(3) Auth-failure alerting + observability.** Health (`/q/health`) reflects the Kafka connection (persistent auth failure → pod **unready**); metrics (connection status + error counters, `/q/metrics`); structured logs + correlation id → Splunk; **alert** on repeated auth/connection failure → Dynatrace/PagerDuty/Teams. Pairs with cert rotation/expiry (point 2) so an **expired cert pages someone, not fails silently**.
+
+**Message-processing resilience:**
+- Manual **ack after success** (commit-after-processing).
+- **`@Retry` + `@ExponentialBackoff`** (transient-only via `retryOn`/`abortOn`): waits grow (e.g. 1s → 2s → 4s → 8s, capped); when `maxRetries` is exhausted → nack → **DLQ** (`failure-strategy=dead-letter-queue`). Permanent failures `abortOn` → straight to DLQ.
+- In-process retries **hold the partition** → keep total retry time (`maxDuration`) **under `max.poll.interval.ms`**; use a non-blocking retry-topic only if long backoff is ever needed.
+- **Idempotent upsert** keyed by contractId (+version guard) — safe because retries/redelivery reprocess.
+- **`@Blocking`** on the consumer (the v5 call + JDBC upsert are blocking).
+
+- ❓ **TO CONFIRM:** any platform standard mandating native vs SmallRye; alerting thresholds + channels (Dynatrace vs Prometheus; PagerDuty vs Teams).
 
 ### 8. Dependencies & contacts
 | Area | Team / owner | Needed for | Lead time |
