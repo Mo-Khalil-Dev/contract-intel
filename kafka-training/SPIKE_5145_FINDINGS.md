@@ -118,15 +118,20 @@ To confirm (network / KaaS):
 
 ### 5. Event contract
 
-- The envelope and payload schema are being defined (EDPMARK-4991/4992); serialisation is likely Avro with a Schema Registry (Confluent, given the `confluent-proxy` Nexus repo), to be confirmed against JSON Schema / Apicurio.
+Finding: we will consume events using the same schema that Helios / Contract Store dispatches — we adopt the producer's event contract rather than defining our own. Helios owns the contract; we conform to it as the consumer, which avoids schema duplication and drift. Serialisation will match Helios (likely Avro with a Schema Registry; Confluent is indicated by the `confluent-proxy` Nexus repo).
+
+Our work:
+
+- Obtain Helios's schema from the schema registry (plus sample events).
+- Generate our model and deserialiser from that schema (for Avro, generated classes) and validate inbound events against it.
+- Reposition the schema tickets (4978/4991/4992) toward consuming/documenting Helios's schema, not authoring a separate one.
 
 To confirm (Helios):
 
-- Obtain sample events.
-- Envelope fields (including a correlation/event id header).
+- The schema definition and where to get it (registry URL and subject, per environment).
 - Avro vs JSON.
-- Schema registry type and URL per environment.
-- Compatibility policy and deserialiser requirements.
+- Envelope fields, including a correlation/event id and the meaning of `version` (contract version).
+- The compatibility policy and how schema changes are communicated to us (the Producer–Consumer Alignment and Schema Sign-off with Helios).
 
 ### 6. Test event publishing
 
