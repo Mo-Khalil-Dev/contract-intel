@@ -36,7 +36,9 @@ Legend: ✅ recommendation/position · ❓ **TO CONFIRM** (owner) · ⛔ blocker
 
 **Local development:** ✅ Local containerized Kafka stack (**Dockerfile**) already built, independent of KaaS envs.
 
-- ❓ **TO CONFIRM (owner: Hari / Helios):** exact **topic names** per env; the **bridging/replication mechanism** (Confluent Replicator vs MirrorMaker 2) and who operates it; the **Helios source partition count** (sets our events-topic count); **retention** on both topics (= recovery/replay window); per-env **cluster/bootstrap details** (on onboarding completion).
+**Assumption 🅰️ — Topic replication is provided and operated as part of KaaS onboarding** (Helios source → our contract-events topic), **not built or operated by our team**. This keeps replication out of our delivery scope — we only consume our own topic. *Validate with Hari/KaaS; if false, replication setup/operation becomes a new delivery task and a schedule risk.*
+
+- ❓ **TO CONFIRM (owner: Hari / KaaS):** exact **topic names** per env; confirm replication is **managed by onboarding** (mechanism + who supports it if it stalls); that it **preserves the Helios partition count**; **retention** on both topics (recovery/replay window); how **replication lag** is monitored; per-env **cluster/bootstrap details** (on onboarding completion).
 
 ### 2. Identity & credentials
 - ✅ Recommend a **dedicated service identity / service account per environment** (INT, PRE separate).
