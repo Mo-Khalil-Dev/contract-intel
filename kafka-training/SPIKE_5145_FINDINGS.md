@@ -23,6 +23,8 @@ Legend: ✅ recommendation/position · ❓ **TO CONFIRM** (owner) · ⛔ blocker
 
 ## Findings by investigation area
 
+> Ordered by priority; each heading keeps the spike's original area number (1–8) for traceability.
+
 ### 1. KaaS tenancy & topics
 **Onboarding & promotion:** Kafka onboarding is owned by **Hari** — creates/configures our own service topics in our KaaS tenant, starting in **INT**, then **promoted to PRE → PROD**. Per-environment connection details are provided as each env's onboarding completes.
 
@@ -40,17 +42,6 @@ Legend: ✅ recommendation/position · ❓ **TO CONFIRM** (owner) · ⛔ blocker
 
 - ❓ **TO CONFIRM (owner: Hari / KaaS):** exact **topic names** per env; confirm replication is **managed by onboarding** (mechanism + who supports it if it stalls); that it **preserves the Helios partition count**; **retention** on both topics (recovery/replay window); how **replication lag** is monitored; per-env **cluster/bootstrap details** (on onboarding completion).
 
-### 2. Identity & credentials
-- ✅ Recommend a **dedicated service identity / service account per environment** (INT, PRE separate).
-- ✅ Consumer group naming: `data-marketplace-subscriber` (per env).
-- ✅ RBAC needed: **READ** on the source topic + consumer group; **PRODUCE** on our own DLT / topics.
-- ✅ Secrets injected into **GKE** via the platform secret store (Vault per onboarding) + K8s Secrets; **no credentials in logs** (structured JSON logging, redaction).
-- ❓ **TO CONFIRM (KaaS / platform / security):** auth mechanism **mTLS vs SASL**; **JKS truststore/keystore issuance** process; **rotation & expiry** process; exact RBAC role bindings; secret store (**Vault** vs GCP Secret Manager).
-
-### 3. Network connectivity
-- ✅ GKE region **europe-west2**; egress to non-prod brokers established via the KaaS **connectivity pipeline** (firewall rules) from onboarding.
-- ❓ **TO CONFIRM (network / KaaS):** non-prod broker **hostnames/ports** (likely TLS 9093); required **firewall rules / network requests**; **DNS** resolution; **lead times**.
-
 ### 4. Production isolation
 Enforced by **defence-in-depth** across four independent controls, so the non-prod consumer cannot reach production topics or commit production offsets:
 
@@ -63,6 +54,17 @@ Enforced by **defence-in-depth** across four independent controls, so the non-pr
 **Net:** wrong address (config) + wrong credentials (Vault) + no permissions (RBAC) + its own environment-scoped consumer group — any one prevents cross-env access; together they guarantee isolation.
 
 - ❓ **TO CONFIRM / AGREE WITH TEAM:** non-prod creds + **RBAC explicitly scoped with zero production access** (KaaS/security); Golden Path per-env config has **no shared/default pointing to prod** + promotion gating understood; **isolation approach reviewed and signed off** (acceptance criterion).
+
+### 2. Identity & credentials
+- ✅ Recommend a **dedicated service identity / service account per environment** (INT, PRE separate).
+- ✅ Consumer group naming: `data-marketplace-subscriber` (per env).
+- ✅ RBAC needed: **READ** on the source topic + consumer group; **PRODUCE** on our own DLT / topics.
+- ✅ Secrets injected into **GKE** via the platform secret store (Vault per onboarding) + K8s Secrets; **no credentials in logs** (structured JSON logging, redaction).
+- ❓ **TO CONFIRM (KaaS / platform / security):** auth mechanism **mTLS vs SASL**; **JKS truststore/keystore issuance** process; **rotation & expiry** process; exact RBAC role bindings; secret store (**Vault** vs GCP Secret Manager).
+
+### 3. Network connectivity
+- ✅ GKE region **europe-west2**; egress to non-prod brokers established via the KaaS **connectivity pipeline** (firewall rules) from onboarding.
+- ❓ **TO CONFIRM (network / KaaS):** non-prod broker **hostnames/ports** (likely TLS 9093); required **firewall rules / network requests**; **DNS** resolution; **lead times**.
 
 ### 5. Event contract
 - ✅ Envelope + payload schema are being defined (EDPMARK-4991/4992); serialisation likely **Avro + Schema Registry** (Confluent — `confluent-proxy` Nexus repo seen), confirm vs JSON Schema / Apicurio.
