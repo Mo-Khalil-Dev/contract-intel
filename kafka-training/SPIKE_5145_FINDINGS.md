@@ -52,9 +52,17 @@ Legend: ✅ recommendation/position · ❓ **TO CONFIRM** (owner) · ⛔ blocker
 - ❓ **TO CONFIRM (network / KaaS):** non-prod broker **hostnames/ports** (likely TLS 9093); required **firewall rules / network requests**; **DNS** resolution; **lead times**.
 
 ### 4. Production isolation
-- ✅ Isolation by construction: separate **cluster/tenant, credentials/service account, RBAC scope, certs, and environment-specific config** (Quarkus profiles) per environment; separate consumer groups; no shared secrets.
-- ✅ Non-prod consumer **physically cannot reach prod** (different bootstrap + creds + network path); the deploy pipeline injects per-env config/secrets.
-- ❓ **TO CONFIRM:** RBAC for non-prod creds is scoped so they have **no prod access**; environment config separation reviewed and signed off.
+Enforced by **defence-in-depth** across four independent controls, so the non-prod consumer cannot reach production topics or commit production offsets:
+
+- ✅ **(a) Environment-specific config (Golden Path).** Per-env config files/scripts set distinct bootstrap servers, topic names and env variables for INT/PRE/PROD. A non-prod deployment holds **no production bootstrap address** → no route to prod brokers.
+- ✅ **(b) Separate credentials per env (Terraform Vault).** Each env has its own service identity/certs in the per-env Vault; non-prod creds authenticate **only** to the non-prod cluster, invalid on prod.
+- ✅ **(c) RBAC scoping.** Non-prod service account has READ on the **non-prod** topic/group and PRODUCE on the **non-prod** DLT only — **no role bindings on production**. Even on misconfig it couldn't read prod data or commit prod offsets.
+- ✅ **(d) Separate consumer groups / offsets.** Offsets commit only to the connected (non-prod) cluster; no path to write a production offset.
+- ✅ **Pipeline enforcement.** Harness/Backstage injects the correct per-env config+secrets; promotion is INT → PRE → PROD with each env applying its own config.
+
+**Net:** wrong address (config) + wrong creds (Vault) + no permissions (RBAC) + separate offsets — any one prevents cross-env; together they guarantee isolation.
+
+- ❓ **TO CONFIRM / AGREE WITH TEAM:** non-prod creds + **RBAC explicitly scoped with zero production access** (KaaS/security); Golden Path per-env config has **no shared/default pointing to prod** + promotion gating understood; **isolation approach reviewed and signed off** (acceptance criterion).
 
 ### 5. Event contract
 - ✅ Envelope + payload schema are being defined (EDPMARK-4991/4992); serialisation likely **Avro + Schema Registry** (Confluent — `confluent-proxy` Nexus repo seen), confirm vs JSON Schema / Apicurio.
