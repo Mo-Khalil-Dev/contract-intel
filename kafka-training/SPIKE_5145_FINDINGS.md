@@ -24,10 +24,19 @@ Legend: ✅ recommendation/position · ❓ **TO CONFIRM** (owner) · ⛔ blocker
 ## Findings by investigation area
 
 ### 1. KaaS tenancy & topics
-- ✅ Our tenant is onboarded via KaaS self-service (`contract-store-streaming`, repo `797530-dmp-01-kafka-service`).
-- ✅ Source contract-event stream is produced by **Helios** (topic observed: `LCAP-AL26669-COLLIBRA-WRITE-META-EVENT`).
-- ✅ Design is **bridged (Pattern B)**: our own topic is replicated from the Helios source → **our topic's partition count must match the source**; retention/replication-factor are ours.
-- ❓ **TO CONFIRM (Helios / KaaS):** non-prod (INT/PRE) cluster + bootstrap servers; exact source topic name per env; **partition count**; retention; whether the source topic is already provisioned or needs a KaaS onboarding request; confirm bridged vs direct consume, and whether the source is same-cluster or cross-cluster.
+**Onboarding & promotion:** Kafka onboarding is owned by **Hari** — creates/configures our own service topics in our KaaS tenant, starting in **INT**, then **promoted to PRE → PROD**. Per-environment connection details are provided as each env's onboarding completes.
+
+**Per-environment configuration:** Built from the **LBG Java Quarkus Golden Path** template, which ships scripts/config files controlling the **env variables per environment (INT/PRE/PROD)**. Once each env's details are known they're keyed into these files — template-driven, pre-determined config guarantees the deployment targets the correct environment.
+
+**Secrets:** A **Terraform-managed Vault** comes with the Golden Path; per-env secrets (creds/certs) stored there and injected at deploy time (none in code/logs).
+
+**Topics — two per environment:**
+- ✅ **Contract store events topic** — our own topic receiving events from the Helios topic via bridging/replication; **partition count matches the Helios source** (preserves ordering).
+- ✅ **Dead-letter topic (DLT)** — **1 partition**; plus **notification/alerting when a message is dispatched there**.
+
+**Local development:** ✅ Local containerized Kafka stack (**Dockerfile**) already built, independent of KaaS envs.
+
+- ❓ **TO CONFIRM (owner: Hari / Helios):** exact **topic names** per env; the **bridging/replication mechanism** (Confluent Replicator vs MirrorMaker 2) and who operates it; the **Helios source partition count** (sets our events-topic count); **retention** on both topics (= recovery/replay window); per-env **cluster/bootstrap details** (on onboarding completion).
 
 ### 2. Identity & credentials
 - ✅ Recommend a **dedicated service identity / service account per environment** (INT, PRE separate).
