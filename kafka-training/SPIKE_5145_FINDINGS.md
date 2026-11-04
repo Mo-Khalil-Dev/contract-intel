@@ -11,16 +11,6 @@ Spike output: documented findings and recommended approach, with the open items 
 
 ---
 
-## TL;DR — recommended approach
-
-- Framework: Quarkus with SmallRye Reactive Messaging (Kafka), aligned with the DMP "Golden Path" Quarkus services.
-- Subscription model: consume contract change events in non-prod (INT/PRE), then fetch the full contract from the Contract Store v5 API, validate, transform, and idempotent upsert.
-- Resilience: manual ack (commit after success), bounded reconnect/backoff, and @Retry with exponential backoff feeding the DLQ on exhaustion; idempotent upsert.
-- Isolation: per-environment cluster/tenant, service identity, RBAC, certificates and config, so non-prod cannot reach prod.
-- Biggest unknowns to close: exact non-prod topic, partition count and retention; auth mechanism and cert rotation; Avro vs JSON and schema registry; and how test events get published to non-prod.
-
----
-
 ## Findings by investigation area
 
 Ordered by priority; each heading keeps the spike's original area number (1–8) for traceability.
