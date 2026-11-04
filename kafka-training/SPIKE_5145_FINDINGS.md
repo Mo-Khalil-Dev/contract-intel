@@ -28,9 +28,18 @@ Legend: ✅ recommendation/position · ❓ **TO CONFIRM** (owner) · ⛔ blocker
 ### 1. KaaS tenancy & topics
 **Onboarding & promotion:** Kafka onboarding is owned by **Hari** — creates/configures our own service topics in our KaaS tenant, starting in **INT**, then **promoted to PRE → PROD**. Per-environment connection details are provided as each env's onboarding completes.
 
-**Per-environment configuration:** Built from the **LBG Java Quarkus Golden Path** template, which ships scripts/config files controlling the **env variables per environment (INT/PRE/PROD)**. Once each env's details are known they're keyed into these files — template-driven, pre-determined config guarantees the deployment targets the correct environment.
+**Per-environment configuration:** Built from the **LBG Java Quarkus Golden Path** template, which ships **per-environment (and per-cloud) YAML files** (e.g. `values-int/pre/prod.yaml`, `application-<env>.yaml`, and `.harness/` pipeline/service YAMLs) controlling the **config + env variables per environment (INT/PRE/PROD)**. Once each env's details are known they're keyed into these YAMLs — template-driven, pre-determined config guarantees the deployment targets the correct environment.
 
-**Secrets:** A **Terraform-managed Vault** comes with the Golden Path; per-env secrets (creds/certs) stored there and injected at deploy time (none in code/logs).
+**How config & secrets reach the container:**
+- **Non-secret config** (bootstrap servers, topic names, consumer group, flags) → values go **directly in the per-env YAML** (in Git).
+- **Secrets** (keystore/truststore passwords, tokens, certs) → the YAML holds only a **reference to Vault** (path/secret name), **never the raw value** (YAMLs are in Git).
+- **Actual secret values** live in the **Terraform-provisioned Vault** (per env; some auto-issued, e.g. JKS certs).
+- At **deploy / container-creation, Harness** picks the right env's YAML, **resolves the secret references from Vault**, and injects both config + secrets into the pod — **nothing in the image, code, or logs**.
+
+```
+per-env YAML (config values + secret REFERENCES)  ──┐
+Vault (actual secret VALUES, Terraform-provisioned) ─┤── Harness deploy ──► config + secrets injected into container
+```
 
 **Topics — two per environment:**
 - ✅ **Contract store events topic** — our own topic receiving events from the Helios topic via bridging/replication; **partition count matches the Helios source** (preserves ordering).
