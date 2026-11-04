@@ -7,7 +7,7 @@
 - Date: (to add)
 - Status: Draft findings
 
-Spike output: documented findings and recommended approach, the requests to raise (with owners and lead times), the recommended consumer configuration and production-isolation approach, delivery-task impacts, and open risks. Items under "To confirm" need a named owner's input before delivery.
+Spike output: documented findings and recommended approach, with the open items to confirm (by owner) before delivery. Items under "To confirm" need a named owner's input.
 
 ---
 
@@ -177,62 +177,6 @@ To confirm:
 | Network / firewall | Network team | egress rules, DNS, ports | (to add) |
 | CI/CD | Jenkins/Harness owner (HG) | pipelines, deploy | (to add) |
 | Security / secrets | Security | Vault, cert issuance/rotation | (to add) |
-
----
-
-## Acceptance-criteria outputs
-
-### A. Requests to raise (owners and lead times)
-
-| # | Request | Owner | Status | Lead time |
-|---|---|---|---|---|
-| 1 | Confirm non-prod cluster, source topic, partitions, retention; provision if needed | Helios / KaaS | Open | (to add) |
-| 2 | RBAC: READ source topic and group; PRODUCE our DLT | KaaS | Open | (to add) |
-| 3 | Service account and cert (JKS) issuance per env and rotation process | KaaS / security | Open | (to add) |
-| 4 | Firewall/egress rules GKE (europe-west2) to non-prod brokers; DNS/ports | Network / KaaS | Open | (to add) |
-| 5 | Secret injection into GKE (Vault/Secret Manager) | Platform / security | Open | (to add) |
-| 6 | Sample events, schema (Avro/JSON) and registry access | Helios | Open | (to add) |
-| 7 | Test-event publishing route to non-prod topic | Helios / KaaS | Open | (to add) |
-
-### B. Recommended consumer configuration (SmallRye, non-prod)
-
-```properties
-mp.messaging.incoming.contract-events.connector=smallrye-kafka
-mp.messaging.incoming.contract-events.topic=<non-prod source/replicated topic>
-mp.messaging.incoming.contract-events.group.id=data-marketplace-subscriber
-mp.messaging.incoming.contract-events.auto.offset.reset=earliest
-# security (confirm mTLS vs SASL)
-mp.messaging.incoming.contract-events.security.protocol=SSL
-mp.messaging.incoming.contract-events.ssl.truststore.location=<from Vault/secret>
-mp.messaging.incoming.contract-events.ssl.keystore.location=<from Vault/secret>
-# bounded reconnect
-mp.messaging.incoming.contract-events.reconnect-attempts=<e.g. 10>
-mp.messaging.incoming.contract-events.reconnect-interval=<e.g. 5>   # seconds
-# DLQ
-mp.messaging.incoming.contract-events.failure-strategy=dead-letter-queue
-mp.messaging.incoming.contract-events.dead-letter-queue.topic=contract-events-dlt
-```
-
-Plus: manual ack (commit after success); @Retry with exponential backoff (transient-only) feeding the DLQ; idempotent upsert keyed by contractId (with version guard).
-
-### C. Production-isolation approach
-
-Per-environment cluster/tenant, service identity, RBAC scope, certs, Quarkus profile config and consumer group; secrets per environment from Vault; the deploy pipeline enforces it; non-prod credentials have no prod RBAC and cannot resolve or reach prod brokers.
-
-### D. Delivery-task impacts (EDPMARK-4979)
-
-- 5129 (scaffold and CI/CD): scaffold from the Quarkus Golden Path (`dmp-producer-service`); add `quarkus-messaging-kafka` and the Avro/registry dependency; add a `messaging/` package.
-- 5130 (listener and broker properties): use the recommended SmallRye config above; blocked until the auth mechanism, topic and schema are confirmed.
-- 5131: refine once findings are confirmed.
-- Consider new tasks: Avro serde and schema registry wiring; DLQ and replay runbook; correlation-id/observability.
-
-### E. Risks and blockers
-
-- Delivery (5129–5131) is blocked until the topic/partition, auth mechanism, and schema/registry are confirmed.
-- No existing DMP service consumes Kafka, so we are first; there is no internal reference for the messaging wiring (the Golden Path covers the rest).
-- Cross-team lead times (Helios, network, KaaS) are unknown, which is a schedule risk.
-- The bridged design adds a replication hop (extra lag and a second lag to monitor).
-- The cert/secret rotation process must be confirmed to avoid auth-failure outages.
 
 ---
 
