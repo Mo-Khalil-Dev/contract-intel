@@ -57,10 +57,10 @@ Enforced by **defence-in-depth** across four independent controls, so the non-pr
 - ✅ **(a) Environment-specific config (Golden Path).** Per-env config files/scripts set distinct bootstrap servers, topic names and env variables for INT/PRE/PROD. A non-prod deployment holds **no production bootstrap address** → no route to prod brokers.
 - ✅ **(b) Separate credentials per env (Terraform Vault).** Each env has its own service identity/certs in the per-env Vault; non-prod creds authenticate **only** to the non-prod cluster, invalid on prod.
 - ✅ **(c) RBAC scoping.** Non-prod service account has READ on the **non-prod** topic/group and PRODUCE on the **non-prod** DLT only — **no role bindings on production**. Even on misconfig it couldn't read prod data or commit prod offsets.
-- ✅ **(d) Separate consumer groups / offsets.** Offsets commit only to the connected (non-prod) cluster; no path to write a production offset.
+- ✅ **(d) Environment-specific consumer groups.** Each environment uses its **own consumer group**, set by the environment-specific config. The consumer only reads from — and records how far it has processed against — the **non-prod** cluster it is connected to. It has no connection or identity in production, so it cannot read production data or affect production in any way.
 - ✅ **Pipeline enforcement.** Harness/Backstage injects the correct per-env config+secrets; promotion is INT → PRE → PROD with each env applying its own config.
 
-**Net:** wrong address (config) + wrong creds (Vault) + no permissions (RBAC) + separate offsets — any one prevents cross-env; together they guarantee isolation.
+**Net:** wrong address (config) + wrong credentials (Vault) + no permissions (RBAC) + its own environment-scoped consumer group — any one prevents cross-env access; together they guarantee isolation.
 
 - ❓ **TO CONFIRM / AGREE WITH TEAM:** non-prod creds + **RBAC explicitly scoped with zero production access** (KaaS/security); Golden Path per-env config has **no shared/default pointing to prod** + promotion gating understood; **isolation approach reviewed and signed off** (acceptance criterion).
 
