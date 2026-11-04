@@ -157,3 +157,41 @@ To confirm:
 
 - Any platform standard mandating native vs SmallRye.
 - Alerting thresholds and channels (Dynatrace vs Prometheus; PagerDuty vs Teams).
+
+---
+
+## Failure handling, DLQ and observability
+
+### Dead-letter queue (DLQ)
+
+- Events that still fail after retries are routed to a dead-letter topic (DLT) by SmallRye (`failure-strategy=dead-letter-queue`), with no bespoke producer code.
+- We will need a DLQ runbook (how to triage, replay, and quarantine dead-lettered events) and an observability/alerting setup (alert when a message lands on the DLT, and monitor DLT volume) so failures are visible and actioned, not silently accumulating.
+
+### Why a DLQ (rather than building our own DB or UI)
+
+- Reuses the Kafka platform we already have — no new infrastructure to build, secure, or operate.
+- Native, standard pattern — supported by SmallRye out of the box; diagnostic headers (failure reason, original topic/partition/offset) are added automatically.
+- Durable, ordered and replayable — a DLT is just a Kafka topic, so failed events can be reprocessed back onto the main topic (replay), inspected with existing Kafka tooling (Kafka UI / Confluent Control Centre), and retained per policy.
+- A custom database or UI would mean building and maintaining extra storage, access control, and a console — duplicating what Kafka and its tooling already provide, at added cost and risk.
+- Alerting integrates with the existing observability stack (Dynatrace/Prometheus, Splunk, PagerDuty/Teams) rather than a bespoke dashboard.
+
+### Failure scenarios and resolutions
+
+Delivery and ordering:
+
+- Duplicate processing (at-least-once redelivery) — idempotent upsert keyed by contractId.
+- Stale/old version overwrites newer (out-of-order via retry or replay) — version guard (update only if the incoming version is greater than or equal to the stored version).
+- Message loss (offset committed before processing) — commit the offset after successful processing (manual ack; no auto-commit).
+
+Downstream failures (v5 API / database):
+
+- Transient failure (timeout, 5xx, DB blip) — @Retry with backoff, transient-only (`retryOn`).
+- Permanent failure (bad data, 4xx, validation) — DLQ immediately (`abortOn`).
+- Dependency outage (API down) — circuit breaker and timeout; alert; do not keep hammering it.
+- 404 from v5 (contract not found) — short retry for a consistency race, then DLQ or treat as a delete (design decision to confirm).
+
+Data and schema:
+
+- Deserialization failure (bytes do not parse) — DLQ at the deserializer layer (cannot be retried).
+- Schema evolution breaks the consumer — rely on Helios's schema registry, compatibility policy, and change notification; test old and new.
+- Invalid or missing mandatory fields — validation, then DLQ.
