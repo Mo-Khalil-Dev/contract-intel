@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1460 1070" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="1460" height="1070" fill="#FFFFFF"/>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6D28D9"/></marker>
+    <marker id="arrowgreen" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#15803D"/></marker>
+    <marker id="arrowred" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#DC2626"/></marker>
+    <marker id="arrowslate" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker>
+  </defs>
+
+  <!-- title -->
+  <text x="730" y="44" text-anchor="middle" font-size="27" font-weight="700" fill="#0F172A">Contract events → Data Marketplace: bridging, partitions, consumers &amp; DLQ</text>
+  <text x="730" y="72" text-anchor="middle" font-size="15" fill="#64748B">From the Contract Store (Helios / Collibra) to our Marketplace — and what happens when an event fails</text>
+
+  <!-- ============ LEFT: HELIOS SOURCE TOPIC ============ -->
+  <rect x="40" y="110" width="360" height="400" rx="10" fill="#FFF7ED" stroke="#FDBA74" stroke-width="2"/>
+  <rect x="40" y="110" width="360" height="48" rx="10" fill="#C2410C"/><rect x="40" y="138" width="360" height="20" fill="#C2410C"/>
+  <text x="220" y="132" text-anchor="middle" font-size="14.5" font-weight="700" fill="#FFFFFF">Helios / Collibra — Contract Store</text>
+  <text x="220" y="150" text-anchor="middle" font-size="11.5" fill="#FFE5D0">source topic (source of truth) — THEY own it</text>
+
+  <g font-size="11" fill="#7C2D12">
+  <rect x="56" y="176" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="74" y="214" font-size="13" font-weight="700" fill="#9A3412">P0</text>
+  <rect x="112" y="194" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="137" y="212" text-anchor="middle">C‑101</text>
+  <rect x="170" y="194" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="195" y="212" text-anchor="middle">C‑105</text>
+  <rect x="228" y="194" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="253" y="212" text-anchor="middle">C‑109</text>
+  <rect x="56" y="252" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="74" y="290" font-size="13" font-weight="700" fill="#9A3412">P1</text>
+  <rect x="112" y="270" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="137" y="288" text-anchor="middle">C‑102</text>
+  <rect x="170" y="270" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="195" y="288" text-anchor="middle">C‑106</text>
+  <rect x="56" y="328" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="74" y="366" font-size="13" font-weight="700" fill="#9A3412">P2</text>
+  <rect x="112" y="346" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="137" y="364" text-anchor="middle">C‑103</text>
+  <rect x="170" y="346" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="195" y="364" text-anchor="middle">C‑107</text>
+  <rect x="228" y="346" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="253" y="364" text-anchor="middle">C‑111</text>
+  <rect x="56" y="404" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="74" y="442" font-size="13" font-weight="700" fill="#9A3412">P3</text>
+  <rect x="112" y="422" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="137" y="440" text-anchor="middle">C‑104</text>
+  <rect x="170" y="422" width="50" height="28" rx="4" fill="#FED7AA" stroke="#FB923C"/><text x="195" y="440" text-anchor="middle">C‑108</text>
+  </g>
+  <text x="220" y="494" text-anchor="middle" font-size="11.5" fill="#9A3412">4 partitions · keyed by contractId</text>
+
+  <!-- ============ BRIDGE ============ -->
+  <text x="500" y="268" text-anchor="middle" font-size="13.5" font-weight="700" fill="#6D28D9">Bridge / Replication</text>
+  <text x="500" y="286" text-anchor="middle" font-size="11" fill="#7C3AED">MirrorMaker 2 / Replicator</text>
+  <line x1="405" y1="310" x2="595" y2="310" stroke="#6D28D9" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="500" y="332" text-anchor="middle" font-size="10.5" fill="#64748B">copies partition‑by‑partition</text>
+  <text x="500" y="348" text-anchor="middle" font-size="10.5" fill="#64748B">preserves key + order</text>
+  <text x="500" y="364" text-anchor="middle" font-size="10.5" fill="#64748B">(onboarding‑managed)</text>
+
+  <!-- ============ MIDDLE: OUR TOPIC ============ -->
+  <rect x="600" y="110" width="360" height="400" rx="10" fill="#ECFEFF" stroke="#67E8F9" stroke-width="2"/>
+  <rect x="600" y="110" width="360" height="48" rx="10" fill="#0E7490"/><rect x="600" y="138" width="360" height="20" fill="#0E7490"/>
+  <text x="780" y="132" text-anchor="middle" font-size="14.5" font-weight="700" fill="#FFFFFF">Our DMP topic — contract‑events</text>
+  <text x="780" y="150" text-anchor="middle" font-size="11.5" fill="#CFFAFE">the copy — WE own it</text>
+
+  <g font-size="11" fill="#134E4A">
+  <rect x="616" y="176" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="634" y="214" font-size="13" font-weight="700" fill="#155E75">P0</text>
+  <rect x="672" y="194" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="697" y="212" text-anchor="middle">C‑101</text>
+  <rect x="730" y="194" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="755" y="212" text-anchor="middle">C‑105</text>
+  <rect x="788" y="194" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="813" y="212" text-anchor="middle">C‑109</text>
+  <rect x="616" y="252" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="634" y="290" font-size="13" font-weight="700" fill="#155E75">P1</text>
+  <rect x="672" y="270" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="697" y="288" text-anchor="middle">C‑102</text>
+  <rect x="730" y="270" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="755" y="288" text-anchor="middle">C‑106</text>
+  <rect x="616" y="328" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="634" y="366" font-size="13" font-weight="700" fill="#155E75">P2</text>
+  <rect x="672" y="346" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="697" y="364" text-anchor="middle">C‑103</text>
+  <rect x="730" y="346" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="755" y="364" text-anchor="middle">C‑107</text>
+  <rect x="788" y="346" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="813" y="364" text-anchor="middle">C‑111</text>
+  <rect x="616" y="404" width="328" height="66" rx="6" fill="#FFFFFF" stroke="#E2E8F0"/><text x="634" y="442" font-size="13" font-weight="700" fill="#155E75">P3</text>
+  <rect x="672" y="422" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="697" y="440" text-anchor="middle">C‑104</text>
+  <rect x="730" y="422" width="50" height="28" rx="4" fill="#A5F3FC" stroke="#22D3EE"/><text x="755" y="440" text-anchor="middle">C‑108</text>
+  </g>
+  <text x="780" y="494" text-anchor="middle" font-size="11.5" fill="#155E75">4 partitions — MUST match the source</text>
+
+  <!-- ============ RIGHT: CONSUMERS ============ -->
+  <rect x="1000" y="110" width="420" height="400" rx="10" fill="#F0FDF4" stroke="#86EFAC" stroke-width="2"/>
+  <rect x="1000" y="110" width="420" height="48" rx="10" fill="#15803D"/><rect x="1000" y="138" width="420" height="20" fill="#15803D"/>
+  <text x="1210" y="132" text-anchor="middle" font-size="14.5" font-weight="700" fill="#FFFFFF">Ingestion consumer microservice</text>
+  <text x="1210" y="150" text-anchor="middle" font-size="11.5" fill="#D1FAE5">one consumer group · pods in GKE</text>
+
+  <line x1="946" y1="209" x2="1016" y2="209" stroke="#15803D" stroke-width="3" marker-end="url(#arrowgreen)"/>
+  <rect x="1016" y="185" width="388" height="48" rx="8" fill="#FFFFFF" stroke="#86EFAC"/><text x="1036" y="214" font-size="13" font-weight="700" fill="#166534">Pod 1 <tspan font-weight="400" fill="#475569">· reads P0</tspan></text>
+  <line x1="946" y1="285" x2="1016" y2="285" stroke="#15803D" stroke-width="3" marker-end="url(#arrowgreen)"/>
+  <rect x="1016" y="261" width="388" height="48" rx="8" fill="#FFFFFF" stroke="#86EFAC"/><text x="1036" y="290" font-size="13" font-weight="700" fill="#166534">Pod 2 <tspan font-weight="400" fill="#475569">· reads P1</tspan></text>
+  <line x1="946" y1="361" x2="1016" y2="361" stroke="#15803D" stroke-width="3" marker-end="url(#arrowgreen)"/>
+  <rect x="1016" y="337" width="388" height="48" rx="8" fill="#FFFFFF" stroke="#86EFAC"/><text x="1036" y="366" font-size="13" font-weight="700" fill="#166534">Pod 3 <tspan font-weight="400" fill="#475569">· reads P2</tspan></text>
+  <line x1="946" y1="437" x2="1016" y2="437" stroke="#15803D" stroke-width="3" marker-end="url(#arrowgreen)"/>
+  <rect x="1016" y="413" width="388" height="48" rx="8" fill="#FFFFFF" stroke="#86EFAC"/><text x="1036" y="442" font-size="13" font-weight="700" fill="#166534">Pod 4 <tspan font-weight="400" fill="#475569">· reads P3</tspan></text>
+  <text x="1210" y="494" text-anchor="middle" font-size="11.5" fill="#166534">pods ≤ partitions (4 max useful)</text>
+
+  <!-- ============ MATCH CALLOUT ============ -->
+  <rect x="450" y="528" width="560" height="32" rx="16" fill="#FEF9C3" stroke="#FACC15" stroke-width="1.5"/>
+  <text x="730" y="549" text-anchor="middle" font-size="12.5" font-weight="700" fill="#854D0E">⚠ Partition count MUST match: 4 (Helios) ↔ 4 (ours) — else key→partition breaks &amp; order is lost</text>
+
+  <!-- ============ LOWER PANEL: SUCCESS + DLQ ============ -->
+  <rect x="40" y="585" width="1380" height="450" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1.5"/>
+  <text x="62" y="616" font-size="16" font-weight="700" fill="#0F172A">What happens on our side — for every single event</text>
+  <text x="62" y="638" font-size="12" fill="#64748B">Each pod processes one event at a time, in order, per partition</text>
+
+  <!-- consumer pod node -->
+  <rect x="66" y="730" width="150" height="70" rx="10" fill="#DCFCE7" stroke="#22C55E" stroke-width="1.5"/>
+  <text x="141" y="760" text-anchor="middle" font-size="13" font-weight="700" fill="#166534">Consumer pod</text>
+  <text x="141" y="779" text-anchor="middle" font-size="10.5" fill="#15803D">(each pod, above)</text>
+
+  <!-- diamond decision -->
+  <line x1="216" y1="765" x2="256" y2="765" stroke="#475569" stroke-width="2.5" marker-end="url(#arrowslate)"/>
+  <polygon points="360,700 470,765 360,830 250,765" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.8"/>
+  <text x="360" y="752" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">Processed</text>
+  <text x="360" y="770" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">OK?</text>
+  <text x="360" y="790" text-anchor="middle" font-size="9.5" fill="#64748B">(retry transient first)</text>
+
+  <!-- YES -> Marketplace (up) -->
+  <path d="M400,733 C430,705 440,695 470,695" fill="none" stroke="#15803D" stroke-width="2.5" marker-end="url(#arrowgreen)"/>
+  <text x="430" y="706" font-size="11" font-weight="700" fill="#15803D">YES</text>
+  <ellipse cx="585" cy="672" rx="110" ry="13" fill="#BFDBFE" stroke="#60A5FA"/>
+  <rect x="475" y="672" width="220" height="48" fill="#DBEAFE" stroke="#60A5FA"/>
+  <line x1="475" y1="672" x2="475" y2="720" stroke="#60A5FA"/><line x1="695" y1="672" x2="695" y2="720" stroke="#60A5FA"/>
+  <ellipse cx="585" cy="720" rx="110" ry="13" fill="#DBEAFE" stroke="#60A5FA"/>
+  <ellipse cx="585" cy="672" rx="110" ry="13" fill="#BFDBFE" stroke="#60A5FA"/>
+  <text x="585" y="690" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1E3A8A">Data Marketplace</text>
+  <text x="585" y="708" text-anchor="middle" font-size="10.5" fill="#1D4ED8">idempotent upsert · version guard</text>
+
+  <!-- NO -> DLT (down/right) -->
+  <path d="M400,797 C430,825 440,835 470,835" fill="none" stroke="#DC2626" stroke-width="2.5" marker-end="url(#arrowred)"/>
+  <text x="396" y="828" font-size="11" font-weight="700" fill="#DC2626">NO</text>
+  <text x="432" y="862" font-size="9.5" fill="#B91C1C">after retries</text>
+  <rect x="475" y="808" width="220" height="56" rx="8" fill="#FEE2E2" stroke="#F87171" stroke-width="1.5"/>
+  <text x="585" y="832" text-anchor="middle" font-size="13" font-weight="700" fill="#991B1B">contract‑events‑dlt</text>
+  <text x="585" y="850" text-anchor="middle" font-size="10.5" fill="#B91C1C">our DLT (Dead Letter Topic) · 1 partition</text>
+
+  <!-- DLT -> Alert + Runbook -->
+  <path d="M695,826 C730,812 745,800 775,800" fill="none" stroke="#DC2626" stroke-width="2.3" marker-end="url(#arrowred)"/>
+  <path d="M695,846 C730,860 745,872 775,872" fill="none" stroke="#DC2626" stroke-width="2.3" marker-end="url(#arrowred)"/>
+  <rect x="778" y="778" width="236" height="44" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="896" y="798" text-anchor="middle" font-size="12" font-weight="700" fill="#92400E">Alert</text>
+  <text x="896" y="814" text-anchor="middle" font-size="10" fill="#B45309">Dynatrace → Teams / PagerDuty</text>
+  <rect x="778" y="850" width="236" height="44" rx="8" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1.5"/>
+  <text x="896" y="870" text-anchor="middle" font-size="12" font-weight="700" fill="#5B21B6">Runbook</text>
+  <text x="896" y="886" text-anchor="middle" font-size="10" fill="#6D28D9">"the DLQ is a process, not a bin"</text>
+
+  <!-- Runbook -> Triage -->
+  <line x1="1014" y1="872" x2="1052" y2="872" stroke="#475569" stroke-width="2.3" marker-end="url(#arrowslate)"/>
+  <rect x="1054" y="850" width="150" height="44" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="1129" y="870" text-anchor="middle" font-size="11.5" font-weight="700" fill="#334155">Triage</text>
+  <text x="1129" y="886" text-anchor="middle" font-size="9.5" fill="#64748B">read headers, classify</text>
+
+  <!-- Triage -> Replay / Quarantine -->
+  <path d="M1204,862 C1230,840 1240,828 1266,828" fill="none" stroke="#475569" stroke-width="2.2" marker-end="url(#arrowslate)"/>
+  <path d="M1204,882 C1230,904 1240,916 1266,916" fill="none" stroke="#475569" stroke-width="2.2" marker-end="url(#arrowslate)"/>
+  <rect x="1268" y="806" width="142" height="46" rx="8" fill="#DCFCE7" stroke="#22C55E" stroke-width="1.5"/>
+  <text x="1339" y="826" text-anchor="middle" font-size="11.5" font-weight="700" fill="#166534">Replay</text>
+  <text x="1339" y="842" text-anchor="middle" font-size="9.5" fill="#15803D">fix → reprocess (safe)</text>
+  <rect x="1268" y="894" width="142" height="46" rx="8" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="1339" y="914" text-anchor="middle" font-size="11.5" font-weight="700" fill="#334155">Quarantine</text>
+  <text x="1339" y="930" text-anchor="middle" font-size="9.5" fill="#64748B">dead data · audit trail</text>
+
+  <!-- Liam money-line caption -->
+  <rect x="66" y="962" width="1288" height="56" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="84" y="986" font-size="12.5" font-weight="700" fill="#0F172A">Why a DLQ (not our own error DB / UI):</text>
+  <text x="84" y="1006" font-size="12" fill="#334155">SmallRye auto‑publishes each failure to the DLT with diagnostic headers (dead‑letter‑reason, cause, correlationId) — every failed event stays <tspan font-weight="700">individually identifiable &amp; replayable</tspan>. Collibra loading a contract never hides our load failing.</text>
+</svg>
