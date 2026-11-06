@@ -68,24 +68,24 @@
   <!-- chip A: Confluent extension -->
   <line x1="470" y1="195" x2="536" y2="195" stroke="#475569" stroke-width="2.3" marker-end="url(#aS)"/>
   <rect x="540" y="168" width="296" height="56" rx="8" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.5"/>
-  <text x="688" y="190" text-anchor="middle" font-size="11.5" font-weight="700" fill="#9A3412">Dynatrace Confluent Cloud extension</text>
-  <text x="688" y="210" text-anchor="middle" font-size="10" fill="#64748B">pulls broker + consumer‑group + lag metrics</text>
+  <text x="688" y="190" text-anchor="middle" font-size="11.5" font-weight="700" fill="#9A3412">Kafka → Dynatrace connector</text>
+  <text x="688" y="210" text-anchor="middle" font-size="10" font-style="italic" fill="#64748B">e.g. Confluent extension / JMX — confirm with KaaS</text>
 
   <!-- chip B: OneAgent -->
   <line x1="470" y1="408" x2="536" y2="408" stroke="#475569" stroke-width="2.3" marker-end="url(#aS)"/>
   <line x1="470" y1="640" x2="520" y2="640" stroke="#475569" stroke-width="2" marker-end="url(#aS)"/>
   <path d="M520,640 C528,640 532,430 538,418" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#aS)"/>
   <rect x="540" y="376" width="296" height="64" rx="8" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.5"/>
-  <text x="688" y="400" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1D4ED8">OneAgent — DaemonSet on GKE nodes</text>
-  <text x="688" y="419" text-anchor="middle" font-size="10" fill="#64748B">auto: infra, process health, traces, log capture</text>
-  <text x="688" y="433" text-anchor="middle" font-size="9.5" font-style="italic" fill="#64748B">covers both the cluster and the app process</text>
+  <text x="688" y="400" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1D4ED8">GKE → Dynatrace connector</text>
+  <text x="688" y="419" text-anchor="middle" font-size="10" font-style="italic" fill="#64748B">e.g. OneAgent DaemonSet — confirm with platform</text>
+  <text x="688" y="433" text-anchor="middle" font-size="9.5" fill="#64748B">covers infra + the app process</text>
 
   <!-- chip C: metrics/otlp -->
   <line x1="470" y1="760" x2="536" y2="700" stroke="#475569" stroke-width="2.3" marker-end="url(#aS)"/>
   <rect x="540" y="612" width="296" height="78" rx="8" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.5"/>
-  <text x="688" y="636" text-anchor="middle" font-size="11.5" font-weight="700" fill="#166534">App telemetry export</text>
-  <text x="688" y="656" text-anchor="middle" font-size="10" fill="#334155">Micrometer→Dynatrace registry · OTLP (traces)</text>
-  <text x="688" y="674" text-anchor="middle" font-size="10" fill="#334155">· Prometheus scrape of /q/metrics</text>
+  <text x="688" y="636" text-anchor="middle" font-size="11.5" font-weight="700" fill="#166534">App → Dynatrace connector</text>
+  <text x="688" y="656" text-anchor="middle" font-size="10" font-style="italic" fill="#64748B">e.g. Micrometer / OTLP / Prometheus — confirm</text>
+  <text x="688" y="674" text-anchor="middle" font-size="10" fill="#334155">metrics · logs · traces from the service</text>
 
   <!-- ===================== DYNATRACE ===================== -->
   <line x1="836" y1="196" x2="876" y2="300" stroke="#6D28D9" stroke-width="2.6" marker-end="url(#aV)"/>
