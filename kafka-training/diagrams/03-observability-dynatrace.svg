@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 940" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="1500" height="940" fill="#FFFFFF"/>
+  <defs>
+    <marker id="aS" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#475569"/></marker>
+    <marker id="aV" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#6D28D9"/></marker>
+    <marker id="aD" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#94A3B8"/></marker>
+    <marker id="aDs" markerWidth="11" markerHeight="11" refX="5" refY="5" orient="auto"><path d="M10,0 L1,5 L10,10 z" fill="#94A3B8"/></marker>
+  </defs>
+
+  <text x="750" y="42" text-anchor="middle" font-size="26" font-weight="700" fill="#0F172A">Observability: three layers → Dynatrace (one pane) → alerts</text>
+  <text x="750" y="68" text-anchor="middle" font-size="14" fill="#64748B">Metrics · logs · traces from every layer converge in Dynatrace. Health probes stay local to the pod; Dynatrace sees the consequences.</text>
+
+  <text x="255" y="96" text-anchor="middle" font-size="12" font-weight="700" fill="#94A3B8">WHAT EACH LAYER EMITS</text>
+  <text x="690" y="96" text-anchor="middle" font-size="12" font-weight="700" fill="#94A3B8">HOW IT GETS THERE</text>
+  <text x="1085" y="96" text-anchor="middle" font-size="12" font-weight="700" fill="#94A3B8">SINGLE PANE</text>
+  <text x="1395" y="96" text-anchor="middle" font-size="12" font-weight="700" fill="#94A3B8">ACT</text>
+
+  <!-- ===================== LAYER 1: KAFKA ===================== -->
+  <rect x="40" y="104" width="430" height="196" rx="10" fill="#FFF7ED" stroke="#FDBA74" stroke-width="2"/>
+  <rect x="40" y="104" width="430" height="40" rx="10" fill="#C2410C"/><rect x="40" y="128" width="430" height="16" fill="#C2410C"/>
+  <text x="58" y="131" font-size="14" font-weight="700" fill="#FFFFFF">① Kafka — KaaS / Confluent</text>
+  <text x="58" y="170" font-size="11.5" fill="#334155">• <tspan font-weight="700">Consumer lag</tspan> — are we keeping up?</text>
+  <text x="58" y="192" font-size="11.5" fill="#334155">• <tspan font-weight="700">DLT count &amp; arrival rate</tspan> — failed events</text>
+  <text x="58" y="214" font-size="11.5" fill="#334155">• Broker / topic throughput, partition health</text>
+  <text x="58" y="236" font-size="11.5" fill="#334155">• <tspan font-weight="700">Replication lag</tspan> (bridged — watch separately)</text>
+  <text x="58" y="262" font-size="10.5" font-style="italic" fill="#9A3412">Viewed in Confluent Control Centre (C3)</text>
+
+  <!-- ===================== LAYER 2: GKE ===================== -->
+  <rect x="40" y="320" width="430" height="176" rx="10" fill="#EFF6FF" stroke="#93C5FD" stroke-width="2"/>
+  <rect x="40" y="320" width="430" height="40" rx="10" fill="#1D4ED8"/><rect x="40" y="344" width="430" height="16" fill="#1D4ED8"/>
+  <text x="58" y="347" font-size="14" font-weight="700" fill="#FFFFFF">② GKE — cluster / platform</text>
+  <text x="58" y="386" font-size="11.5" fill="#334155">• Pod state — running / restarts / crashloops</text>
+  <text x="58" y="408" font-size="11.5" fill="#334155">• CPU / memory, node pressure</text>
+  <text x="58" y="430" font-size="11.5" fill="#334155">• Scaling events, consumer‑group rebalances</text>
+  <text x="58" y="452" font-size="11.5" fill="#334155">• <tspan font-weight="700">Probe outcomes</tspan> (liveness / readiness)</text>
+  <text x="58" y="478" font-size="10.5" font-style="italic" fill="#1D4ED8">Google Cloud Operations also collects this natively</text>
+
+  <!-- ===================== LAYER 3: MICROSERVICE ===================== -->
+  <rect x="40" y="516" width="430" height="362" rx="10" fill="#F0FDF4" stroke="#86EFAC" stroke-width="2"/>
+  <rect x="40" y="516" width="430" height="40" rx="10" fill="#15803D"/><rect x="40" y="540" width="430" height="16" fill="#15803D"/>
+  <text x="58" y="543" font-size="14" font-weight="700" fill="#FFFFFF">③ Ingestion consumer microservice (Quarkus)</text>
+
+  <!-- health sub-box -->
+  <rect x="56" y="564" width="398" height="74" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="70" y="584" font-size="11.5" font-weight="700" fill="#0F172A">Health APIs (smallrye‑health) — per pod / consumer</text>
+  <text x="70" y="604" font-size="10.5" fill="#334155">/q/health/started · /live · /ready (Kafka + DB check) · /q/health</text>
+  <text x="70" y="624" font-size="10" font-style="italic" fill="#64748B">consumed by GKE probes — restart / deroute happens locally</text>
+
+  <!-- pillars -->
+  <rect x="56" y="648" width="398" height="62" rx="8" fill="#FFFFFF" stroke="#86EFAC"/>
+  <text x="70" y="670" font-size="11.5" font-weight="700" fill="#166534">Metrics — /q/metrics (Micrometer / Prometheus)</text>
+  <text x="70" y="690" font-size="10.5" fill="#334155">processing time · DLQ count · v5 latency/errors · CB state</text>
+  <rect x="56" y="716" width="398" height="62" rx="8" fill="#FFFFFF" stroke="#86EFAC"/>
+  <text x="70" y="738" font-size="11.5" font-weight="700" fill="#166534">Logs — quarkus‑logging‑json (structured)</text>
+  <text x="70" y="758" font-size="10.5" fill="#334155">correlationId in MDC → every line tied to one event</text>
+  <rect x="56" y="784" width="398" height="80" rx="8" fill="#FFFFFF" stroke="#86EFAC"/>
+  <text x="70" y="806" font-size="11.5" font-weight="700" fill="#166534">Traces — quarkus‑opentelemetry</text>
+  <text x="70" y="826" font-size="10.5" fill="#334155">auto‑propagated traceparent, one end‑to‑end trace:</text>
+  <text x="70" y="846" font-size="10.5" font-weight="700" fill="#334155">Kafka → v5 API → DB</text>
+
+  <!-- probe local loop (micro health <-> GKE) -->
+  <line x1="250" y1="564" x2="250" y2="498" stroke="#94A3B8" stroke-width="2" stroke-dasharray="4 3" marker-start="url(#aDs)" marker-end="url(#aD)"/>
+  <rect x="266" y="508" width="150" height="40" rx="6" fill="#F8FAFC" stroke="#CBD5E1"/>
+  <text x="341" y="524" text-anchor="middle" font-size="9.5" fill="#475569">GKE kubelet probes</text>
+  <text x="341" y="538" text-anchor="middle" font-size="9.5" fill="#475569">(local, per pod)</text>
+
+  <!-- ===================== CONNECTORS ===================== -->
+  <!-- chip A: Confluent extension -->
+  <line x1="470" y1="195" x2="536" y2="195" stroke="#475569" stroke-width="2.3" marker-end="url(#aS)"/>
+  <rect x="540" y="168" width="296" height="56" rx="8" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.5"/>
+  <text x="688" y="190" text-anchor="middle" font-size="11.5" font-weight="700" fill="#9A3412">Dynatrace Confluent Cloud extension</text>
+  <text x="688" y="210" text-anchor="middle" font-size="10" fill="#64748B">pulls broker + consumer‑group + lag metrics</text>
+
+  <!-- chip B: OneAgent -->
+  <line x1="470" y1="408" x2="536" y2="408" stroke="#475569" stroke-width="2.3" marker-end="url(#aS)"/>
+  <line x1="470" y1="640" x2="520" y2="640" stroke="#475569" stroke-width="2" marker-end="url(#aS)"/>
+  <path d="M520,640 C528,640 532,430 538,418" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#aS)"/>
+  <rect x="540" y="376" width="296" height="64" rx="8" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.5"/>
+  <text x="688" y="400" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1D4ED8">OneAgent — DaemonSet on GKE nodes</text>
+  <text x="688" y="419" text-anchor="middle" font-size="10" fill="#64748B">auto: infra, process health, traces, log capture</text>
+  <text x="688" y="433" text-anchor="middle" font-size="9.5" font-style="italic" fill="#64748B">covers both the cluster and the app process</text>
+
+  <!-- chip C: metrics/otlp -->
+  <line x1="470" y1="760" x2="536" y2="700" stroke="#475569" stroke-width="2.3" marker-end="url(#aS)"/>
+  <rect x="540" y="612" width="296" height="78" rx="8" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.5"/>
+  <text x="688" y="636" text-anchor="middle" font-size="11.5" font-weight="700" fill="#166534">App telemetry export</text>
+  <text x="688" y="656" text-anchor="middle" font-size="10" fill="#334155">Micrometer→Dynatrace registry · OTLP (traces)</text>
+  <text x="688" y="674" text-anchor="middle" font-size="10" fill="#334155">· Prometheus scrape of /q/metrics</text>
+
+  <!-- ===================== DYNATRACE ===================== -->
+  <line x1="836" y1="196" x2="876" y2="300" stroke="#6D28D9" stroke-width="2.6" marker-end="url(#aV)"/>
+  <line x1="836" y1="408" x2="876" y2="408" stroke="#6D28D9" stroke-width="2.6" marker-end="url(#aV)"/>
+  <line x1="836" y1="651" x2="876" y2="520" stroke="#6D28D9" stroke-width="2.6" marker-end="url(#aV)"/>
+
+  <rect x="880" y="150" width="408" height="520" rx="12" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="2"/>
+  <rect x="880" y="150" width="408" height="52" rx="12" fill="#4C1D95"/><rect x="880" y="176" width="408" height="26" fill="#4C1D95"/>
+  <text x="1084" y="174" text-anchor="middle" font-size="16" font-weight="700" fill="#FFFFFF">Dynatrace</text>
+  <text x="1084" y="193" text-anchor="middle" font-size="11" fill="#DDD6FE">single pane of glass — all three pillars in one place</text>
+
+  <rect x="902" y="222" width="364" height="70" rx="8" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="1084" y="246" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4C1D95">Unified: Metrics · Logs · Traces</text>
+  <text x="1084" y="268" text-anchor="middle" font-size="10.5" fill="#334155">correlated by service, host, and correlationId</text>
+  <text x="1084" y="284" text-anchor="middle" font-size="10" fill="#64748B">one query across the whole stack</text>
+
+  <rect x="902" y="304" width="364" height="66" rx="8" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="1084" y="328" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4C1D95">Service flow / PurePath</text>
+  <text x="1084" y="350" text-anchor="middle" font-size="10.5" fill="#334155">follow one event: Kafka → v5 API → DB → DLQ</text>
+
+  <rect x="902" y="382" width="364" height="66" rx="8" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="1084" y="406" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4C1D95">Davis AI — problem detection</text>
+  <text x="1084" y="428" text-anchor="middle" font-size="10.5" fill="#334155">auto root‑cause &amp; anomaly detection</text>
+
+  <rect x="902" y="460" width="364" height="66" rx="8" fill="#FFFFFF" stroke="#C4B5FD"/>
+  <text x="1084" y="484" text-anchor="middle" font-size="12.5" font-weight="700" fill="#4C1D95">Dashboards — per environment</text>
+  <text x="1084" y="506" text-anchor="middle" font-size="10.5" fill="#334155">INT · PreProd · Prod views</text>
+
+  <!-- alerting inside DT -->
+  <rect x="902" y="540" width="364" height="112" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="1084" y="562" text-anchor="middle" font-size="12.5" font-weight="700" fill="#92400E">Alerting rules</text>
+  <text x="920" y="584" font-size="10.5" fill="#334155">• sustained consumer lag &#160;&#160; • DLQ count / rate &gt; 0</text>
+  <text x="920" y="604" font-size="10.5" fill="#334155">• auth failures (cert expiry) &#160;&#160; • v5 errors / CB open</text>
+  <text x="920" y="624" font-size="10.5" fill="#334155">• pod restarts / readiness flap &#160; • replication lag</text>
+  <text x="1084" y="645" text-anchor="middle" font-size="9.5" font-style="italic" fill="#92400E">low‑volume stream → any DLQ message is worth a look</text>
+
+  <!-- ===================== ACT ===================== -->
+  <line x1="1288" y1="596" x2="1320" y2="596" stroke="#475569" stroke-width="2.6" marker-end="url(#aS)"/>
+  <rect x="1324" y="540" width="150" height="112" rx="10" fill="#F1F5F9" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="1399" y="576" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">On‑call</text>
+  <text x="1399" y="600" text-anchor="middle" font-size="11" fill="#475569">Teams</text>
+  <text x="1399" y="620" text-anchor="middle" font-size="11" fill="#475569">PagerDuty</text>
+  <text x="1399" y="640" text-anchor="middle" font-size="11" fill="#475569">email</text>
+
+  <!-- ===================== LIAM CAPTION ===================== -->
+  <rect x="40" y="890" width="1434" height="36" rx="10" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="58" y="913" font-size="12" fill="#334155"><tspan font-weight="700">Everything in one place (Liam's ask):</tspan> one failed contract is traceable end‑to‑end by correlationId — its Kafka lag, the pod that handled it, the trace through the v5 call and DB, and its DLQ entry — all in Dynatrace.</text>
+</svg>
