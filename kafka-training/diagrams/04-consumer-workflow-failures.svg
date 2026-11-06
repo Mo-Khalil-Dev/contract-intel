@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1000" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="1500" height="1000" fill="#FFFFFF"/>
+  <defs>
+    <marker id="aS" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#475569"/></marker>
+    <marker id="aG" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#15803D"/></marker>
+    <marker id="aR" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#DC2626"/></marker>
+    <marker id="aA" markerWidth="11" markerHeight="11" refX="5" refY="5" orient="auto"><path d="M0,0 L9,5 L0,10 z" fill="#B45309"/></marker>
+    <marker id="aAs" markerWidth="11" markerHeight="11" refX="6" refY="5" orient="auto"><path d="M10,0 L1,5 L10,10 z" fill="#B45309"/></marker>
+  </defs>
+
+  <text x="500" y="40" text-anchor="middle" font-size="25" font-weight="700" fill="#0F172A">Consumer workflow — one event, end to end</text>
+  <text x="500" y="65" text-anchor="middle" font-size="13.5" font-weight="700" fill="#15803D">We never advance past the event until everything succeeds (commit offset AFTER the upsert).</text>
+
+  <!-- ===== TOPIC STRIP ===== -->
+  <text x="40" y="108" font-size="12" font-weight="700" fill="#334155">TOPIC: contract‑events · Partition 2</text>
+  <g font-size="11">
+  <rect x="300" y="118" width="66" height="40" rx="5" fill="#DCFCE7" stroke="#22C55E"/><text x="333" y="143" text-anchor="middle" fill="#166534">N‑2</text>
+  <rect x="368" y="118" width="66" height="40" rx="5" fill="#DCFCE7" stroke="#22C55E"/><text x="401" y="143" text-anchor="middle" fill="#166534">N‑1</text>
+  <rect x="436" y="118" width="66" height="40" rx="5" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/><text x="469" y="143" text-anchor="middle" font-weight="700" fill="#92400E">N</text>
+  <rect x="504" y="118" width="66" height="40" rx="5" fill="#F1F5F9" stroke="#CBD5E1"/><text x="537" y="143" text-anchor="middle" fill="#64748B">N+1</text>
+  <rect x="572" y="118" width="66" height="40" rx="5" fill="#F1F5F9" stroke="#CBD5E1"/><text x="605" y="143" text-anchor="middle" fill="#64748B">N+2</text>
+  <rect x="640" y="118" width="66" height="40" rx="5" fill="#F1F5F9" stroke="#CBD5E1"/><text x="673" y="143" text-anchor="middle" fill="#64748B">N+3</text>
+  </g>
+  <path d="M434,176 L428,164 L440,164 Z" fill="#B91C1C"/>
+  <text x="434" y="192" text-anchor="middle" font-size="9.5" fill="#B91C1C">last committed offset (N‑1)</text>
+  <text x="560" y="134" font-size="9.5" fill="#92400E">◀ event N in‑flight</text>
+  <text x="560" y="150" font-size="9.5" fill="#64748B">N+1… not read yet</text>
+
+  <line x1="469" y1="158" x2="428" y2="198" stroke="#475569" stroke-width="2" marker-end="url(#aS)"/>
+
+  <!-- ===== PIPELINE ===== -->
+  <!-- S1 -->
+  <rect x="280" y="200" width="250" height="52" rx="8" fill="#ECFEFF" stroke="#67E8F9" stroke-width="1.5"/>
+  <circle cx="302" cy="226" r="11" fill="#0E7490"/><text x="302" y="230" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">1</text>
+  <text x="322" y="221" font-size="12.5" font-weight="700" fill="#155E75">Receive event (offset N)</text>
+  <text x="322" y="238" font-size="10" fill="#64748B">offset not committed yet</text>
+  <line x1="405" y1="252" x2="405" y2="272" stroke="#475569" stroke-width="2.2" marker-end="url(#aS)"/>
+
+  <!-- S2 -->
+  <rect x="280" y="272" width="250" height="52" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+  <circle cx="302" cy="298" r="11" fill="#6D28D9"/><text x="302" y="302" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">2</text>
+  <text x="322" y="293" font-size="12.5" font-weight="700" fill="#334155">Deserialize (Avro)</text>
+  <text x="322" y="310" font-size="10" fill="#64748B">bytes → object, via Schema Registry</text>
+  <line x1="405" y1="324" x2="405" y2="344" stroke="#475569" stroke-width="2.2" marker-end="url(#aS)"/>
+
+  <!-- S3 -->
+  <rect x="280" y="344" width="250" height="52" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+  <circle cx="302" cy="370" r="11" fill="#1D4ED8"/><text x="302" y="374" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">3</text>
+  <text x="322" y="365" font-size="12.5" font-weight="700" fill="#334155">Validate</text>
+  <text x="322" y="382" font-size="10" fill="#64748B">mandatory fields, lifecycle</text>
+  <line x1="405" y1="396" x2="405" y2="416" stroke="#475569" stroke-width="2.2" marker-end="url(#aS)"/>
+
+  <!-- S4 -->
+  <rect x="280" y="416" width="250" height="52" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+  <circle cx="302" cy="442" r="11" fill="#B45309"/><text x="302" y="446" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">4</text>
+  <text x="322" y="437" font-size="12.5" font-weight="700" fill="#334155">Fetch full contract</text>
+  <text x="322" y="454" font-size="10" fill="#64748B">event is only a trigger → call the v5 API</text>
+  <line x1="405" y1="468" x2="405" y2="488" stroke="#475569" stroke-width="2.2" marker-end="url(#aS)"/>
+
+  <!-- S5 -->
+  <rect x="280" y="488" width="250" height="52" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+  <circle cx="302" cy="514" r="11" fill="#475569"/><text x="302" y="518" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">5</text>
+  <text x="322" y="509" font-size="12.5" font-weight="700" fill="#334155">Transform / map</text>
+  <text x="322" y="526" font-size="10" fill="#64748B">to the Marketplace shape</text>
+  <line x1="405" y1="540" x2="405" y2="560" stroke="#475569" stroke-width="2.2" marker-end="url(#aS)"/>
+
+  <!-- S6 -->
+  <rect x="280" y="560" width="250" height="52" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.5"/>
+  <circle cx="302" cy="586" r="11" fill="#1E3A8A"/><text x="302" y="590" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">6</text>
+  <text x="322" y="581" font-size="12.5" font-weight="700" fill="#334155">Idempotent upsert</text>
+  <text x="322" y="598" font-size="10" fill="#64748B">version guard — don't overwrite newer</text>
+  <line x1="405" y1="612" x2="405" y2="632" stroke="#15803D" stroke-width="2.8" marker-end="url(#aG)"/>
+
+  <!-- S7 -->
+  <rect x="280" y="632" width="250" height="60" rx="8" fill="#F0FDF4" stroke="#22C55E" stroke-width="2"/>
+  <circle cx="302" cy="662" r="11" fill="#15803D"/><text x="302" y="666" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">7</text>
+  <text x="322" y="657" font-size="12.5" font-weight="700" fill="#166534">Ack → commit offset ✓</text>
+  <text x="322" y="675" font-size="10" fill="#15803D">only now do we advance past N</text>
+
+  <!-- commit callout -->
+  <line x1="405" y1="692" x2="405" y2="712" stroke="#15803D" stroke-width="2.8" marker-end="url(#aG)"/>
+  <rect x="250" y="714" width="500" height="74" rx="10" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5"/>
+  <text x="266" y="736" font-size="11.5" font-weight="700" fill="#065F46">The event stayed on the topic the whole time.</text>
+  <text x="266" y="755" font-size="10.5" fill="#334155">Commit moves the offset to N+1 only after success. If the pod crashes</text>
+  <text x="266" y="771" font-size="10.5" fill="#334155">mid‑process, Kafka redelivers N (at‑least‑once) → the idempotent upsert</text>
+  <text x="266" y="783" font-size="10.5" font-weight="700" fill="#065F46">makes reprocessing safe. No message loss.</text>
+
+  <!-- ===== DEPENDENCIES ===== -->
+  <text x="665" y="268" text-anchor="middle" font-size="11" font-weight="700" fill="#B45309">DEPENDENCIES THAT CAN TRIP THE FLOW</text>
+  <line x1="530" y1="298" x2="578" y2="298" stroke="#B45309" stroke-width="2" marker-start="url(#aAs)" marker-end="url(#aA)"/>
+  <rect x="580" y="274" width="180" height="48" rx="8" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.5"/>
+  <text x="670" y="295" text-anchor="middle" font-size="11.5" font-weight="700" fill="#9A3412">Schema Registry</text>
+  <text x="670" y="312" text-anchor="middle" font-size="9.5" fill="#B45309">schema mismatch → fail</text>
+
+  <line x1="530" y1="442" x2="578" y2="442" stroke="#B45309" stroke-width="2" marker-start="url(#aAs)" marker-end="url(#aA)"/>
+  <rect x="580" y="418" width="180" height="48" rx="8" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.5"/>
+  <text x="670" y="439" text-anchor="middle" font-size="11.5" font-weight="700" fill="#9A3412">Contract Store v5 API</text>
+  <text x="670" y="456" text-anchor="middle" font-size="9.5" fill="#B45309">timeout / 5xx / 404</text>
+
+  <line x1="530" y1="586" x2="578" y2="586" stroke="#B45309" stroke-width="2" marker-start="url(#aAs)" marker-end="url(#aA)"/>
+  <rect x="580" y="562" width="180" height="48" rx="8" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.5"/>
+  <text x="670" y="583" text-anchor="middle" font-size="11.5" font-weight="700" fill="#9A3412">Marketplace DB</text>
+  <text x="670" y="600" text-anchor="middle" font-size="9.5" fill="#B45309">connection / tx blip</text>
+
+  <!-- ===== RETRY BRACE ===== -->
+  <path d="M772,418 L764,418 L764,610 L772,610" fill="none" stroke="#7C3AED" stroke-width="2"/>
+  <path d="M764,514 L756,514" stroke="#7C3AED" stroke-width="2"/>
+  <rect x="628" y="636" width="300" height="118" rx="10" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1.5"/>
+  <text x="644" y="658" font-size="12" font-weight="700" fill="#5B21B6">↻ The external calls are retried</text>
+  <text x="644" y="679" font-size="10.5" fill="#334155">@Retry maxRetries=4 · exponential backoff 1→2→4→8s</text>
+  <text x="644" y="698" font-size="10.5" fill="#334155">retryOn = transient (timeout, 5xx, DB blip)</text>
+  <text x="644" y="717" font-size="10.5" fill="#334155">abortOn = permanent (bad data) → straight to DLQ</text>
+  <text x="644" y="738" font-size="10.5" fill="#334155">@CircuitBreaker + @Timeout on the v5 call</text>
+
+  <!-- ===== FAILURE EXITS -> DLQ ===== -->
+  <path d="M280,298 C150,320 110,520 236,790" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#aR)"/>
+  <path d="M280,370 C170,420 120,560 190,790" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#aR)"/>
+  <path d="M280,442 C200,520 150,620 140,790" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#aR)"/>
+  <path d="M280,586 C180,660 110,700 92,790" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#aR)"/>
+  <text x="44" y="330" font-size="9.5" fill="#B91C1C">deserialize / schema</text><text x="44" y="343" font-size="9" fill="#991B1B">→ DLQ (can't retry)</text>
+  <text x="44" y="400" font-size="9.5" fill="#B91C1C">invalid / missing fields</text><text x="44" y="413" font-size="9" fill="#991B1B">→ DLQ (permanent)</text>
+  <text x="44" y="470" font-size="9.5" fill="#B91C1C">v5 404 (no contract)</text><text x="44" y="483" font-size="9" fill="#991B1B">→ DECIDE: retry / delete</text>
+  <text x="44" y="640" font-size="9.5" fill="#B91C1C">retries exhausted</text><text x="44" y="653" font-size="9" fill="#991B1B">→ DLQ</text>
+
+  <rect x="40" y="792" width="236" height="96" rx="10" fill="#FEF2F2" stroke="#F87171" stroke-width="2"/>
+  <text x="158" y="818" text-anchor="middle" font-size="13" font-weight="700" fill="#991B1B">contract‑events‑dlt (DLQ)</text>
+  <text x="158" y="840" text-anchor="middle" font-size="10" fill="#B91C1C">SmallRye auto‑publishes the failure</text>
+  <text x="158" y="857" text-anchor="middle" font-size="10" fill="#B91C1C">+ diagnostic headers (reason, cause,</text>
+  <text x="158" y="872" text-anchor="middle" font-size="10" fill="#B91C1C">correlationId) → triage via the runbook</text>
+
+  <!-- ===== COMMON FAILURES PANEL ===== -->
+  <rect x="960" y="92" width="510" height="860" rx="12" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="982" y="122" font-size="16" font-weight="700" fill="#0F172A">Common failures &amp; how we handle them</text>
+
+  <text x="982" y="156" font-size="12.5" font-weight="700" fill="#B45309">Dependency / downstream</text>
+  <text x="982" y="178" font-size="11" fill="#334155">• v5 down / 5xx / timeout → <tspan font-weight="700">retry + backoff</tspan>, circuit‑break, then DLQ</text>
+  <text x="982" y="198" font-size="11" fill="#334155">• v5 404 (missing contract) → short retry (race) → DLQ or treat as delete</text>
+  <text x="982" y="218" font-size="11" fill="#334155">• DB connection / tx blip → <tspan font-weight="700">retry</tspan>; idempotency covers reprocessing</text>
+  <text x="982" y="238" font-size="11" fill="#334155">• Dependency down a long time → <tspan font-weight="700">@CircuitBreaker</tspan> stops hammering</text>
+
+  <text x="982" y="272" font-size="12.5" font-weight="700" fill="#6D28D9">Data / schema</text>
+  <text x="982" y="294" font-size="11" fill="#334155">• Deserialization / schema mismatch → handler → <tspan font-weight="700">DLQ</tspan> (can't retry)</text>
+  <text x="982" y="314" font-size="11" fill="#334155">• Missing / invalid mandatory fields → validate → <tspan font-weight="700">DLQ</tspan></text>
+  <text x="982" y="334" font-size="11" fill="#334155">• Poison message blocks the partition → retry N → <tspan font-weight="700">DLQ</tspan>, never forever</text>
+
+  <text x="982" y="368" font-size="12.5" font-weight="700" fill="#1D4ED8">Delivery / ordering</text>
+  <text x="982" y="390" font-size="11" fill="#334155">• Duplicate delivery (at‑least‑once) → <tspan font-weight="700">idempotent upsert</tspan> by contractId</text>
+  <text x="982" y="410" font-size="11" fill="#334155">• Out‑of‑order / stale version → <tspan font-weight="700">version guard</tspan> (skip older)</text>
+  <text x="982" y="430" font-size="11" fill="#334155">• Hot partition / skew → good key cardinality; watch per‑partition lag</text>
+
+  <text x="982" y="464" font-size="12.5" font-weight="700" fill="#15803D">Offsets / state</text>
+  <text x="982" y="486" font-size="11" fill="#334155">• Crash before commit → redelivery → <tspan font-weight="700">idempotency</tspan></text>
+  <text x="982" y="506" font-size="11" fill="#334155">• Commit before processing → message loss → <tspan font-weight="700">commit AFTER success</tspan></text>
+  <text x="982" y="526" font-size="11" fill="#334155">• Wrong auto.offset.reset → set <tspan font-weight="700">deliberately per environment</tspan></text>
+
+  <text x="982" y="560" font-size="12.5" font-weight="700" fill="#0E7490">Scaling / performance</text>
+  <text x="982" y="582" font-size="11" fill="#334155">• Consumer lag growing → scale pods (≤ partitions); find the slow stage</text>
+  <text x="982" y="602" font-size="11" fill="#334155">• Slow handler → <tspan font-weight="700">max.poll.interval</tspan> exceeded → rebalance loop</text>
+  <text x="982" y="622" font-size="11" fill="#334155">• Blocking work on event loop → use <tspan font-weight="700">@Blocking</tspan> worker thread</text>
+
+  <text x="982" y="656" font-size="12.5" font-weight="700" fill="#B91C1C">Operational / security</text>
+  <text x="982" y="678" font-size="11" fill="#334155">• Cert expiry / auth fail → rotation process + <tspan font-weight="700">alert</tspan>; bounded reconnect</text>
+  <text x="982" y="698" font-size="11" fill="#334155">• Rebalance storm → keep handler fast; tune session / poll timeouts</text>
+  <text x="982" y="718" font-size="11" fill="#334155">• No visibility → metrics + correlationId logs + OTel traces (Dynatrace)</text>
+
+  <text x="982" y="752" font-size="12.5" font-weight="700" fill="#7C3AED">Bridged‑design specific</text>
+  <text x="982" y="774" font-size="11" fill="#334155">• Replication lag → monitor <tspan font-weight="700">separately</tspan> from consumer lag</text>
+  <text x="982" y="794" font-size="11" fill="#334155">• Replication adds duplicates → <tspan font-weight="700">idempotency</tspan> (again)</text>
+  <text x="982" y="814" font-size="11" fill="#334155">• Partition mismatch source↔dest → <tspan font-weight="700">match partition count</tspan></text>
+
+  <rect x="982" y="836" width="466" height="96" rx="8" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="998" y="860" font-size="11.5" font-weight="700" fill="#0F172A">The pattern behind all of it</text>
+  <text x="998" y="882" font-size="10.5" fill="#334155">Transient → <tspan font-weight="700">retry with backoff</tspan>. &#160; Permanent → <tspan font-weight="700">DLQ</tspan> (don't retry).</text>
+  <text x="998" y="902" font-size="10.5" fill="#334155">Duplicates / replays → <tspan font-weight="700">idempotency</tspan>. &#160; Loss → <tspan font-weight="700">commit after success</tspan>.</text>
+  <text x="998" y="922" font-size="10.5" fill="#334155">Nothing silently dropped — every dead event is visible in the DLQ.</text>
+</svg>
