@@ -3,6 +3,7 @@ package com.lbg.quarkus.service;
 import com.lbg.quarkus.dto.ContractStoreEventDto;
 import com.lbg.quarkus.dto.EventStatus;
 import com.lbg.quarkus.dto.EventTrigger;
+import com.lbg.quarkus.dto.MarketplaceRecord;
 import com.lbg.quarkus.exception.InvalidEventException;
 import com.lbg.quarkus.exception.TransientProcessingException;
 import io.quarkus.logging.Log;
@@ -11,10 +12,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.faulttolerance.Retry;
 
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Orchestrates processing of one event.
+ * Orchestrates processing of one event: validate → extract → fetch+merge → (phase 4) upsert.
  *
  * <p>Resilience: retry TRANSIENT failures (API/DB blips) with exponential backoff;
  * abort PERMANENT failures (bad data) straight to the DLQ. When retries are exhausted
@@ -26,8 +28,8 @@ public class ContractIngestionService {
     @Inject
     EventValidator validator;
 
-    // Phase 3: inject the fetch/merge service (two concurrent API calls -> merged record)
-    // @Inject ContractFetchService fetchService;
+    @Inject
+    ContractFetchService fetchService;
 
     // Phase 4: inject the repository (idempotent upsert with version guard)
     // @Inject MarketplaceRepository repository;
@@ -57,14 +59,16 @@ public class ContractIngestionService {
             return;
         }
 
-        // 5. PHASE 3 — fetch Contract Store + Governance concurrently, then merge:
-        //    MarketplaceRecord record = fetchService.buildRecord(trigger.contractId())
-        //                                           .await().atMost(Duration.ofSeconds(30));
+        // 5. FETCH Contract Store + Governance concurrently, then merge.
+        //    .await() is safe here: @Blocking put us on a worker thread.
+        MarketplaceRecord record = fetchService
+                .buildRecord(trigger.contractId(), trigger.contractVersion())
+                .await().atMost(Duration.ofSeconds(30));
 
         // 6. PHASE 4 — idempotent upsert with version guard:
         //    repository.upsert(record, trigger.contractVersion());
 
-        Log.infof("Processed contract %s version %s (%s)",
-                trigger.contractId(), trigger.contractVersion(), trigger.operationType());
+        Log.infof("Built marketplace record for contract %s version %s (%s)",
+                record.contractId(), record.contractVersion(), trigger.operationType());
     }
 }
