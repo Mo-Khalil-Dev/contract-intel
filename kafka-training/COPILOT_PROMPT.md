@@ -84,6 +84,12 @@ Paste this after the main prompt to generate the test/mock layer:
 Add a WireMock-backed test layer so the consumer can be built and tested without the live APIs.
 The seam is the REST client base URL — do NOT change any production code; only config + tests.
 
+- Add WireMock in TEST scope only (it is confirmed available in the LBG Nexus):
+  org.wiremock:wiremock:3.9.2  (group org.wiremock). WireMock 3.x keeps the
+  com.github.tomakehurst.wiremock.* package names, so use those imports. If Jetty transitive
+  conflicts appear in the Quarkus test run, switch to the shaded org.wiremock:wiremock-standalone:3.9.2.
+  WireMock is TEST-ONLY — never add it to the runtime image; deployed environments point the url
+  properties at the real APIs.
 - QuarkusTestResourceLifecycleManager that starts a WireMock server on a dynamic port and returns
   config overrides pointing quarkus.rest-client."contract-store".url and
   quarkus.rest-client."governance".url at it; inject the server into tests.
@@ -133,5 +139,6 @@ Use package-private fields on the services so the tests can inject mocks without
 - Confirm **which key** the APIs take (`contractId` vs `collibraAssetId`).
 - Confirm the **overlap merge rules** (description/status) and **delete** semantics.
 - Set real **retry/timeout** numbers per the team's SLA.
-- Add **WireMock fixtures** (one Success event, one FAILED event, one contract response, one
-  governance response) to test it without live APIs.
+- Add the **WireMock** test dependency `org.wiremock:wiremock:3.9.2` (test scope — confirmed in the
+  LBG Nexus) and the **fixtures** (one Success event, one FAILED event, a contract response, a
+  contract-not-returned response, a governance response) to test it without live APIs.
