@@ -4,6 +4,7 @@ import com.lbg.quarkus.dto.ContractStoreEventDto;
 import com.lbg.quarkus.dto.EventStatus;
 import com.lbg.quarkus.dto.EventTrigger;
 import com.lbg.quarkus.dto.MarketplaceRecord;
+import com.lbg.quarkus.exception.ContractNotFoundException;
 import com.lbg.quarkus.exception.InvalidEventException;
 import com.lbg.quarkus.exception.TransientProcessingException;
 import io.quarkus.logging.Log;
@@ -35,7 +36,8 @@ public class ContractIngestionService {
     // @Inject MarketplaceRepository repository;
 
     @Retry(maxRetries = 4, delay = 1, delayUnit = ChronoUnit.SECONDS,
-            retryOn = TransientProcessingException.class,
+            // ContractNotFoundException = short retry for a consistency race, then DLQ (DECIDE vs delete)
+            retryOn = {TransientProcessingException.class, ContractNotFoundException.class},
             abortOn = InvalidEventException.class)
     @ExponentialBackoff(factor = 2, maxDelay = 10_000)   // 1s -> 2s -> 4s -> 8s (cap 10s)
     public void process(ContractStoreEventDto event) {

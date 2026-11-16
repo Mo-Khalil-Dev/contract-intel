@@ -53,4 +53,42 @@ Kafka → deserialize (JSON→DTO)  →  @Blocking listener (manual ack)
       → ack (success)  |  nack (failure → DLQ, after retries)
 ```
 
+## Mock layer (for when the APIs aren't ready)
+
+The **seam is the REST client base URL** — swap real for mock via config, **no code change**:
+```properties
+# test / local dev  → WireMock
+quarkus.rest-client."contract-store".url=http://localhost:8089
+quarkus.rest-client."governance".url=http://localhost:8089
+# INT / PRE / PROD   → the real APIs (set per env via Helm/Vault)
+```
+
+Files:
+- `src/test/java/com/lbg/quarkus/WireMockResource.java` + `InjectWireMock.java` — start WireMock
+  for the test run and point both clients at it.
+- `src/test/java/com/lbg/quarkus/service/ContractIngestionScenarioTest.java` — the failure scenarios.
+- `src/test/resources/__files/*.json` — semi-real API responses.
+- `src/test/resources/events/*.json` — topic events (success / failed / malformed).
+- `src/test/resources/application.properties` — disables Fault Tolerance in tests so `@Retry`
+  backoff doesn't slow assertions.
+
+### Failure scenarios covered
+| Scenario | Fixture / stub | Expected |
+|---|---|---|
+| Happy path | contract + governance 200 | record built (governance + schema merged) |
+| Upstream (Collibra) failure | `event-failed.json` (status FAILED) | **skipped** (not DLQ) |
+| Malformed event (missing contractId) | `event-malformed.json` | `InvalidEventException` → DLQ |
+| **Contract id not returned** | `contract-store-notfound.json` (data null) | `ContractNotFoundException` (retry → DLQ) |
+| Contract Store 500 | WireMock `serverError()` | `TransientProcessingException` (retry → DLQ) |
+| Contract Store `hasError=true` | inline stub | `TransientProcessingException` |
+| Governance unavailable (404) | WireMock `notFound()` | recovers to empty → record still built |
+
+> **WireMock is a TEST / LOCAL-DEV tool only — it is never deployed to GKE.** In INT/PRE/PROD the
+> `url` properties point at the real APIs (set per environment). WireMock is not in the runtime image.
+>
+> **Is WireMock in the Golden Path? — confirm.** If the chassis test stack doesn't bundle it, either
+> add `com.github.tomakehurst:wiremock-jre8` (or `quarkus-wiremock`) in **test scope** (check it's in
+> Nexus), or use the chassis-provided **Mockito** (`@InjectMock @RestClient`) + the SmallRye
+> **in-memory connector** instead — those need no extra dependency.
+
 > Generic material — verify config keys against the project's Quarkus version.

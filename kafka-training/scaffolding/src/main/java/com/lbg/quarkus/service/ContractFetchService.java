@@ -5,6 +5,7 @@ import com.lbg.quarkus.client.GovernanceClient;
 import com.lbg.quarkus.dto.ContractStoreResponse;
 import com.lbg.quarkus.dto.GovernanceProduct;
 import com.lbg.quarkus.dto.MarketplaceRecord;
+import com.lbg.quarkus.exception.ContractNotFoundException;
 import com.lbg.quarkus.exception.TransientProcessingException;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -47,6 +48,11 @@ public class ContractFetchService {
                     if (!c.ok()) {
                         throw new TransientProcessingException(
                                 "contract-store returned an error for " + contractId);
+                    }
+                    // the contract id was NOT returned (empty/null data) — not-found scenario
+                    if (c.data() == null || c.data().id() == null) {
+                        throw new ContractNotFoundException(
+                                "contract-store did not return contract " + contractId);
                     }
                     return merger.merge(eventContractVersion, c, g);
                 });

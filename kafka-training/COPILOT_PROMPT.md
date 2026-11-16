@@ -76,6 +76,36 @@ Generate all classes with imports, Javadoc, and the application.properties snipp
 
 ---
 
+## Add-on prompt — mock layer & failure scenarios
+
+Paste this after the main prompt to generate the test/mock layer:
+
+```
+Add a WireMock-backed test layer so the consumer can be built and tested without the live APIs.
+The seam is the REST client base URL — do NOT change any production code; only config + tests.
+
+- QuarkusTestResourceLifecycleManager that starts a WireMock server on a dynamic port and returns
+  config overrides pointing quarkus.rest-client."contract-store".url and
+  quarkus.rest-client."governance".url at it; inject the server into tests.
+- Semi-real fixtures in src/test/resources/__files/: a full Contract Store response (ODCS v3 shape),
+  a "contract not returned" response (meta.status=200, hasError=false, response.data=null), and a
+  Governance product response (the 11 fields). Topic events in src/test/resources/events/:
+  success, failed (status=FAILED), malformed (missing contractId).
+- A ContractNotFoundException thrown by the fetch service when the contract store returns no data
+  (data==null or id==null); add it to @Retry(retryOn=...) for a short consistency-race retry.
+- Scenario tests asserting: happy path merges both sources; FAILED-status event is skipped;
+  malformed event -> InvalidEventException; contract id not returned -> ContractNotFoundException;
+  contract store 500 or meta.hasError -> TransientProcessingException; governance 404 ->
+  recovered to empty, record still built.
+- In src/test/resources/application.properties set MP_Fault_Tolerance_NonFallback_Enabled=false so
+  @Retry backoff doesn't slow the tests.
+- Use the chassis-provided Mockito (@InjectMock @RestClient) as a fallback if WireMock is not
+  available as a dependency. WireMock is TEST-ONLY — never add it to the runtime image; deployed
+  environments point the url properties at the real APIs.
+```
+
+---
+
 ### After Copilot generates it
 - Fix the **API paths** (`/contracts/{id}`, the governance **versions** endpoint).
 - Confirm **which key** the APIs take (`contractId` vs `collibraAssetId`).

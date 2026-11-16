@@ -1,0 +1,19 @@
+{
+  "eventId": "8f273fa0-ae0c-4bca-b35e-de2b261edb17",
+  "operationType": "DATACONTRACT_CREATED",
+  "version": "4.0",
+  "contractId": "019a06d4-f80c-7160-b4b8-a93e65a1a02d",
+  "eventTimestamp": "2026-10-12T10:35:18.529Z",
+  "source": "DataContractStore",
+  "correlationId": "c46e7ac0-a0b2-40c8-bbc5-d68c96ac544a",
+  "contractVersion": "0.0.8",
+  "status": "FAILED",
+  "userId": "12323",
+  "collibraAssetId": "019a06d4-f80c-7160-b4b8-a93e65a1a02d",
+  "error": {
+    "httpStatus": "500",
+    "errorCategory": "SERVER_ERROR",
+    "sanitisedErrorMessage": "Collibra Workflow failed with"
+  },
+  "message": "errorMessage=Collibra Workflow failed with HTTP 500, httpStatus=500, errorCategory=SERVER_ERROR"
+}
