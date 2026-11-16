@@ -91,4 +91,20 @@ Files:
 > Nexus), or use the chassis-provided **Mockito** (`@InjectMock @RestClient`) + the SmallRye
 > **in-memory connector** instead — those need no extra dependency.
 
+## Unit tests (plain JUnit + Mockito — no Quarkus boot, no WireMock)
+
+Fast tests that need only chassis-provided libs (JUnit 5, Mockito, Hibernate Validator, Mutiny):
+- `TestFixtures.java` — shared Jackson mapper + fixture loaders.
+- `dto/ContractStoreEventDtoTest` — JSON → typed event (enums, Instant, error block).
+- `dto/EventTriggerTest` — extraction + `isIngestable()` / `isDelete()`.
+- `service/ContractMergerTest` — merge provenance + fallbacks.
+- `service/EventValidatorTest` — valid passes, invalid throws with the field name.
+- `service/ContractFetchServiceTest` — mocked clients; happy merge, not-found, 500, hasError,
+  governance recovered.
+- `service/ContractIngestionServiceTest` — mocked validator + fetch; routing (success / failed /
+  delete / invalid).
+
+The scaffolding uses **package-private fields** on the services so plain unit tests can inject
+mocks without CDI; the real app still injects via `@Inject`.
+
 > Generic material — verify config keys against the project's Quarkus version.

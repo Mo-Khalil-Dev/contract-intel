@@ -106,6 +106,28 @@ The seam is the REST client base URL — do NOT change any production code; only
 
 ---
 
+## Add-on prompt — unit tests
+
+```
+Write plain JUnit 5 + Mockito unit tests (no @QuarkusTest, no WireMock) for every service and DTO:
+- A TestFixtures helper with a Jackson mapper (JSR-310 + ACCEPT_CASE_INSENSITIVE_ENUMS) that loads
+  the JSON fixtures.
+- ContractStoreEventDto: JSON maps to typed object (enums, Instant, nested error).
+- EventTrigger: extraction + isIngestable()/isDelete().
+- ContractMerger: governance metadata + contract schema merge, with fallbacks (empty governance,
+  null contract version).
+- EventValidator: valid event passes; missing contractId throws InvalidEventException naming the field.
+  Build the Validator with ParameterMessageInterpolator so no EL dependency is needed.
+- ContractFetchService: mock both clients (return Uni); assert happy merge, contract-not-returned ->
+  ContractNotFoundException, contract 500/failure -> TransientProcessingException, hasError ->
+  TransientProcessingException, governance failure -> recovered/empty.
+- ContractIngestionService: mock EventValidator + ContractFetchService; assert validate is called,
+  FAILED-status and delete events skip the fetch, and an invalid event propagates.
+Use package-private fields on the services so the tests can inject mocks without CDI.
+```
+
+---
+
 ### After Copilot generates it
 - Fix the **API paths** (`/contracts/{id}`, the governance **versions** endpoint).
 - Confirm **which key** the APIs take (`contractId` vs `collibraAssetId`).
