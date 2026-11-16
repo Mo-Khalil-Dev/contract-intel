@@ -55,6 +55,10 @@ class ContractIngestionScenarioTest {
         assertEquals("Example Data Product", record.dataProductName());   // from governance
         assertNotNull(record.schema());                                   // from contract store
         assertEquals("0.0.8", record.contractVersion());
+
+        // prove BOTH endpoints were actually called (exactly once each)
+        wiremock.verify(1, getRequestedFor(urlPathMatching("/contracts/.*")));
+        wiremock.verify(1, getRequestedFor(urlPathMatching("/products/.*")));
     }
 
     // ---------------------------------------------------------------- event routing

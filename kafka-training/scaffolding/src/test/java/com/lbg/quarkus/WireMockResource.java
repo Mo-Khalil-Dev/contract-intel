@@ -1,6 +1,7 @@
 package com.lbg.quarkus;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
 import java.util.Map;
@@ -21,7 +22,8 @@ public class WireMockResource implements QuarkusTestResourceLifecycleManager {
 
     @Override
     public Map<String, String> start() {
-        server = new WireMockServer(options().dynamicPort());
+        // ConsoleNotifier(true) logs every request + whether it matched a stub (great for debugging)
+        server = new WireMockServer(options().dynamicPort().notifier(new ConsoleNotifier(true)));
         server.start();
         String base = server.baseUrl();
         return Map.of(
