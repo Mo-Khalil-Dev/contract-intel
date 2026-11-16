@@ -86,10 +86,22 @@ Files:
 > **WireMock is a TEST / LOCAL-DEV tool only — it is never deployed to GKE.** In INT/PRE/PROD the
 > `url` properties point at the real APIs (set per environment). WireMock is not in the runtime image.
 >
-> **Is WireMock in the Golden Path? — confirm.** If the chassis test stack doesn't bundle it, either
-> add `com.github.tomakehurst:wiremock-jre8` (or `quarkus-wiremock`) in **test scope** (check it's in
-> Nexus), or use the chassis-provided **Mockito** (`@InjectMock @RestClient`) + the SmallRye
-> **in-memory connector** instead — those need no extra dependency.
+> **WireMock IS available in the LBG Nexus** (`maven-osg-proxy`). Use the modern 3.x artifact:
+> ```xml
+> <dependency>
+>   <groupId>org.wiremock</groupId>
+>   <artifactId>wiremock</artifactId>
+>   <version>3.9.2</version>
+>   <scope>test</scope>
+> </dependency>
+> ```
+> WireMock 3.x kept the `com.github.tomakehurst.wiremock.*` package names, so the scaffolded
+> `WireMockResource` and scenario test compile against it unchanged. If Jetty transitive conflicts
+> appear in Quarkus tests, switch to the shaded `org.wiremock:wiremock-standalone:3.9.2`.
+> (Avoid the old `com.github.tomakehurst:wiremock-jre8-standalone:2.21.0`; ignore
+> `spring-cloud-contract-wiremock` — that's Spring.)
+>
+> The **unit tests** below need no WireMock at all (Mockito only), so they run regardless.
 
 ## Unit tests (plain JUnit + Mockito — no Quarkus boot, no WireMock)
 
