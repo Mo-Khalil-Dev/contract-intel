@@ -1,0 +1,13 @@
+{
+  "dataProductName": "Example Data Product",
+  "description": "Example governance description for the data product.",
+  "dataProductType": "Origin",
+  "dataProductOwners": ["owner.one@example.com", "owner.two@example.com"],
+  "owningBusinessArea": "Example Business Area",
+  "productLifeCycleStage": "Active",
+  "relatedToGDMDataConcepts": ["ConceptA", "ConceptB"],
+  "securityClassification": "Internal",
+  "dataUpdateFrequency": "Daily",
+  "accessInstructions": "Request access via the data portal.",
+  "status": "Active"
+}

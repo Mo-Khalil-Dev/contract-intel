@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "responseEpochMs": 1794401484350,
+    "status": 200,
+    "hasError": false,
+    "correlationId": "{11111111-1111-1111-1111-111111111111}"
+  },
+  "response": {
+    "data": {
+      "id": "019a06d4-f80c-7160-b4b8-a93e65a1a02d",
+      "version": "0.0.8",
+      "apiVersion": "v3.0.2",
+      "kind": "DataContract",
+      "name": null,
+      "tenant": "Example Platform",
+      "status": "Active",
+      "tags": null,
+      "servers": [],
+      "dataProduct": "AL00000.ExampleProduct",
+      "domain": "DP: Example Domain",
+      "description": {
+        "usage": null,
+        "purpose": "Example purpose text for the data product.",
+        "limitations": null,
+        "customProperties": [
+          { "property": "detailedDescription", "value": "Example detailed description." }
+        ]
+      },
+      "schema": [
+        {
+          "logicalType": "object",
+          "physicalName": "example_table",
+          "name": "example_table",
+          "physicalType": "table",
+          "description": "example table",
+          "properties": [
+            {
+              "name": "batch_id(column)",
+              "logicalType": "string",
+              "physicalType": "STRING",
+              "required": true,
+              "customProperties": [ { "property": "columnPosition", "value": 1 } ]
+            },
+            {
+              "name": "status(column)",
+              "logicalType": "string",
+              "physicalType": "STRING",
+              "required": true,
+              "customProperties": [ { "property": "columnPosition", "value": 2 } ]
+            }
+          ]
+        }
+      ],
+      "customProperties": [
+        { "property": "dataProductId", "value": "019a06d4-f80c-7160-b4b8-a93e65a1a02d" },
+        { "property": "dataProductType", "value": "Origin" }
+      ],
+      "contractCreatedTs": "2026-08-14T06:19:40.243Z",
+      "signature": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  }
+}
